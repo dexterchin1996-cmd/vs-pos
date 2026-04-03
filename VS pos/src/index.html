@@ -5988,10 +5988,11 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             
             if (!member.pointsHistory) member.pointsHistory = [];
             
+            const newBalance = member.points + points;
             member.pointsHistory.push({
                 type,
                 points,
-                balance: member.points,
+                balance: newBalance,
                 note,
                 time: new Date().toISOString()
             });
