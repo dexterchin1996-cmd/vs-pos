@@ -4041,11 +4041,12 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
 
         function generateCommissions(order) {
             const rate = settings.commissionRate / 100;
-            order.items.forEach(item => {
+            const maxId = commissions.length ? Math.max(...commissions.map(c => c.id)) : 0;
+            order.items.forEach((item, idx) => {
                 const availableEmp = employees.find(e => e.status === 'free') || employees[0];
-                const commission = item.price * rate;
+                const commission = (item.price * item.qty) * rate;
                 commissions.push({
-                    id: commissions.length + 1,
+                    id: maxId + idx + 1,
                     orderNo: order.orderNo,
                     employeeId: availableEmp?.id || 0,
                     employeeName: availableEmp?.name || '未分配',
