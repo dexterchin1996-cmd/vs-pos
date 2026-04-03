@@ -200,7 +200,7 @@
         .member-info-panel .detail { font-size: 12px; color: var(--gray-600); margin-top: 4px; }
         
         .search-bar { padding: 12px 16px; border-bottom: 1px solid var(--gray-200); }
-        .search-input { width: 100%; padding: 10px 14px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 14px; }
+        .search-input { width: 100%; padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 13px; min-width: 200px; }
         .search-input:focus { outline: none; border-color: var(--primary); }
         
         .category-tabs { display: flex; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--gray-200); overflow-x: auto; }
@@ -362,8 +362,6 @@
         .tip-btn:hover { background: var(--gray-100); }
         .tip-btn.active { background: var(--success); color: white; border-color: var(--success); }
         .tip-custom { color: var(--primary); }
-        .search-input { padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 13px; min-width: 200px; }
-        .search-input:focus { outline: none; border-color: var(--primary); }
         .stat-card.warning { border-left: 4px solid var(--warning); }
         .stat-card.highlight { border-left: 4px solid var(--primary); }
         .gold { color: #ffd700 !important; font-weight: 700; }
@@ -398,9 +396,11 @@
             background: var(--white); border: 1px solid var(--gray-200);
             border-radius: 10px; padding: 16px; cursor: pointer;
             transition: all 0.2s; position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
-        .ticket-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .ticket-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-1px); }
         .ticket-card.occupied { border-left: 4px solid var(--danger); }
+        .ticket-card.selected { border: 2px solid var(--primary); }
         .ticket-number { font-size: 20px; font-weight: 700; color: var(--dark); }
         .ticket-status { font-size: 12px; margin-top: 8px; }
         .ticket-amount { font-size: 18px; font-weight: 600; color: var(--primary); margin-top: 8px; }
@@ -431,14 +431,11 @@
         
         .invoice-preview { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 12px; padding: 24px; margin: 16px 0; }
         .invoice-header { text-align: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--gray-300); }
-        .invoice-items { margin: 16px 0; }
-        .invoice-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted var(--gray-200); }
-        .invoice-total { display: flex; justify-content: space-between; padding: 16px 0; margin-top: 16px; border-top: 2px solid var(--gray-300); font-size: 18px; font-weight: 700; }
+        .invoice-items { margin: 16px 0; border-top: 1px dashed var(--gray-400); border-bottom: 1px dashed var(--gray-400); padding: 12px 0; }
+        .invoice-item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px dotted var(--gray-200); }
+        .invoice-total { display: flex; justify-content: space-between; padding: 12px 0; margin-top: 16px; border-top: 2px solid var(--gray-300); font-size: 16px; font-weight: 600; }
         .invoice-header h3 { font-size: 18px; margin-bottom: 4px; }
         .invoice-header p { font-size: 12px; color: var(--gray-500); }
-        .invoice-items { border-top: 1px dashed var(--gray-400); border-bottom: 1px dashed var(--gray-400); padding: 12px 0; }
-        .invoice-item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
-        .invoice-total { display: flex; justify-content: space-between; padding: 12px 0; font-size: 16px; font-weight: 600; }
         
         @media (max-width: 1024px) {
             .pos-layout { flex-direction: column; height: auto; }
@@ -482,7 +479,6 @@
         .integration-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; }
         
         /* 小按钮 */
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
         .btn-lg { padding: 14px 24px; font-size: 16px; }
         
         /* 离线信息 */
@@ -527,11 +523,6 @@
         
         /* 小尺寸输入框 */
         .form-input-sm { padding: 6px 10px; font-size: 13px; }
-        
-        /* 开台卡片样式 */
-        .ticket-card { background: var(--white); border-radius: 8px; padding: 16px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; position: relative; }
-        .ticket-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-1px); }
-        .ticket-card.selected { border: 2px solid var(--primary); }
         
         /* POS 商品网格 */
         @media (min-width: 768px) {
@@ -1106,53 +1097,6 @@
                             <span>小费</span>
                             <span>实收</span>
                             <span>支付</span>
-                            <span>操作</span>
-                        </div>
-                        <div id="invoicesTable"></div>
-                    </div>
-                </div>
-                    </div>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="icon">📄</div>
-                            <div class="value" id="statTotalInvoices">0</div>
-                            <div class="label">总账单数</div>
-                        </div>
-                        <div class="stat-card success">
-                            <div class="icon">✅</div>
-                            <div class="value" id="statPaidInvoices">¥0</div>
-                            <div class="label">已收款</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="icon">⏳</div>
-                            <div class="value" id="statUnpaidInvoices">¥0</div>
-                            <div class="label">待收款</div>
-                        </div>
-                    </div>
-                    
-                    <div class="filter-bar">
-                        <select id="invoiceFilterStatus" onchange="renderInvoices()">
-                            <option value="all">全部状态</option>
-                            <option value="paid">已付款</option>
-                            <option value="unpaid">待付款</option>
-                        </select>
-                        <select id="invoiceFilterDate" onchange="renderInvoices()">
-                            <option value="today">今天</option>
-                            <option value="week">本周</option>
-                            <option value="month">本月</option>
-                            <option value="all">全部</option>
-                        </select>
-                    </div>
-                    
-                    <div class="data-table">
-                        <div class="table-header" style="grid-template-columns: 120px 1fr 2fr 100px 100px 100px auto;">
-                            <span>账单号</span>
-                            <span>客户</span>
-                            <span>明细</span>
-                            <span>金额</span>
-                            <span>状态</span>
-                            <span>日期</span>
                             <span>操作</span>
                         </div>
                         <div id="invoicesTable"></div>
@@ -2669,31 +2613,6 @@
                                 <button class="btn btn-outline" onclick="exportCSV('employees')">📥 员工CSV</button>
                                 <button class="btn btn-outline" onclick="exportCSV('invoices')">📥 账单CSV</button>
                                 <button class="btn btn-outline" onclick="exportCSV('inventory')">📥 库存CSV</button>
-                    <div id="settings-importExport" class="settings-content" style="display:none;">
-                        <div class="settings-section">
-                            <div class="settings-section-title">导入数据</div>
-                            <div class="csv-upload-area" onclick="document.getElementById('csvFileInput').click()">
-                                <div style="font-size:32px;margin-bottom:8px;">📂</div>
-                                <div>点击选择CSV文件</div>
-                                <div style="font-size:11px;color:#6c757d;margin-top:4px;">支持: 商品、会员、员工数据</div>
-                            </div>
-                            <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCSVUpload(event)">
-                            <div class="form-group" style="margin-top:16px;">
-                                <label>导入类型</label>
-                                <select id="importType" class="form-input">
-                                    <option value="services">商品/服务</option>
-                                    <option value="members">会员</option>
-                                    <option value="employees">员工</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="settings-section">
-                            <div class="settings-section-title">导出数据</div>
-                            <div class="form-row" style="flex-wrap:wrap;gap:8px;">
-                                <button class="btn btn-outline" onclick="exportCSV('services')">📥 商品CSV</button>
-                                <button class="btn btn-outline" onclick="exportCSV('members')">📥 会员CSV</button>
-                                <button class="btn btn-outline" onclick="exportCSV('employees')">📥 员工CSV</button>
-                                <button class="btn btn-outline" onclick="exportCSV('invoices')">📥 账单CSV</button>
                             </div>
                         </div>
                         <div class="settings-section">
@@ -2837,6 +2756,15 @@
         let currentMember = null;
         let selectedPayment = 'cash';
         let currentCategory = 'all';
+
+        // 唯一ID生成器
+        function generateId(prefix = 'id') {
+            return prefix + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+
+        function getNextId(array) {
+            return array.length ? Math.max(...array.map(i => typeof i.id === 'number' ? i.id : 0)) + 1 : 1;
+        }
 
         // 初始化
         function init() {
@@ -3977,7 +3905,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             const orderNo = 'V' + Date.now().toString().slice(-8);
             currentOrderNo = orderNo;
             const order = {
-                id: orders.length + 1,
+                id: getNextId(orders),
                 orderNo,
                 customerType: currentCustomerType,
                 customerName: currentMember ? currentMember.name : (currentCustomerType === 'vip' ? 'VIP客户' : '散客'),
@@ -4062,7 +3990,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
 
         function createInvoice(order) {
             const invoice = {
-                id: invoices.length + 1,
+                id: getNextId(invoices),
                 invoiceNo: 'INV' + Date.now().toString().slice(-8),
                 orderNo: order.orderNo,
                 customerName: order.customerName,
@@ -4602,7 +4530,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             if (!customer || !amount) { alert('请填写完整信息'); return; }
             
             const invoice = {
-                id: invoices.length + 1,
+                id: getNextId(invoices),
                 invoiceNo: 'INV' + Date.now().toString().slice(-8),
                 orderNo: '',
                 customerName: customer,
@@ -8123,7 +8051,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             
             if (!name) { alert('请填写姓名'); return; }
             
-            employees.push({ id: employees.length + 1, name, phone, skills, status: 'free', monthlyCommission: 0 });
+            employees.push({ id: getNextId(employees), name, phone, skills, status: 'free', monthlyCommission: 0 });
             saveData('employees', employees);
             closeModal();
             renderEmployeesTable();
