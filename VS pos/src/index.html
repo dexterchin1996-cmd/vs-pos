@@ -483,6 +483,7 @@
         
         /* 小按钮 */
         .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-lg { padding: 14px 24px; font-size: 16px; }
         
         /* 离线信息 */
         .offline-info ul li { margin-bottom: 4px; }
@@ -528,7 +529,7 @@
         .form-input-sm { padding: 6px 10px; font-size: 13px; }
         
         /* 开台卡片样式 */
-        .ticket-card { background: var(--white); border-radius: 8px; padding: 16px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; }
+        .ticket-card { background: var(--white); border-radius: 8px; padding: 16px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; position: relative; }
         .ticket-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-1px); }
         .ticket-card.selected { border: 2px solid var(--primary); }
         
@@ -543,6 +544,133 @@
         .device-card .device-info { flex: 1; }
         .device-card .device-name { font-weight: 600; font-size: 14px; }
         .device-card .device-ip { font-size: 12px; color: var(--gray-500); }
+        
+        /* 支付界面 */
+        .payment-screen { padding: 0; }
+        .payment-total { text-align: center; padding: 24px; background: linear-gradient(135deg, var(--primary) 0%, #5dade2 100%); color: white; border-radius: 12px; margin-bottom: 20px; }
+        .payment-methods { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .payment-method { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px; background: var(--gray-50); border-radius: 12px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .payment-method:hover { background: var(--gray-100); }
+        .payment-method.active { border-color: var(--primary); background: rgba(59,125,221,0.1); }
+        .payment-method .method-icon { font-size: 28px; }
+        .payment-method .method-name { font-weight: 600; font-size: 14px; }
+        .payment-method .method-badge { font-size: 10px; background: var(--success); color: white; padding: 2px 8px; border-radius: 10px; }
+        .quick-amounts { display: flex; gap: 8px; margin-top: 16px; }
+        .quick-amount-btn { flex: 1; padding: 10px; background: var(--gray-100); border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .quick-amount-btn:hover { background: var(--gray-200); }
+        
+        /* 现金支付 */
+        .cash-payment { padding: 0; }
+        .cash-display { background: var(--gray-50); padding: 20px; border-radius: 12px; margin-bottom: 16px; }
+        .cash-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gray-200); }
+        .cash-row:last-child { border-bottom: none; }
+        .cash-row.change { background: var(--success); color: white; margin: 0 -20px -20px; padding: 16px 20px; border-radius: 0 0 12px 12px; }
+        .cash-row.change .cash-change { font-size: 24px; font-weight: 700; }
+        .cash-amount { font-size: 24px; font-weight: 700; color: var(--primary); }
+        .cash-input { font-size: 24px; font-weight: 700; text-align: right; width: 150px; border: none; background: transparent; color: var(--primary); }
+        .cash-input:focus { outline: none; }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .numpad-btn { padding: 16px; font-size: 24px; font-weight: 600; background: var(--gray-100); border: none; border-radius: 8px; cursor: pointer; transition: all 0.1s; }
+        .numpad-btn:hover { background: var(--gray-200); }
+        .numpad-btn:active { transform: scale(0.95); }
+        .numpad-btn.empty { background: transparent; cursor: default; }
+        
+        /* 拆分付款 */
+        .split-payment { padding: 0; }
+        .split-total { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--gray-50); border-radius: 8px; margin-bottom: 16px; }
+        .split-total .split-amount { font-size: 20px; font-weight: 700; color: var(--primary); }
+        .split-summary { background: var(--gray-50); padding: 16px; border-radius: 8px; margin-top: 16px; }
+        .split-row { display: flex; justify-content: space-between; padding: 8px 0; }
+        .split-assigned { font-weight: 700; }
+        .split-remaining { font-weight: 700; }
+        
+        /* 加载动画 */
+        .loading-dots { display: flex; justify-content: center; gap: 8px; }
+        .loading-dots span { width: 12px; height: 12px; background: var(--primary); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        
+        /* 班次详情样式 */
+        .shift-detail { padding: 0; }
+        .shift-summary { background: var(--gray-50); padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-200); }
+        .summary-row:last-child { border-bottom: none; }
+        .summary-row.positive { color: var(--danger); font-weight: 600; }
+        .summary-row.negative { color: var(--success); font-weight: 600; }
+        .shift-section { margin-bottom: 16px; }
+        .section-title { font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200); }
+        .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .summary-item { text-align: center; padding: 12px; background: var(--gray-50); border-radius: 8px; }
+        .summary-item .item-value { font-size: 20px; font-weight: 700; color: var(--primary); }
+        .summary-item .item-label { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+        .payment-breakdown { background: var(--gray-50); border-radius: 8px; padding: 12px; }
+        .payment-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-200); }
+        .payment-row:last-child { border-bottom: none; }
+        .cash-entry { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--gray-50); border-radius: 6px; margin-bottom: 4px; }
+        .shift-row:hover { background: var(--gray-50); }
+        
+        /* 会员详情样式 */
+        .member-detail { padding: 0; }
+        .member-header { display: flex; align-items: center; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--gray-200); margin-bottom: 16px; }
+        .member-info { flex: 1; }
+        .member-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+        .member-card { background: var(--gray-50); padding: 12px; border-radius: 8px; text-align: center; }
+        .member-card.highlight { background: rgba(59,125,221,0.1); }
+        .card-label { font-size: 12px; color: var(--gray-500); margin-bottom: 4px; }
+        .card-value { font-size: 20px; font-weight: 700; }
+        .card-sub { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+        .member-section { margin-bottom: 16px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 600; }
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .info-item { display: flex; justify-content: space-between; padding: 8px; background: var(--gray-50); border-radius: 6px; font-size: 13px; }
+        .info-label { color: var(--gray-500); }
+        .order-list { max-height: 200px; overflow-y: auto; }
+        .order-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--gray-200); cursor: pointer; }
+        .order-item:hover { background: var(--gray-50); }
+        .order-left .order-no { font-weight: 600; }
+        .order-left .order-date { font-size: 12px; color: var(--gray-500); }
+        .order-right { text-align: right; }
+        .order-right .order-total { font-weight: 700; color: var(--primary); }
+        .order-right .order-items { font-size: 12px; color: var(--gray-500); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .member-actions { display: flex; gap: 8px; margin-top: 16px; }
+        .member-actions .btn { flex: 1; }
+        
+        /* 充值/兑换样式 */
+        .redeem-modal, .recharge-modal { padding: 0; }
+        .redeem-info { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 20px; background: var(--gray-50); border-radius: 12px; margin-bottom: 16px; }
+        .redeem-balance, .redeem-value { text-align: center; }
+        .redeem-balance strong, .redeem-value strong { display: block; font-size: 24px; color: var(--primary); }
+        .redeem-arrow { font-size: 24px; color: var(--gray-400); }
+        .redeem-preview { display: flex; justify-content: space-between; padding: 12px; background: var(--success); color: white; border-radius: 8px; margin-top: 12px; font-weight: 600; }
+        .recharge-bonus, .recharge-total { display: flex; justify-content: space-between; padding: 12px; margin-top: 8px; border-radius: 8px; }
+        .recharge-bonus { background: var(--gray-100); }
+        .recharge-total { background: var(--success); color: white; font-weight: 700; font-size: 18px; }
+        
+        /* 权限编辑 */
+        .permissions-editor { max-height: 60vh; overflow-y: auto; }
+        .perm-section { margin-bottom: 20px; }
+        .perm-title { font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200); }
+        .perm-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; cursor: pointer; }
+        .perm-item input[type="checkbox"] { width: 18px; height: 18px; }
+        .role-list { display: flex; flex-direction: column; gap: 12px; }
+        .role-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 8px; padding: 16px; }
+        .role-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .role-name { font-weight: 600; font-size: 16px; }
+        .role-badge { font-size: 11px; background: var(--gray-200); padding: 2px 8px; border-radius: 4px; color: var(--gray-500); }
+        .role-perms { font-size: 13px; color: var(--gray-500); }
+        
+        /* 采购订单/生产 */
+        .order-list-container { max-height: 300px; overflow-y: auto; }
+        .order-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+        .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .order-id { font-weight: 600; color: var(--primary); }
+        .order-info { font-size: 13px; color: var(--gray-600); margin-bottom: 8px; }
+        .order-info div { margin-bottom: 4px; }
+        .order-total { font-size: 18px; font-weight: 700; color: var(--primary); }
+        .po-items-section { margin-top: 16px; border-top: 1px solid var(--gray-200); padding-top: 16px; }
+        .po-summary { background: var(--gray-50); padding: 12px; border-radius: 8px; margin-top: 16px; }
+        .production-summary { display: flex; justify-content: space-between; padding: 12px; background: var(--success); color: white; border-radius: 8px; margin-top: 16px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -1352,6 +1480,8 @@
                         <div class="settings-tab" onclick="switchSettingsTab('integrations', this)">🔗 集成</div>
                         <div class="settings-tab" onclick="switchSettingsTab('offline', this)">📴 离线模式</div>
                         <div class="settings-tab" onclick="switchSettingsTab('apiDocs', this)">📡 API</div>
+                        <div class="settings-tab" onclick="switchSettingsTab('permissions', this)">🔐 权限</div>
+                        <div class="settings-tab" onclick="switchSettingsTab('inventory', this)">📦 库存</div>
                         <div class="settings-tab" onclick="switchSettingsTab('importExport', this)">📁 导入导出</div>
                     </div>
                     
@@ -2146,6 +2276,59 @@
                         </div>
                     </div>
                     
+                    <!-- 员工权限 -->
+                    <div id="settings-permissions" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">角色组</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">
+                                管理不同角色的权限，分配给员工以控制其可访问的功能。
+                            </p>
+                            <div class="role-list">
+                                ${['owner', 'admin', 'manager', 'cashier'].map(role => {
+                                    const roleNames = { owner: '所有者', admin: '管理员', manager: '经理', cashier: '收银员' };
+                                    const roleColors = { owner: '#6f42c1', admin: '#dc3545', manager: '#ffc107', cashier: '#28a745' };
+                                    return `
+                                        <div class="role-card" style="border-left: 4px solid ${roleColors[role]};">
+                                            <div class="role-header">
+                                                <span class="role-name">${roleNames[role]}</span>
+                                                ${role === 'owner' ? '<span class="role-badge">只读</span>' : `<button class="btn btn-sm btn-outline" onclick="editRolePermissions('${role}')">编辑</button>`}
+                                            </div>
+                                            <div class="role-perms">
+                                                ${getRolePermissionsSummary(role)}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 库存管理 -->
+                    <div id="settings-inventory" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">采购订单</div>
+                            <div style="display:flex;gap:12px;margin-bottom:16px;">
+                                <button class="btn btn-primary" onclick="showPurchaseOrderModal()">+ 创建采购订单</button>
+                                <button class="btn btn-outline" onclick="showPurchaseOrdersList()">📋 查看订单列表</button>
+                            </div>
+                            <div id="purchaseOrdersList" class="order-list-container"></div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <div class="settings-section-title">生产</div>
+                            <div style="display:flex;gap:12px;margin-bottom:16px;">
+                                <button class="btn btn-primary" onclick="showProductionModal()">+ 创建生产</button>
+                                <button class="btn btn-outline" onclick="showProductionsList()">📋 生产历史</button>
+                            </div>
+                            <div id="productionsList" class="order-list-container"></div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <div class="settings-section-title">库存调整</div>
+                            <button class="btn btn-outline" onclick="showStockAdjustmentModal()">📊 库存调整记录</button>
+                        </div>
+                    </div>
+                    
                     <!-- 导入导出 -->
                     <div id="settings-importExport" class="settings-content" style="display:none;">
                         <div class="settings-section">
@@ -2660,23 +2843,299 @@
             selectedPayment = method;
         }
 
-        // 结账
-        function processCheckout() {
-            if (cart.length === 0) return;
+        // 支付界面
+        function showPaymentScreen() {
+            if (cart.length === 0) { showToast('warning', '提示', '购物车是空的'); return; }
             
             let subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
             let discount = 0;
-            const discountType = document.getElementById('discountType').value;
-            const discountValue = parseFloat(document.getElementById('discountValue').value) || 0;
+            const discountType = document.getElementById('discountType')?.value;
+            const discountValue = parseFloat(document.getElementById('discountValue')?.value) || 0;
             if (discountType === 'percent') discount = subtotal * (discountValue / 100);
             else if (discountType === 'fixed') discount = discountValue;
             
             const afterDiscount = subtotal - discount;
-            const tax = calculateTax(afterDiscount);
+            const tax = settings.tax?.enabled ? calculateTax(afterDiscount) : 0;
             const tip = currentTip;
             const total = roundAmount(afterDiscount + tax + tip);
-            const orderNo = 'V' + Date.now().toString().slice(-8);
             
+            showModal('支付', `
+                <div class="payment-screen">
+                    <div class="payment-total">
+                        <div style="font-size:14px;color:#6c757d;">应付金额</div>
+                        <div style="font-size:36px;font-weight:700;color:var(--primary);">¥${total.toFixed(2)}</div>
+                        ${settings.tax?.enabled ? '<div style="font-size:12px;color:#6c757d;">含税费 ¥' + tax.toFixed(2) + '</div>' : ''}
+                    </div>
+                    
+                    <div class="payment-methods">
+                        <div class="payment-method ${selectedPayment === 'cash' ? 'active' : ''}" onclick="showCashPayment(${total})">
+                            <span class="method-icon">💵</span>
+                            <span class="method-name">现金</span>
+                            ${selectedPayment === 'cash' ? '<span class="method-badge">推荐</span>' : ''}
+                        </div>
+                        <div class="payment-method ${selectedPayment === 'card' ? 'active' : ''}" onclick="processPayment('card', ${total})">
+                            <span class="method-icon">💳</span>
+                            <span class="method-name">银行卡</span>
+                        </div>
+                        <div class="payment-method ${selectedPayment === 'wechat' ? 'active' : ''}" onclick="processPayment('wechat', ${total})">
+                            <span class="method-icon">💬</span>
+                            <span class="method-name">微信支付</span>
+                        </div>
+                        <div class="payment-method ${selectedPayment === 'alipay' ? 'active' : ''}" onclick="processPayment('alipay', ${total})">
+                            <span class="method-icon">📱</span>
+                            <span class="method-name">支付宝</span>
+                        </div>
+                        ${settings.integrations?.sumup ? `
+                        <div class="payment-method ${selectedPayment === 'sumup' ? 'active' : ''}" onclick="processPayment('sumup', ${total})">
+                            <span class="method-icon">💳</span>
+                            <span class="method-name">SumUp</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="quick-amounts">
+                        <button class="quick-amount-btn" onclick="showCashPayment(${total}, 300)">¥300</button>
+                        <button class="quick-amount-btn" onclick="showCashPayment(${total}, 500)">¥500</button>
+                        <button class="quick-amount-btn" onclick="showCashPayment(${total}, 1000)">¥1000</button>
+                    </div>
+                    
+                    <button class="btn btn-outline" onclick="showSplitPayment(${total})" style="width:100%;margin-top:12px;">
+                        🔀 拆分付款
+                    </button>
+                </div>
+            `);
+        }
+
+        // 现金支付界面
+        function showCashPayment(total, quickAmount) {
+            showModal('现金支付', `
+                <div class="cash-payment">
+                    <div class="cash-display">
+                        <div class="cash-row">
+                            <span>应付金额</span>
+                            <span class="cash-amount">¥${total.toFixed(2)}</span>
+                        </div>
+                        <div class="cash-row">
+                            <span>收到金额</span>
+                            <input type="text" id="cashReceived" class="cash-input" placeholder="0.00" value="${quickAmount || ''}" oninput="calculateChange(${total})">
+                        </div>
+                        <div class="cash-row change">
+                            <span>找零</span>
+                            <span id="changeAmount" class="cash-change">¥0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="numpad">
+                        ${[1,2,3,4,5,6,7,8,9,'','.',0,'⌫'].map(key => `
+                            <button class="numpad-btn ${key === '' ? 'empty' : ''}" onclick="${key === '⌫' ? 'deleteDigit()' : key === '' ? '' : `enterDigit('${key}')`}">${key}</button>
+                        `).join('')}
+                    </div>
+                    
+                    <button class="btn btn-primary btn-lg" onclick="confirmCashPayment(${total})" style="width:100%;margin-top:12px;">
+                        确认收款
+                    </button>
+                </div>
+            `);
+            if (quickAmount) {
+                document.getElementById('cashReceived').value = quickAmount;
+                calculateChange(total);
+            }
+        }
+
+        function enterDigit(digit) {
+            const input = document.getElementById('cashReceived');
+            if (input.value === '0' && digit !== '.') input.value = '';
+            input.value += digit;
+            input.focus();
+        }
+
+        function deleteDigit() {
+            const input = document.getElementById('cashReceived');
+            input.value = input.value.slice(0, -1);
+        }
+
+        function calculateChange(total) {
+            const received = parseFloat(document.getElementById('cashReceived').value) || 0;
+            const change = Math.max(0, received - total);
+            const changeEl = document.getElementById('changeAmount');
+            changeEl.textContent = '¥' + change.toFixed(2);
+            changeEl.style.color = change > 0 ? 'var(--success)' : 'var(--gray-500)';
+        }
+
+        function confirmCashPayment(total) {
+            const received = parseFloat(document.getElementById('cashReceived').value) || 0;
+            if (received < total) {
+                showToast('error', '金额不足', '收到的金额小于应付金额');
+                return;
+            }
+            processPayment('cash', total, received);
+        }
+
+        // 拆分付款
+        function showSplitPayment(total) {
+            showModal('拆分付款', `
+                <div class="split-payment">
+                    <div class="split-total">
+                        <span>总金额</span>
+                        <span class="split-amount">¥${total.toFixed(2)}</span>
+                    </div>
+                    
+                    <div id="splitParts">
+                        <div class="split-part" data-idx="0">
+                            <div class="split-part-header">
+                                <span>部分 1</span>
+                                <button class="btn btn-sm btn-danger" onclick="removeSplitPart(0)">🗑️</button>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group" style="flex:2;">
+                                    <input type="number" class="form-input" placeholder="金额" value="${total.toFixed(2)}" onchange="updateSplitTotal(${total})">
+                                </div>
+                                <div class="form-group">
+                                    <select class="form-select" style="padding:10px;">
+                                        <option value="cash">现金</option>
+                                        <option value="card">银行卡</option>
+                                        <option value="wechat">微信</option>
+                                        <option value="alipay">支付宝</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-outline" onclick="addSplitPart()" style="width:100%;margin:12px 0;">+ 添加拆分</button>
+                    
+                    <div class="split-summary">
+                        <div class="split-row">
+                            <span>已分配</span>
+                            <span id="splitAssigned" class="split-assigned">¥${total.toFixed(2)}</span>
+                        </div>
+                        <div class="split-row">
+                            <span>剩余</span>
+                            <span id="splitRemaining" class="split-remaining" style="color:var(--success);">¥0.00</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="confirmSplitPayment(${total})" style="width:100%;margin-top:12px;">确认拆分</button>
+                </div>
+            `);
+        }
+
+        function addSplitPart() {
+            const parts = document.getElementById('splitParts');
+            const idx = parts.children.length + 1;
+            parts.innerHTML += `
+                <div class="split-part" data-idx="${idx}" style="margin-top:12px;padding:12px;background:#f8f9fa;border-radius:8px;">
+                    <div class="split-part-header" style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span>部分 ${idx + 1}</span>
+                        <button class="btn btn-sm btn-danger" onclick="removeSplitPart(${idx})">🗑️</button>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex:2;">
+                            <input type="number" class="form-input" placeholder="金额" onchange="updateSplitTotal(0)">
+                        </div>
+                        <div class="form-group">
+                            <select class="form-select" style="padding:10px;">
+                                <option value="cash">现金</option>
+                                <option value="card">银行卡</option>
+                                <option value="wechat">微信</option>
+                                <option value="alipay">支付宝</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function removeSplitPart(idx) {
+            const part = document.querySelector(`[data-idx="${idx}"]`);
+            if (part) part.remove();
+            updateSplitTotal(0);
+        }
+
+        function updateSplitTotal(total) {
+            const parts = document.querySelectorAll('.split-part input[type="number"]');
+            let assigned = 0;
+            parts.forEach(input => {
+                assigned += parseFloat(input.value) || 0;
+            });
+            const remaining = total - assigned;
+            document.getElementById('splitAssigned').textContent = '¥' + assigned.toFixed(2);
+            const remainingEl = document.getElementById('splitRemaining');
+            remainingEl.textContent = '¥' + Math.abs(remaining).toFixed(2);
+            remainingEl.style.color = remaining === 0 ? 'var(--success)' : remaining > 0 ? 'var(--warning)' : 'var(--danger)';
+        }
+
+        function confirmSplitPayment(total) {
+            const parts = document.querySelectorAll('.split-part');
+            let assigned = 0;
+            const payments = [];
+            
+            parts.forEach(part => {
+                const amount = parseFloat(part.querySelector('input').value) || 0;
+                const method = part.querySelector('select').value;
+                if (amount > 0) {
+                    payments.push({ method, amount });
+                    assigned += amount;
+                }
+            });
+            
+            if (Math.abs(assigned - total) > 0.01) {
+                showToast('error', '金额不符', '分配的金额不等于总金额');
+                return;
+            }
+            
+            closeModal();
+            showToast('success', '拆分成功', `已拆分为 ${payments.length} 笔`);
+            processSplitPayments(payments);
+        }
+
+        function processSplitPayments(payments) {
+            let subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            let discount = parseFloat(document.getElementById('discountValue')?.value) || 0;
+            let tax = settings.tax?.enabled ? calculateTax(subtotal - discount) : 0;
+            
+            payments.forEach(p => {
+                createOrder(subtotal, discount, tax, p.amount, p.method);
+            });
+            
+            finishCheckout();
+        }
+
+        // 处理支付
+        function processPayment(method, total, cashReceived = total) {
+            if (method === 'sumup') {
+                showToast('info', '连接中', '正在连接 SumUp 读卡器...');
+                setTimeout(() => {
+                    showModal('请刷卡', `
+                        <div style="text-align:center;padding:40px;">
+                            <div style="font-size:64px;margin-bottom:20px;">💳</div>
+                            <p style="font-size:16px;margin-bottom:16px;">请刷卡、插入芯片或轻触</p>
+                            <div class="loading-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <div style="margin-top:24px;">
+                                <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                            </div>
+                        </div>
+                    `);
+                    setTimeout(() => {
+                        closeModal();
+                        completePayment(method, total);
+                    }, 3000);
+                }, 1500);
+            } else {
+                completePayment(method, total, cashReceived);
+            }
+        }
+
+        function completePayment(method, total, cashReceived) {
+            createOrder(0, 0, 0, total, method, cashReceived);
+            finishCheckout();
+            showToast('success', '支付成功', `已使用${CONFIG.paymentNames[method] || method}支付 ¥${total.toFixed(2)}`);
+        }
+
+        function createOrder(subtotal, discount, tax, total, method, cashReceived) {
+            const orderNo = 'V' + Date.now().toString().slice(-8);
             const order = {
                 id: orders.length + 1,
                 orderNo,
@@ -2684,13 +3143,15 @@
                 customerName: currentMember ? currentMember.name : (currentCustomerType === 'vip' ? 'VIP客户' : '散客'),
                 memberId: currentMember?.id || null,
                 items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty })),
-                subtotal,
-                discount,
-                tax,
-                tip,
+                subtotal: subtotal || cart.reduce((sum, item) => sum + item.price * item.qty, 0),
+                discount: discount || 0,
+                tax: tax || 0,
+                tip: currentTip,
                 total,
                 pointsEarned: Math.floor(total * settings.earningRate),
-                payment: selectedPayment,
+                payment: method,
+                cashReceived: cashReceived || total,
+                change: cashReceived ? cashReceived - total : 0,
                 status: 'completed',
                 createdAt: new Date().toISOString()
             };
@@ -2708,33 +3169,29 @@
             
             generateCommissions(order);
             createInvoice(order);
-            
+        }
+
+        function finishCheckout() {
             cart = [];
             currentMember = null;
             currentTip = 0;
             currentTipPercent = 0;
-            document.getElementById('memberInfoDisplay').classList.remove('show');
+            document.getElementById('memberInfoDisplay')?.classList.remove('show');
             document.getElementById('memberPhoneInput').value = '';
             document.getElementById('tipSection').style.display = 'none';
+            closeModal();
             updateCart();
             updateOrderBadge();
             updateAllStats();
             
-            let receiptDetails = `<div style="margin-bottom:8px;">小计: ¥${subtotal.toFixed(2)}</div>`;
-            if (discount > 0) receiptDetails += `<div style="margin-bottom:8px;">折扣: -¥${discount.toFixed(2)}</div>`;
-            if (settings.tax.enabled && tax > 0) receiptDetails += `<div style="margin-bottom:8px;">税费: ¥${tax.toFixed(2)}</div>`;
-            if (tip > 0) receiptDetails += `<div style="margin-bottom:8px;">小费: ¥${tip.toFixed(2)}</div>`;
-            
-            showModal('结账成功', `
-                <div style="text-align:center;">
-                    <div style="font-size:48px;margin-bottom:16px;">✅</div>
-                    ${receiptDetails}
-                    <div style="font-size:24px;font-weight:700;color:var(--success);margin-bottom:8px;">¥${total.toFixed(2)}</div>
-                    <div style="color:var(--gray-500);margin-bottom:24px;">订单号: ${orderNo}</div>
-                    <button class="btn btn-outline" onclick="previewReceipt();closeModal();">🖨️ 打印小票</button>
-                    <button class="btn btn-primary" onclick="closeModal()" style="margin-left:8px;">确定</button>
-                </div>
-            `);
+            if (settings.printer?.autoPrint) {
+                setTimeout(() => previewReceipt(), 500);
+            }
+        }
+
+        // 结账
+        function processCheckout() {
+            showPaymentScreen();
         }
 
         function generateCommissions(order) {
@@ -4262,51 +4719,563 @@
             if (!member) return;
             
             const memberOrders = orders.filter(o => o.memberId === id).slice(0, 10);
+            const redeemValue = (member.points || 0) / settings.redeemRate;
             
             showModal('会员详情 - ' + member.name, `
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                    <div style="background:#f8f9fa;padding:16px;border-radius:8px;">
-                        <h4 style="margin-bottom:12px;">基本信息</h4>
-                        <p><strong>卡号:</strong> ${member.cardNo || member.id}</p>
-                        <p><strong>姓名:</strong> ${member.name}</p>
-                        <p><strong>电话:</strong> ${member.phone}</p>
-                        <p><strong>邮箱:</strong> ${member.email || '-'}</p>
-                        <p><strong>地址:</strong> ${member.address || '-'}</p>
-                        <p><strong>生日:</strong> ${member.birthday || '-'}</p>
-                        <p><strong>等级:</strong> ${CONFIG.levelNames[member.level]}</p>
-                        <p><strong>折扣:</strong> ${member.discount || 0}%</p>
-                        <p><strong>注册:</strong> ${member.joinDate || '-'}</p>
-                        <p><strong>最后消费:</strong> ${member.lastVisit || '-'}</p>
-                        <p><strong>状态:</strong> <span class="status-badge ${member.status === 'active' ? 'active' : 'cancelled'}">${member.status === 'active' ? '正常' : '已冻结'}</span></p>
-                    </div>
-                    <div style="background:#f8f9fa;padding:16px;border-radius:8px;">
-                        <h4 style="margin-bottom:12px;">账户信息</h4>
-                        <p><strong>积分:</strong> <span style="color:var(--primary);font-weight:700;">${member.points || 0}</span></p>
-                        <p><strong>余额:</strong> <span style="color:var(--success);font-weight:700;">¥${(member.balance || 0).toFixed(2)}</span></p>
-                        <p><strong>累计消费:</strong> <span style="color:var(--warning);font-weight:700;">¥${(member.totalSpent || 0).toFixed(2)}</span></p>
-                        <p><strong>消费次数:</strong> ${member.visitCount || 0}次</p>
-                        <p><strong>平均消费:</strong> ¥${member.visitCount > 0 ? ((member.totalSpent || 0) / member.visitCount).toFixed(2) : '0.00'}</p>
-                        <hr style="margin:12px 0;border:none;border-top:1px solid #dee2e6;">
-                        <p><strong>备注:</strong> ${member.notes || '无'}</p>
-                    </div>
-                </div>
-                ${memberOrders.length > 0 ? `
-                <h4 style="margin:16px 0 12px;">最近消费记录</h4>
-                <div style="max-height:200px;overflow-y:auto;">
-                    ${memberOrders.map(o => `
-                        <div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #eee;">
-                            <span>${o.createdAt?.slice(0,10) || o.date || '-'} | ${o.items?.map(i => i.name).join(', ') || '-'}</span>
-                            <span style="font-weight:600;">¥${o.total?.toFixed(2) || '0.00'}</span>
+                <div class="member-detail">
+                    <div class="member-header">
+                        <div class="member-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:24px;color:white;font-weight:700;">
+                            ${member.name.charAt(0)}
                         </div>
-                    `).join('')}
-                </div>
-                ` : '<p style="margin-top:16px;color:#6c757d;">暂无消费记录</p>'}
-                <div style="margin-top:16px;display:flex;gap:8px;">
-                    <button class="btn btn-outline" onclick="showRechargeModal('${id}')">💰 充值</button>
-                    <button class="btn btn-outline" onclick="showPointsAdjust('${id}')">🎯 调整积分</button>
-                    <button class="btn btn-primary" onclick="closeModal()">关闭</button>
+                        <div class="member-info">
+                            <div style="font-size:18px;font-weight:700;">${member.name}</div>
+                            <div style="color:#6c757d;font-size:13px;">${member.phone}</div>
+                            <span class="status-badge" style="background:${member.level === 'gold' ? '#ffc107' : member.level === 'diamond' ? '#6f42c1' : '#6c757d'};color:white;">${CONFIG.levelNames[member.level]}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="member-grid">
+                        <div class="member-card">
+                            <div class="card-label">客户代码</div>
+                            <div class="card-value">${member.customerCode || '-'}</div>
+                        </div>
+                        <div class="member-card">
+                            <div class="card-label">折扣</div>
+                            <div class="card-value">${member.discount || 0}%</div>
+                        </div>
+                        <div class="member-card highlight">
+                            <div class="card-label">积分余额</div>
+                            <div class="card-value" style="color:var(--primary);">${member.points || 0}</div>
+                            <div class="card-sub">可抵 ¥${redeemValue.toFixed(2)}</div>
+                        </div>
+                        <div class="member-card highlight">
+                            <div class="card-label">储值余额</div>
+                            <div class="card-value" style="color:var(--success);">¥${(member.balance || 0).toFixed(2)}</div>
+                        </div>
+                        <div class="member-card">
+                            <div class="card-label">累计消费</div>
+                            <div class="card-value">¥${(member.totalSpent || 0).toFixed(2)}</div>
+                        </div>
+                        <div class="member-card">
+                            <div class="card-label">消费次数</div>
+                            <div class="card-value">${member.visitCount || 0}次</div>
+                        </div>
+                    </div>
+                    
+                    <div class="member-section">
+                        <div class="section-header">
+                            <span>📋 基本信息</span>
+                            <button class="btn btn-sm btn-outline" onclick="showEditMemberModal('${id}')">✏️ 编辑</button>
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-item"><span class="info-label">卡号</span><span>${member.cardNo || member.id}</span></div>
+                            <div class="info-item"><span class="info-label">邮箱</span><span>${member.email || '-'}</span></div>
+                            <div class="info-item"><span class="info-label">地址</span><span>${member.address || '-'}</span></div>
+                            <div class="info-item"><span class="info-label">生日</span><span>${member.birthday || '-'}</span></div>
+                            <div class="info-item"><span class="info-label">注册日期</span><span>${member.joinDate || '-'}</span></div>
+                            <div class="info-item"><span class="info-label">最后消费</span><span>${member.lastVisit || '从未消费'}</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="member-section">
+                        <div class="section-header">
+                            <span>📜 消费历史</span>
+                            <button class="btn btn-sm btn-outline" onclick="exportMemberHistory('${id}')">📥 导出</button>
+                        </div>
+                        <div class="order-list">
+                            ${memberOrders.length === 0 ? '<p style="text-align:center;color:#6c757d;padding:20px;">暂无消费记录</p>' : memberOrders.map(o => `
+                                <div class="order-item" onclick="showReceiptDetail('${o.orderNo || o.id}')">
+                                    <div class="order-left">
+                                        <div class="order-no">${o.orderNo || '-'}</div>
+                                        <div class="order-date">${new Date(o.createdAt).toLocaleDateString('zh-CN')}</div>
+                                    </div>
+                                    <div class="order-right">
+                                        <div class="order-total">¥${(o.total || 0).toFixed(2)}</div>
+                                        <div class="order-items">${o.items?.map(i => i.name).join(', ') || '-'}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="member-actions">
+                        <button class="btn btn-success" onclick="showRechargeModal('${id}')">💰 充值</button>
+                        <button class="btn btn-outline" onclick="showRedeemModal('${id}')">🎁 积分兑换</button>
+                        <button class="btn btn-outline" onclick="showPointsAdjust('${id}')">🎯 调整积分</button>
+                    </div>
                 </div>
             `);
+        }
+
+        function showRedeemModal(id) {
+            const member = members.find(m => m.id === id);
+            if (!member) return;
+            
+            const maxRedeem = Math.floor(member.points || 0);
+            const maxValue = maxRedeem / settings.redeemRate;
+            
+            showModal('积分兑换', `
+                <div class="redeem-modal">
+                    <div class="redeem-info">
+                        <div class="redeem-balance">
+                            <span>可用积分</span>
+                            <strong>${maxRedeem}</strong>
+                        </div>
+                        <div class="redeem-arrow">→</div>
+                        <div class="redeem-value">
+                            <span>可抵金额</span>
+                            <strong>¥${maxValue.toFixed(2)}</strong>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">使用积分</label>
+                        <input type="number" class="form-input" id="redeemPoints" max="${maxRedeem}" value="${Math.min(1000, maxRedeem)}" placeholder="输入要使用的积分">
+                        <div style="font-size:12px;color:#6c757d;margin-top:4px;">兑换比例: ${settings.redeemRate} 积分 = ¥1</div>
+                    </div>
+                    <div class="redeem-preview">
+                        <span>抵扣金额</span>
+                        <span id="redeemDiscount">¥0.00</span>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                        <button class="btn btn-primary" onclick="confirmRedeem('${id}')">确认兑换</button>
+                    </div>
+                </div>
+            `);
+            
+            document.getElementById('redeemPoints').addEventListener('input', function() {
+                const points = parseInt(this.value) || 0;
+                const discount = points / settings.redeemRate;
+                document.getElementById('redeemDiscount').textContent = '¥' + discount.toFixed(2);
+            });
+        }
+
+        function confirmRedeem(id) {
+            const member = members.find(m => m.id === id);
+            if (!member) return;
+            
+            const points = parseInt(document.getElementById('redeemPoints').value) || 0;
+            if (points > (member.points || 0)) {
+                showToast('error', '积分不足', '使用的积分不能超过可用积分');
+                return;
+            }
+            
+            member.points -= points;
+            saveData('members', members);
+            closeModal();
+            showMemberDetail(id);
+            showToast('success', '兑换成功', `已使用 ${points} 积分`);
+        }
+
+        function exportMemberHistory(id) {
+            const member = members.find(m => m.id === id);
+            if (!member) return;
+            
+            const memberOrders = orders.filter(o => o.memberId === id);
+            let csv = '收据号,日期,商品,金额,支付方式\n';
+            memberOrders.forEach(o => {
+                csv += `${o.orderNo || ''},${o.createdAt?.slice(0,10) || ''},"${o.items?.map(i => i.name).join('; ') || ''}",${o.total || 0},${CONFIG.paymentNames[o.payment] || o.payment}\n`;
+            });
+            
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${member.name}_消费记录_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            showToast('success', '已导出', '消费记录已导出为CSV');
+        }
+
+        function showRechargeModal(id) {
+            const amounts = [100, 200, 500, 1000, 2000];
+            showModal('会员充值', `
+                <div class="recharge-modal">
+                    <div class="quick-amounts">
+                        ${amounts.map(a => `
+                            <button class="quick-amount-btn" onclick="setRechargeAmount(${a})">¥${a}</button>
+                        `).join('')}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">自定义金额</label>
+                        <input type="number" class="form-input" id="rechargeAmount" placeholder="输入充值金额" oninput="updateRechargeBonus()">
+                    </div>
+                    <div class="recharge-bonus">
+                        <span>赠送金额</span>
+                        <span id="bonusAmount">¥0.00</span>
+                    </div>
+                    <div class="recharge-total">
+                        <span>到账金额</span>
+                        <span id="totalAmount">¥0.00</span>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                        <button class="btn btn-success" onclick="confirmRecharge('${id}')">确认充值</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function setRechargeAmount(amount) {
+            document.getElementById('rechargeAmount').value = amount;
+            updateRechargeBonus();
+        }
+
+        function updateRechargeBonus() {
+            const amount = parseFloat(document.getElementById('rechargeAmount').value) || 0;
+            let bonus = 0;
+            if (amount >= 1000) bonus = amount * 0.1;
+            else if (amount >= 500) bonus = amount * 0.05;
+            document.getElementById('bonusAmount').textContent = '¥' + bonus.toFixed(2);
+            document.getElementById('totalAmount').textContent = '¥' + (amount + bonus).toFixed(2);
+        }
+
+        function confirmRecharge(id) {
+            const member = members.find(m => m.id === id);
+            if (!member) return;
+            
+            const amount = parseFloat(document.getElementById('rechargeAmount').value) || 0;
+            if (amount <= 0) {
+                showToast('error', '错误', '请输入有效金额');
+                return;
+            }
+            
+            let bonus = 0;
+            if (amount >= 1000) bonus = amount * 0.1;
+            else if (amount >= 500) bonus = amount * 0.05;
+            
+            member.balance = (member.balance || 0) + amount + bonus;
+            member.points = (member.points || 0) + Math.floor(amount * settings.earningRate);
+            member.lastVisit = new Date().toISOString().slice(0,10);
+            member.visitCount = (member.visitCount || 0) + 1;
+            
+            saveData('members', members);
+            closeModal();
+            showMemberDetail(id);
+            showToast('success', '充值成功', `已充值 ¥${amount}，赠送 ¥${bonus.toFixed(2)}`);
+        }
+
+        // 员工权限
+        const rolePermissions = {
+            owner: ['all'],
+            admin: ['sales', 'refunds', 'discounts', 'items', 'customers', 'employees', 'reports', 'settings', 'cashdrawer'],
+            manager: ['sales', 'refunds', 'discounts', 'items', 'customers', 'reports', 'cashdrawer'],
+            cashier: ['sales']
+        };
+
+        function getRolePermissionsSummary(role) {
+            const summaries = {
+                owner: '全部权限',
+                admin: '销售、退款、折扣、商品、客户、员工、报表、设置',
+                manager: '销售、退款、折扣、商品、客户、报表',
+                cashier: '仅销售'
+            };
+            return summaries[role] || '';
+        }
+
+        function editRolePermissions(role) {
+            const posPerms = [
+                { id: 'sales', name: '接受付款' },
+                { id: 'refunds', name: '执行退款' },
+                { id: 'discounts', name: '应用折扣' },
+                { id: 'void', name: '作废项目' },
+                { id: 'cashdrawer', name: '无销售开钱箱' },
+                { id: 'items', name: '管理商品' },
+                { id: 'cost', name: '查看商品成本' },
+                { id: 'receipts', name: '查看所有收据' },
+                { id: 'reprint', name: '重印收据' }
+            ];
+            const boPerms = [
+                { id: 'reports', name: '查看销售报表' },
+                { id: 'cancelreceipts', name: '取消收据' },
+                { id: 'customers', name: '管理客户' },
+                { id: 'employees', name: '管理员工' },
+                { id: 'settings', name: '更改设置' }
+            ];
+            
+            const currentPerms = rolePermissions[role] || [];
+            
+            showModal('编辑权限 - ' + role, `
+                <div class="permissions-editor">
+                    <div class="perm-section">
+                        <div class="perm-title">POS 权限</div>
+                        ${posPerms.map(p => `
+                            <label class="perm-item">
+                                <input type="checkbox" ${currentPerms.includes(p.id) || currentPerms.includes('all') ? 'checked' : ''} 
+                                       onchange="updateRolePermission('${role}', '${p.id}', this.checked)">
+                                <span>${p.name}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div class="perm-section">
+                        <div class="perm-title">后台权限</div>
+                        ${boPerms.map(p => `
+                            <label class="perm-item">
+                                <input type="checkbox" ${currentPerms.includes(p.id) || currentPerms.includes('all') ? 'checked' : ''} 
+                                       onchange="updateRolePermission('${role}', '${p.id}', this.checked)">
+                                <span>${p.name}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">关闭</button>
+                </div>
+            `);
+        }
+
+        function updateRolePermission(role, permId, checked) {
+            if (!rolePermissions[role]) rolePermissions[role] = [];
+            const idx = rolePermissions[role].indexOf(permId);
+            if (checked && idx === -1) rolePermissions[role].push(permId);
+            if (!checked && idx > -1) rolePermissions[role].splice(idx, 1);
+            localStorage.setItem('vsevice_role_permissions', JSON.stringify(rolePermissions));
+            showToast('success', '已保存', '权限已更新');
+        }
+
+        // 采购订单
+        let purchaseOrders = JSON.parse(localStorage.getItem('vsevice_purchase_orders') || '[]');
+
+        function showPurchaseOrderModal() {
+            const suppliers = [...new Set(services.map(s => s.supplier).filter(Boolean))];
+            showModal('创建采购订单', `
+                <div class="purchase-order-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">供应商</label>
+                            <select class="form-select" id="poSupplier">
+                                <option value="">选择供应商...</option>
+                                ${suppliers.map(s => `<option value="${s}">${s}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">订单日期</label>
+                            <input type="date" class="form-input" id="poDate" value="${new Date().toISOString().slice(0,10)}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">期望到货日期</label>
+                        <input type="date" class="form-input" id="poExpectedDate">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-input" id="poNote" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="po-items-section">
+                        <div class="section-header">
+                            <span>📦 商品</span>
+                            <button class="btn btn-sm btn-outline" onclick="addPOItem()">+ 添加商品</button>
+                        </div>
+                        <div id="poItemsList"></div>
+                    </div>
+                    
+                    <div class="po-summary">
+                        <div class="summary-row">
+                            <span>商品合计</span>
+                            <span id="poTotal">¥0.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-outline" onclick="autoFillPOItems()">🤖 自动填充</button>
+                    <button class="btn btn-primary" onclick="savePurchaseOrder()">保存订单</button>
+                </div>
+            `);
+        }
+
+        function addPOItem() {
+            const list = document.getElementById('poItemsList');
+            const idx = list.children.length;
+            list.innerHTML += `
+                <div class="po-item" style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+                    <select class="form-select" style="flex:2;" onchange="calculatePOTotal()">
+                        <option value="">选择商品...</option>
+                        ${services.map(s => `<option value="${s.id}" data-cost="${s.cost || 0}">${s.name} (¥${s.cost || 0})</option>`).join('')}
+                    </select>
+                    <input type="number" class="form-input" style="width:80px;" placeholder="数量" value="1" min="1" onchange="calculatePOTotal()">
+                    <input type="number" class="form-input" style="width:100px;" placeholder="成本" onchange="calculatePOTotal()">
+                    <button class="btn btn-sm btn-danger" onclick="this.parentElement.remove();calculatePOTotal()">🗑️</button>
+                </div>
+            `;
+        }
+
+        function autoFillPOItems() {
+            const lowStockItems = services.filter(s => (s.stock || 999) <= (s.lowStockAlert || 10));
+            const list = document.getElementById('poItemsList');
+            list.innerHTML = '';
+            lowStockItems.forEach(item => {
+                list.innerHTML += `
+                    <div class="po-item" style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+                        <select class="form-select" style="flex:2;">
+                            <option value="${item.id}" selected data-cost="${item.cost || 0}">${item.name} (¥${item.cost || 0})</option>
+                        </select>
+                        <input type="number" class="form-input" style="width:80px;" value="${Math.max(10, (item.lowStockAlert || 10) - (item.stock || 0))}" min="1">
+                        <input type="number" class="form-input" style="width:100px;" value="${item.cost || 0}">
+                        <button class="btn btn-sm btn-danger" onclick="this.parentElement.remove();calculatePOTotal()">🗑️</button>
+                    </div>
+                `;
+            });
+            calculatePOTotal();
+            showToast('info', '已填充', `已添加 ${lowStockItems.length} 个低库存商品`);
+        }
+
+        function calculatePOTotal() {
+            let total = 0;
+            document.querySelectorAll('.po-item').forEach(row => {
+                const qty = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+                const cost = parseFloat(row.querySelectorAll('input[type="number"]')[1]?.value) || 0;
+                total += qty * cost;
+            });
+            document.getElementById('poTotal').textContent = '¥' + total.toFixed(2);
+        }
+
+        function savePurchaseOrder() {
+            const items = [];
+            document.querySelectorAll('.po-item').forEach(row => {
+                const select = row.querySelector('select');
+                const qty = parseFloat(row.querySelectorAll('input[type="number"]')[0].value) || 0;
+                const cost = parseFloat(row.querySelectorAll('input[type="number"]')[1].value) || 0;
+                if (select.value && qty > 0) {
+                    const item = services.find(s => s.id === select.value);
+                    items.push({ itemId: select.value, name: item?.name || '', qty, cost });
+                }
+            });
+            
+            if (items.length === 0) {
+                showToast('error', '错误', '请添加至少一个商品');
+                return;
+            }
+            
+            const total = items.reduce((sum, i) => sum + i.qty * i.cost, 0);
+            const order = {
+                id: 'PO' + Date.now(),
+                supplier: document.getElementById('poSupplier').value,
+                date: document.getElementById('poDate').value,
+                expectedDate: document.getElementById('poExpectedDate').value,
+                note: document.getElementById('poNote').value,
+                items,
+                total,
+                status: 'pending'
+            };
+            
+            purchaseOrders.unshift(order);
+            localStorage.setItem('vsevice_purchase_orders', JSON.stringify(purchaseOrders));
+            closeModal();
+            showPurchaseOrdersList();
+            showToast('success', '已创建', `采购订单 ${order.id} 已创建`);
+        }
+
+        function showPurchaseOrdersList() {
+            const container = document.getElementById('purchaseOrdersList');
+            if (purchaseOrders.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#6c757d;padding:20px;">暂无采购订单</p>';
+                return;
+            }
+            container.innerHTML = purchaseOrders.map(po => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">${po.id}</span>
+                        <span class="status-badge ${po.status}">${po.status === 'pending' ? '待收货' : po.status === 'received' ? '已收货' : '已关闭'}</span>
+                    </div>
+                    <div class="order-info">
+                        <div>供应商: ${po.supplier || '未指定'}</div>
+                        <div>日期: ${po.date}</div>
+                        <div>商品: ${po.items.length} 件</div>
+                    </div>
+                    <div class="order-total">¥${(po.total || 0).toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        // 生产
+        let productions = JSON.parse(localStorage.getItem('vsevice_productions') || '[]');
+
+        function showProductionModal() {
+            const compositeItems = services.filter(s => s.isComposite);
+            showModal('创建生产', `
+                <div class="production-form">
+                    <div class="form-group">
+                        <label class="form-label">商品</label>
+                        <select class="form-select" id="prodItem">
+                            <option value="">选择组合商品...</option>
+                            ${services.filter(s => !s.isComposite).map(s => `<option value="${s.id}" data-cost="${s.cost || 0}">${s.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">数量</label>
+                        <input type="number" class="form-input" id="prodQty" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-input" id="prodNote" rows="2"></textarea>
+                    </div>
+                    <div class="production-summary">
+                        <span>预计成本</span>
+                        <span id="prodCost">¥0.00</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveProduction()">确认生产</button>
+                </div>
+            `);
+        }
+
+        function saveProduction() {
+            const itemId = document.getElementById('prodItem').value;
+            const qty = parseInt(document.getElementById('prodQty').value) || 1;
+            const item = services.find(s => s.id === itemId);
+            
+            if (!item) {
+                showToast('error', '错误', '请选择商品');
+                return;
+            }
+            
+            const production = {
+                id: 'PRD' + Date.now(),
+                itemId,
+                itemName: item.name,
+                qty,
+                cost: (item.cost || 0) * qty,
+                note: document.getElementById('prodNote').value,
+                date: new Date().toISOString(),
+                status: 'completed'
+            };
+            
+            item.stock = (item.stock || 0) + qty;
+            saveData('services', services);
+            
+            productions.unshift(production);
+            localStorage.setItem('vsevice_productions', JSON.stringify(productions));
+            closeModal();
+            showToast('success', '已完成', `生产 ${item.name} x${qty}`);
+        }
+
+        function showProductionsList() {
+            const container = document.getElementById('productionsList');
+            if (productions.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#6c757d;padding:20px;">暂无生产记录</p>';
+                return;
+            }
+            container.innerHTML = productions.map(p => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">${p.id}</span>
+                        <span class="status-badge completed">已完成</span>
+                    </div>
+                    <div class="order-info">
+                        <div>商品: ${p.itemName}</div>
+                        <div>数量: ${p.qty}</div>
+                        <div>日期: ${new Date(p.date).toLocaleDateString('zh-CN')}</div>
+                    </div>
+                    <div class="order-total">¥${(p.cost || 0).toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        function showStockAdjustmentModal() {
+            showToast('info', '提示', '库存调整功能开发中');
         }
 
         function showAddMemberModal() {
@@ -5024,17 +5993,215 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 return;
             }
             
-            table.innerHTML = shifts.map(s => `
-                <div class="table-row" style="grid-template-columns: 120px 1fr 1fr 100px 100px 100px auto;">
+            table.innerHTML = shifts.map(s => {
+                const difference = s.endCash ? s.endCash - (s.startCash + (s.totalSales || 0)) : null;
+                return `
+                <div class="table-row shift-row" onclick="showShiftDetail('${s.id}')" style="cursor:pointer;">
                     <span style="font-weight:600;">${s.shiftNo}</span>
                     <span>${s.employeeName}</span>
-                    <span>${new Date(s.startTime).toLocaleString()}</span>
+                    <span>${new Date(s.startTime).toLocaleString('zh-CN', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
                     <span>¥${s.startCash.toFixed(2)}</span>
                     <span>${s.endCash ? '¥' + s.endCash.toFixed(2) : '-'}</span>
+                    <span style="color:${difference > 0 ? 'var(--danger)' : difference < 0 ? 'var(--success)' : 'inherit'};">
+                        ${difference !== null ? (difference > 0 ? '+' : '') + '¥' + difference.toFixed(2) : '-'}
+                    </span>
                     <span><span class="status-badge ${s.status}">${s.status === 'open' ? '进行中' : '已结束'}</span></span>
-                    <span>${s.status === 'open' ? `<button class="btn btn-sm btn-success" onclick="endShift('${s.id}')">结班</button>` : '-'}</span>
+                    <span>${s.status === 'open' ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation();endShift('${s.id}')">结班</button>` : `<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();showShiftDetail('${s.id}')">查看</button>`}</span>
                 </div>
-            `).join('');
+            `}).join('');
+        }
+
+        function showShiftDetail(id) {
+            const shift = shifts.find(s => s.id === id);
+            if (!shift) return;
+            
+            const shiftOrders = orders.filter(o => new Date(o.createdAt) >= new Date(shift.startTime) && (!shift.endTime ? true : new Date(o.createdAt) <= new Date(shift.endTime)));
+            const totalSales = shiftOrders.reduce((sum, o) => sum + o.total, 0);
+            const cashSales = shiftOrders.filter(o => o.payment === 'cash').reduce((sum, o) => sum + o.total, 0);
+            const cardSales = shiftOrders.filter(o => o.payment === 'card').reduce((sum, o) => sum + o.total, 0);
+            const otherSales = shiftOrders.filter(o => !['cash', 'card'].includes(o.payment)).reduce((sum, o) => sum + o.total, 0);
+            const refundTotal = shiftOrders.filter(o => o.status === 'refunded').reduce((sum, o) => sum + o.total, 0);
+            const avgOrder = shiftOrders.length > 0 ? totalSales / shiftOrders.length : 0;
+            
+            shift.totalSales = totalSales;
+            shift.totalOrders = shiftOrders.length;
+            shift.cashSales = cashSales;
+            shift.cardSales = cardSales;
+            shift.otherSales = otherSales;
+            shift.refundTotal = refundTotal;
+            
+            const expectedCash = shift.startCash + cashSales - refundTotal + (shift.payIns || []).reduce((s, p) => s + (p.type === 'in' ? p.amount : -p.amount), 0);
+            const difference = shift.endCash ? shift.endCash - expectedCash : null;
+            
+            showModal('班次详情 - ' + shift.shiftNo, `
+                <div class="shift-detail">
+                    <div class="shift-summary">
+                        <div class="summary-row">
+                            <span>员工</span>
+                            <span>${shift.employeeName}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>时间</span>
+                            <span>${new Date(shift.startTime).toLocaleString('zh-CN')} - ${shift.endTime ? new Date(shift.endTime).toLocaleString('zh-CN') : '进行中'}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>开班现金</span>
+                            <span>¥${shift.startCash.toFixed(2)}</span>
+                        </div>
+                        ${shift.endCash !== null ? `
+                        <div class="summary-row">
+                            <span>结班现金</span>
+                            <span>¥${shift.endCash.toFixed(2)}</span>
+                        </div>
+                        <div class="summary-row ${difference > 0 ? 'positive' : difference < 0 ? 'negative' : ''}">
+                            <span>差额</span>
+                            <span>${difference > 0 ? '+' : ''}¥${difference.toFixed(2)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="shift-section">
+                        <div class="section-title">💰 现金管理</div>
+                        <div id="cashManagementList">
+                            ${(shift.payIns || []).map(p => `
+                                <div class="cash-entry">
+                                    <span>${p.type === 'in' ? '💵 投钱' : '💸 取钱'}</span>
+                                    <span>¥${p.amount.toFixed(2)}</span>
+                                    <span style="color:#6c757d;font-size:12px;">${new Date(p.time).toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="btn btn-outline btn-sm" onclick="showPayInOutModal('${id}')" style="width:100%;margin-top:8px;">+ 添加投钱/取钱</button>
+                    </div>
+                    
+                    <div class="shift-section">
+                        <div class="section-title">📊 销售汇总</div>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <div class="item-value">¥${totalSales.toFixed(2)}</div>
+                                <div class="item-label">总销售额</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="item-value">${shiftOrders.length}</div>
+                                <div class="item-label">收据数</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="item-value">¥${avgOrder.toFixed(2)}</div>
+                                <div class="item-label">平均客单价</div>
+                            </div>
+                            ${refundTotal > 0 ? `
+                            <div class="summary-item" style="color:var(--danger);">
+                                <div class="item-value">-¥${refundTotal.toFixed(2)}</div>
+                                <div class="item-label">退款总额</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="shift-section">
+                        <div class="section-title">💳 支付方式</div>
+                        <div class="payment-breakdown">
+                            <div class="payment-row">
+                                <span>💵 现金</span>
+                                <span>¥${cashSales.toFixed(2)}</span>
+                            </div>
+                            <div class="payment-row">
+                                <span>💳 银行卡</span>
+                                <span>¥${cardSales.toFixed(2)}</span>
+                            </div>
+                            <div class="payment-row">
+                                <span>📱 其他</span>
+                                <span>¥${otherSales.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:16px;">
+                        <button class="btn btn-outline" onclick="showShiftReceipts('${id}')" style="flex:1;">📋 收据列表 (${shiftOrders.length})</button>
+                        <button class="btn btn-outline" onclick="printShiftReport('${id}')" style="flex:1;">🖨️ 打印报告</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function showPayInOutModal(shiftId) {
+            showModal('投钱/取钱', `
+                <div class="form-group">
+                    <label class="form-label">类型</label>
+                    <select class="form-select" id="payInOutType">
+                        <option value="in">💵 投钱 (Pay In)</option>
+                        <option value="out">💸 取钱 (Pay Out)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">金额</label>
+                    <input type="number" class="form-input" id="payInOutAmount" placeholder="输入金额">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <input type="text" class="form-input" id="payInOutNote" placeholder="可选备注">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="addPayInOut('${shiftId}')">添加</button>
+                </div>
+            `);
+        }
+
+        function addPayInOut(shiftId) {
+            const shift = shifts.find(s => s.id === shiftId);
+            if (!shift) return;
+            
+            const type = document.getElementById('payInOutType').value;
+            const amount = parseFloat(document.getElementById('payInOutAmount').value) || 0;
+            const note = document.getElementById('payInOutNote').value;
+            
+            if (amount <= 0) { showToast('error', '错误', '请输入有效金额'); return; }
+            
+            if (!shift.payIns) shift.payIns = [];
+            shift.payIns.push({ type, amount, note, time: new Date().toISOString() });
+            saveData('shifts', shifts);
+            closeModal();
+            showShiftDetail(shiftId);
+            showToast('success', '已添加', `${type === 'in' ? '投钱' : '取钱'} ¥${amount}`);
+        }
+
+        function showShiftReceipts(shiftId) {
+            const shift = shifts.find(s => s.id === shiftId);
+            if (!shift) return;
+            
+            const shiftOrders = orders.filter(o => new Date(o.createdAt) >= new Date(shift.startTime) && (!shift.endTime ? true : new Date(o.createdAt) <= new Date(shift.endTime)));
+            
+            showModal(`收据列表 - ${shift.shiftNo}`, `
+                <div style="max-height:400px;overflow-y:auto;">
+                    ${shiftOrders.length === 0 ? '<p style="text-align:center;color:#6c757d;padding:40px;">暂无收据</p>' : shiftOrders.map(o => `
+                        <div style="display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #eee;cursor:pointer;" onclick="showReceiptDetail('${o.orderNo || o.id}')">
+                            <div>
+                                <div style="font-weight:600;">${o.orderNo}</div>
+                                <div style="font-size:12px;color:#6c757d;">${new Date(o.createdAt).toLocaleString('zh-CN')}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-weight:600;">¥${o.total.toFixed(2)}</div>
+                                <div style="font-size:12px;color:#6c757d;">${CONFIG.paymentNames[o.payment] || o.payment}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `);
+        }
+
+        function showReceiptDetail(orderNo) {
+            const order = orders.find(o => (o.orderNo || o.id) === orderNo);
+            if (!order) return;
+            closeModal();
+            showInvoiceDetail(order);
+        }
+
+        function printShiftReport(shiftId) {
+            const shift = shifts.find(s => s.id === shiftId);
+            if (!shift) return;
+            showToast('info', '打印中', '正在打印班次报告...');
+            setTimeout(() => showToast('success', '完成', '班次报告已发送打印'), 1500);
         }
 
         function updateShiftStats() {
@@ -5076,7 +6243,8 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 startTime: new Date().toISOString(),
                 startCash,
                 endCash: null,
-                status: 'open'
+                status: 'open',
+                payIns: []
             };
             
             shifts.unshift(shift);
@@ -5084,20 +6252,50 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             closeModal();
             renderShiftsTable();
             updateShiftStats();
+            showToast('success', '开班成功', `班次 ${shift.shiftNo} 已开始`);
         }
 
         function endShift(id) {
             const shift = shifts.find(s => s.id === id);
+            if (!shift) return;
+            
+            showModal('结班', `
+                <div class="form-group">
+                    <label class="form-label">结束现金金额</label>
+                    <input type="number" class="form-input" id="endShiftCash" value="${shift.startCash}" step="0.01">
+                </div>
+                <div style="background:#f8f9fa;padding:16px;border-radius:8px;margin-top:12px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span>开班现金</span>
+                        <span>¥${shift.startCash.toFixed(2)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span>销售总额</span>
+                        <span>¥${(shift.totalSales || 0).toFixed(2)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-weight:600;font-size:18px;border-top:1px solid #ddd;padding-top:8px;margin-top:8px;">
+                        <span>预期现金</span>
+                        <span>¥${((shift.startCash + (shift.totalSales || 0) - (shift.refundTotal || 0))).toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-success" onclick="confirmEndShift('${id}')">确认结班</button>
+                </div>
+            `);
+        }
+
+        function confirmEndShift(id) {
+            const shift = shifts.find(s => s.id === id);
             if (shift) {
-                const endCash = prompt('请输入结束现金金额:', shift.startCash);
-                if (endCash !== null) {
-                    shift.endCash = parseFloat(endCash);
-                    shift.endTime = new Date().toISOString();
-                    shift.status = 'closed';
-                    saveData('shifts', shifts);
-                    renderShiftsTable();
-                    updateShiftStats();
-                }
+                shift.endCash = parseFloat(document.getElementById('endShiftCash').value) || 0;
+                shift.endTime = new Date().toISOString();
+                shift.status = 'closed';
+                saveData('shifts', shifts);
+                closeModal();
+                renderShiftsTable();
+                updateShiftStats();
+                showToast('success', '结班成功', `班次 ${shift.shiftNo} 已结束`);
             }
         }
 
