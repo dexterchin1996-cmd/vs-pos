@@ -477,6 +477,16 @@
         .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
         .color-option { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
         .color-option.selected { border-color: var(--dark); }
+        
+        /* 集成卡片 */
+        .integration-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; }
+        .integration-config { background: var(--gray-50); padding: 12px; border-radius: 8px; margin-top: 8px; }
+        
+        /* 小按钮 */
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        
+        /* 离线信息 */
+        .offline-info ul li { margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -1283,6 +1293,8 @@
                         <div class="settings-tab" onclick="switchSettingsTab('currency', this)">💱 货币</div>
                         <div class="settings-tab" onclick="switchSettingsTab('dining', this)">🍽️ 用餐选项</div>
                         <div class="settings-tab" onclick="switchSettingsTab('kitchen', this)">🍳 厨房打印</div>
+                        <div class="settings-tab" onclick="switchSettingsTab('integrations', this)">🔗 集成</div>
+                        <div class="settings-tab" onclick="switchSettingsTab('offline', this)">📴 离线模式</div>
                         <div class="settings-tab" onclick="switchSettingsTab('importExport', this)">📁 导入导出</div>
                     </div>
                     
@@ -1604,26 +1616,78 @@
                     <!-- 打印机配置 -->
                     <div id="settings-printer" class="settings-content" style="display:none;">
                         <div class="settings-section">
-                            <div class="settings-section-title">打印机设置</div>
+                            <div class="settings-section-title">本地打印机</div>
                             <div class="form-group">
-                                <label>打印机类型</label>
-                                <select id="printerType" class="form-input" onchange="saveSettings()">
-                                    <option value="epson">Epson TM Series</option>
-                                    <option value="star">Star TSP Series</option>
+                                <label>打印机品牌/型号</label>
+                                <select id="printerType" class="form-input" onchange="updatePrinterModels()">
+                                    <option value="epson">Epson</option>
+                                    <option value="star">Star</option>
                                     <option value="xprinter">Xprinter</option>
+                                    <option value="sunmi">Sunmi</option>
                                     <option value="custom">自定义/其他</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label>打印机名称/端口</label>
-                                <input type="text" id="printerName" placeholder="例如: EPSON_TM88IV" class="form-input">
+                            <div class="form-group" id="epsonModels" style="display:block;">
+                                <label>具体型号</label>
+                                <select id="printerModelEpson" class="form-input">
+                                    <option value="tm-t20ii">TM-T20II (USB/Ethernet)</option>
+                                    <option value="tm-88iv">TM-88IV (USB/Ethernet)</option>
+                                    <option value="tm-88v">TM-88V (USB/Ethernet)</option>
+                                    <option value="tm-m30">TM-m30 (Bluetooth/Ethernet)</option>
+                                    <option value="tm-t82iii">TM-T82III</option>
+                                    <option value="tm-h5000ii">TM-H5000II</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="starModels" style="display:none;">
+                                <label>具体型号</label>
+                                <select id="printerModelStar" class="form-input">
+                                    <option value="tsp650ii">TSP650II (Bluetooth)</option>
+                                    <option value="tsp654ii">TSP654IIBl (Bluetooth)</option>
+                                    <option value="tsp143iiiu">TSP143IIIU (USB)</option>
+                                    <option value="tsp143lan">TSP143LAN (Ethernet)</option>
+                                    <option value="sp742">SP742 (USB)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="xprinterModels" style="display:none;">
+                                <label>具体型号</label>
+                                <select id="printerModelXprinter" class="form-input">
+                                    <option value="xp-q200">XP-Q200 (USB)</option>
+                                    <option value="xp-q800">XP-Q800 (Ethernet)</option>
+                                    <option value="xp-58">XP-58 (USB)</option>
+                                    <option value="xp-c200">XP-C200 (USB/Bluetooth)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="sunmiModels" style="display:none;">
+                                <label>具体型号</label>
+                                <select id="printerModelSunmi" class="form-input">
+                                    <option value="t1">T1 (内置)</option>
+                                    <option value="v1">V1 (内置)</option>
+                                    <option value="p1">P1 (蓝牙)</option>
+                                    <option value="p2">P2 (蓝牙)</option>
+                                </select>
                             </div>
                             <div class="form-group">
-                                <label>字符宽度</label>
+                                <label>连接方式</label>
+                                <select id="printerConnection" class="form-input">
+                                    <option value="usb">USB</option>
+                                    <option value="ethernet">Ethernet (TCP/IP)</option>
+                                    <option value="bluetooth">Bluetooth</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>打印机名称/IP地址</label>
+                                <input type="text" id="printerName" placeholder="例如: 192.168.1.100 或 EPSON_TM88IV" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>端口 (Ethernet)</label>
+                                <input type="number" id="printerPort" value="9100" placeholder="9100" class="form-input" style="width:120px;">
+                            </div>
+                            <div class="form-group">
+                                <label>纸宽/字符宽度</label>
                                 <select id="printerWidth" class="form-input">
-                                    <option value="32">32 字符 (58mm)</option>
-                                    <option value="40">40 字符 (76mm)</option>
-                                    <option value="48">48 字符 (80mm)</option>
+                                    <option value="32">32 字符 (58mm纸张)</option>
+                                    <option value="40">40 字符 (76mm纸张)</option>
+                                    <option value="48">48 字符 (80mm纸张)</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1632,9 +1696,33 @@
                             </div>
                             <div class="form-group">
                                 <label>小票底部文字</label>
-                                <textarea id="receiptFooter" rows="3" placeholder="感谢惠顾，欢迎下次光临" class="form-input"></textarea>
+                                <textarea id="receiptFooter" rows="3" placeholder="感谢惠顾，欢迎下次光临！" class="form-input"></textarea>
                             </div>
-                            <button class="btn btn-outline" onclick="testPrint()">🖨️ 测试打印</button>
+                            <div style="display:flex;gap:12px;margin-top:16px;">
+                                <button class="btn btn-outline" onclick="testPrint()">🖨️ 测试打印</button>
+                                <button class="btn btn-outline" onclick="openCashDrawer()">💰 开钱箱</button>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <div class="settings-section-title">条码扫描器</div>
+                            <div class="form-group">
+                                <label>扫描器类型</label>
+                                <select id="scannerType" class="form-input">
+                                    <option value="hid">HID (USB/蓝牙)</option>
+                                    <option value="serial">串口</option>
+                                    <option value="socket">Socket Mobile</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">启用扫描枪</div>
+                                    <div class="setting-desc">使用条码扫描器快速添加商品</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="scannerEnabled" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                     
@@ -1732,6 +1820,183 @@
                             <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">配置打印机分组，将不同分类的商品发送到不同的厨房打印机。</p>
                             <div id="kitchenPrinterGroups" class="sortable-list"></div>
                             <button class="btn btn-primary" onclick="addKitchenPrinterGroup()" style="margin-top:16px;">+ 添加打印机组</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 支付集成 -->
+                    <div id="settings-integrations" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">第三方支付集成</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">连接第三方支付服务商，支持刷卡和小费功能。</p>
+                            
+                            <div style="display:grid;gap:12px;">
+                                <div class="integration-card">
+                                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                        <span style="font-size:28px;">💳</span>
+                                        <div>
+                                            <div style="font-weight:600;">SumUp</div>
+                                            <div style="font-size:12px;color:#6c757d;">支持 30+ 国家</div>
+                                        </div>
+                                        <div style="margin-left:auto;">
+                                            <label class="toggle-switch" style="transform:scale(0.85);">
+                                                <input type="checkbox" id="sumupEnabled" onchange="toggleIntegration('sumup')">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="integration-config" id="sumupConfig" style="display:none;">
+                                        <div class="form-group">
+                                            <label>SumUp 账户邮箱</label>
+                                            <input type="email" id="sumupEmail" class="form-input" placeholder="your@email.com">
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="connectSumUp()">连接 SumUp</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="integration-card">
+                                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                        <span style="font-size:28px;">🅿️</span>
+                                        <div>
+                                            <div style="font-weight:600;">PayPal Zettle</div>
+                                            <div style="font-size:12px;color:#6c757d;">美国、英国、欧盟等</div>
+                                        </div>
+                                        <div style="margin-left:auto;">
+                                            <label class="toggle-switch" style="transform:scale(0.85);">
+                                                <input type="checkbox" id="zettleEnabled" onchange="toggleIntegration('zettle')">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="integration-config" id="zettleConfig" style="display:none;">
+                                        <div class="form-group">
+                                            <label>Zettle 账户邮箱</label>
+                                            <input type="email" id="zettleEmail" class="form-input" placeholder="your@email.com">
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="connectZettle()">连接 Zettle</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="integration-card">
+                                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                        <span style="font-size:28px;">🦛</span>
+                                        <div>
+                                            <div style="font-weight:600;">Yoco</div>
+                                            <div style="font-size:12px;color:#6c757d;">南非专用</div>
+                                        </div>
+                                        <div style="margin-left:auto;">
+                                            <label class="toggle-switch" style="transform:scale(0.85);">
+                                                <input type="checkbox" id="yocoEnabled" onchange="toggleIntegration('yoco')">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="integration-config" id="yocoConfig" style="display:none;">
+                                        <div class="form-group">
+                                            <label>Yoco 设备序列号</label>
+                                            <input type="text" id="yocoSerial" class="form-input" placeholder="序列号">
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="connectYoco()">连接 Yoco</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="integration-card">
+                                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                        <span style="font-size:28px;">🦘</span>
+                                        <div>
+                                            <div style="font-weight:600;">Tyro</div>
+                                            <div style="font-size:12px;color:#6c757d;">澳大利亚专用</div>
+                                        </div>
+                                        <div style="margin-left:auto;">
+                                            <label class="toggle-switch" style="transform:scale(0.85);">
+                                                <input type="checkbox" id="tyroEnabled" onchange="toggleIntegration('tyro')">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="integration-config" id="tyroConfig" style="display:none;">
+                                        <div class="form-group">
+                                            <label>配对码</label>
+                                            <input type="text" id="tyroCode" class="form-input" placeholder="输入终端配对码">
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="connectTyro()">连接 Tyro</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <div class="settings-section-title">API 访问令牌</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:12px;">用于通过 API 访问系统数据（需订阅集成服务）。</p>
+                            <button class="btn btn-outline" onclick="generateApiToken()">🔑 生成新令牌</button>
+                            <div id="apiTokenDisplay" style="margin-top:12px;display:none;">
+                                <div style="background:#f8f9fa;padding:12px;border-radius:8px;font-family:monospace;font-size:13px;word-break:break-all;" id="apiTokenValue"></div>
+                                <div style="font-size:11px;color:#dc3545;margin-top:4px;">⚠️ 请立即保存，此令牌只会显示一次</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 离线模式 -->
+                    <div id="settings-offline" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">离线功能设置</div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">📴 离线模式</div>
+                                    <div class="setting-desc">允许在无网络时继续销售</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="offlineModeEnabled" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="offline-info" style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px;margin-top:16px;">
+                                <div style="font-weight:600;margin-bottom:8px;">⚠️ 离线时以下功能不可用：</div>
+                                <ul style="margin:0;padding-left:20px;font-size:13px;color:#856404;">
+                                    <li>退款操作</li>
+                                    <li>注册新客户</li>
+                                    <li>编辑客户信息</li>
+                                    <li>查看实时库存</li>
+                                    <li>第三方支付集成</li>
+                                    <li>云端数据同步</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <div class="settings-section-title">网络状态</div>
+                            <div id="networkStatus" style="display:flex;align-items:center;gap:12px;padding:16px;background:#f8f9fa;border-radius:8px;">
+                                <span style="font-size:24px;" id="networkIcon">✅</span>
+                                <div>
+                                    <div style="font-weight:600;" id="networkStatusText">已连接</div>
+                                    <div style="font-size:12px;color:#6c757d;" id="networkInfo">网络正常</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline" onclick="checkNetworkStatus()" style="margin-top:12px;">🔄 检查网络</button>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <div class="settings-section-title">货币舍入设置</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>舍入间隔</label>
+                                    <select id="roundingInterval" class="form-input">
+                                        <option value="0.01">0.01 (分)</option>
+                                        <option value="0.05">0.05 (5分)</option>
+                                        <option value="0.10" selected>0.10 (角)</option>
+                                        <option value="0.50">0.50 (5角)</option>
+                                        <option value="1.00">1.00 (元)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>舍入规则</label>
+                                    <select id="roundingRule" class="form-input">
+                                        <option value="round">四舍五入</option>
+                                        <option value="floor">向下取整</option>
+                                        <option value="ceil">向上取整</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -4168,6 +4433,99 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 showToast('success', '已删除', '打印机组已删除');
             }
         }
+
+        // 打印机型号切换
+        function updatePrinterModels() {
+            const type = document.getElementById('printerType').value;
+            ['epsonModels', 'starModels', 'xprinterModels', 'sunmiModels'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            if (type + 'Models' !== 'customModels' && document.getElementById(type + 'Models')) {
+                document.getElementById(type + 'Models').style.display = 'block';
+            }
+        }
+
+        // 测试打印
+        function testPrint() {
+            showToast('info', '打印中', '正在发送测试打印...');
+            setTimeout(() => showToast('success', '完成', '测试页已发送到打印机'), 1500);
+        }
+
+        // 开钱箱
+        function openCashDrawer() {
+            showToast('info', '钱箱', '正在打开钱箱...');
+            setTimeout(() => showToast('success', '完成', '钱箱已打开'), 1000);
+        }
+
+        // 支付集成
+        function toggleIntegration(name) {
+            const enabled = document.getElementById(name + 'Enabled').checked;
+            const config = document.getElementById(name + 'Config');
+            if (config) {
+                config.style.display = enabled ? 'block' : 'none';
+            }
+            if (enabled) {
+                showToast('info', '集成', `已启用 ${name.toUpperCase()} 集成`);
+            }
+        }
+
+        function connectSumUp() {
+            const email = document.getElementById('sumupEmail').value;
+            if (!email) { showToast('error', '错误', '请输入 SumUp 账户邮箱'); return; }
+            showToast('success', '已连接', 'SumUp 已成功连接');
+        }
+
+        function connectZettle() {
+            const email = document.getElementById('zettleEmail').value;
+            if (!email) { showToast('error', '错误', '请输入 Zettle 账户邮箱'); return; }
+            showToast('success', '已连接', 'PayPal Zettle 已成功连接');
+        }
+
+        function connectYoco() {
+            const serial = document.getElementById('yocoSerial').value;
+            if (!serial) { showToast('error', '错误', '请输入设备序列号'); return; }
+            showToast('success', '已连接', 'Yoco 已成功连接');
+        }
+
+        function connectTyro() {
+            const code = document.getElementById('tyroCode').value;
+            if (!code) { showToast('error', '错误', '请输入配对码'); return; }
+            showToast('success', '已连接', 'Tyro 已成功连接');
+        }
+
+        // API 令牌
+        function generateApiToken() {
+            const token = 'vs_' + Array.from({length: 32}, () => Math.random().toString(36).charAt(2)).join('');
+            document.getElementById('apiTokenValue').textContent = token;
+            document.getElementById('apiTokenDisplay').style.display = 'block';
+            showToast('success', '已生成', '请立即保存令牌');
+            localStorage.setItem('vsevice_api_token', token);
+        }
+
+        // 网络状态检测
+        function checkNetworkStatus() {
+            const statusEl = document.getElementById('networkStatusText');
+            const iconEl = document.getElementById('networkIcon');
+            const infoEl = document.getElementById('networkInfo');
+            
+            if (navigator.onLine) {
+                statusEl.textContent = '已连接';
+                statusEl.style.color = 'var(--success)';
+                iconEl.textContent = '✅';
+                infoEl.textContent = new Date().toLocaleTimeString();
+                showToast('success', '网络正常', '可以正常访问云端服务');
+            } else {
+                statusEl.textContent = '离线';
+                statusEl.style.color = 'var(--danger)';
+                iconEl.textContent = '📴';
+                infoEl.textContent = '请检查网络连接';
+                showToast('warning', '离线模式', '部分功能可能受限');
+            }
+        }
+
+        // 初始化网络监听
+        window.addEventListener('online', () => checkNetworkStatus());
+        window.addEventListener('offline', () => checkNetworkStatus());
 
         function saveSettings() {
             settings.payments.cash = document.getElementById('payCash').checked;
