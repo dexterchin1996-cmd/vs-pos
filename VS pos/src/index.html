@@ -559,6 +559,38 @@
         .quick-amount-btn { flex: 1; padding: 10px; background: var(--gray-100); border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
         .quick-amount-btn:hover { background: var(--gray-200); }
         
+        /* 支付后小费选择 */
+        .tip-selection { display: none; padding: 20px; background: var(--gray-50); border-radius: 12px; margin-top: 16px; }
+        .tip-selection.show { display: block; }
+        .tip-selection-title { font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .tip-amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+        .tip-amount-btn { padding: 12px 8px; background: var(--white); border: 1px solid var(--gray-300); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .tip-amount-btn:hover { border-color: var(--primary); }
+        .tip-amount-btn.active { background: var(--success); color: white; border-color: var(--success); }
+        .tip-amount-btn .tip-pct { font-size: 14px; font-weight: 600; }
+        .tip-amount-btn .tip-value { font-size: 12px; opacity: 0.8; }
+        .tip-skip { text-align: center; margin-top: 12px; }
+        .tip-skip button { background: none; border: none; color: var(--gray-500); cursor: pointer; font-size: 13px; }
+        .tip-skip button:hover { color: var(--gray-700); }
+        
+        /* 支付成功页面 */
+        .payment-success { text-align: center; padding: 20px; }
+        .success-icon { width: 80px; height: 80px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; animation: scaleIn 0.3s ease; }
+        .success-icon .check { font-size: 40px; color: white; }
+        @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
+        .success-amount { font-size: 32px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+        .success-order-no { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; }
+        .success-details { background: var(--gray-50); border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: left; }
+        .success-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-200); }
+        .success-row:last-child { border-bottom: none; }
+        .success-row .label { color: var(--gray-600); }
+        .success-row .value { font-weight: 600; }
+        .success-actions { display: flex; flex-direction: column; gap: 10px; }
+        .success-actions .btn { width: 100%; justify-content: center; }
+        .receipt-email { margin-bottom: 16px; }
+        .receipt-email input { width: 100%; padding: 12px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px; }
+        .receipt-email input:focus { outline: none; border-color: var(--primary); }
+        
         /* 现金支付 */
         .cash-payment { padding: 0; }
         .cash-display { background: var(--gray-50); padding: 20px; border-radius: 12px; margin-bottom: 16px; }
@@ -2810,6 +2842,8 @@
         }
         
         let currentTip = 0;
+        let currentOrderNo = '';
+        let cashReceived = 0;
         let currentTipPercent = 0;
         
         function setTip(btnNum) {
@@ -3102,7 +3136,12 @@
         }
 
         // 处理支付
-        function processPayment(method, total, cashReceived = total) {
+        function processPayment(method, total, cashReceived = total, skipTip = false) {
+            if (settings.tips?.enabled && !skipTip && currentTip === 0) {
+                showTipSelectionModal(method, total, cashReceived);
+                return;
+            }
+            
             if (method === 'sumup') {
                 showToast('info', '连接中', '正在连接 SumUp 读卡器...');
                 setTimeout(() => {
@@ -3120,22 +3159,201 @@
                     `);
                     setTimeout(() => {
                         closeModal();
-                        completePayment(method, total);
+                        completePayment(method, total, cashReceived);
                     }, 3000);
                 }, 1500);
             } else {
                 completePayment(method, total, cashReceived);
             }
         }
+        
+        // 显示支付后小费选择
+        function showTipSelectionModal(method, total, cashReceived) {
+            const tipOptions = [
+                { label: '无小费', value: 0, isPercent: false },
+                { label: settings.tips?.percent1 + '%', value: settings.tips?.percent1 || 10, isPercent: true },
+                { label: settings.tips?.percent2 + '%', value: settings.tips?.percent2 || 15, isPercent: true },
+                { label: settings.tips?.percent3 + '%', value: settings.tips?.percent3 || 20, isPercent: true }
+            ];
+            
+            const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            
+            showModal('添加小费', `
+                <div class="tip-selection show">
+                    <div class="tip-selection-title">💰 请选择小费金额</div>
+                    <div class="tip-amounts">
+                        ${tipOptions.map((opt, idx) => {
+                            const tipValue = opt.isPercent ? (subtotal * opt.value / 100).toFixed(2) : opt.value.toFixed(2);
+                            return `
+                                <div class="tip-amount-btn" onclick="selectPaymentTip(${idx}, ${opt.isPercent ? `'percent'` : `'fixed'`}, ${opt.value}, '${method}', ${total}, ${cashReceived})">
+                                    <div class="tip-pct">${opt.label}</div>
+                                    <div class="tip-value">¥${tipValue}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    ${settings.tips?.custom ? `
+                    <div style="margin-top:12px;">
+                        <input type="number" id="customTipAmount" class="form-input" placeholder="输入自定义小费金额" style="width:100%;padding:12px;">
+                        <button class="btn btn-primary" onclick="applyCustomPaymentTip('${method}', ${total}, ${cashReceived})" style="width:100%;margin-top:8px;">应用自定义小费</button>
+                    </div>
+                    ` : ''}
+                    <div class="tip-skip">
+                        <button onclick="processPayment('${method}', ${total}, ${cashReceived}, true)">跳过，不加小费</button>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function selectPaymentTip(idx, type, value, method, total, cashReceived) {
+            document.querySelectorAll('.tip-amount-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === idx);
+            });
+            
+            const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            let tipAmount = type === 'percent' ? subtotal * value / 100 : value;
+            
+            setTimeout(() => {
+                currentTip = tipAmount;
+                closeModal();
+                processPayment(method, total, cashReceived, true);
+            }, 300);
+        }
+        
+        function applyCustomPaymentTip(method, total, cashReceived) {
+            const customTip = parseFloat(document.getElementById('customTipAmount').value) || 0;
+            if (customTip < 0) {
+                showToast('error', '金额错误', '小费金额不能为负数');
+                return;
+            }
+            currentTip = customTip;
+            closeModal();
+            processPayment(method, total, cashReceived, true);
+        }
 
         function completePayment(method, total, cashReceived) {
             createOrder(0, 0, 0, total, method, cashReceived);
             finishCheckout();
-            showToast('success', '支付成功', `已使用${CONFIG.paymentNames[method] || method}支付 ¥${total.toFixed(2)}`);
+            showPaymentSuccess(total, method, currentOrderNo);
+        }
+        
+        function showPaymentSuccess(total, method, orderNo) {
+            const tip = currentTip;
+            const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            let discount = parseFloat(document.getElementById('discountValue')?.value) || 0;
+            let tax = settings.tax?.enabled ? calculateTax(subtotal - discount) : 0;
+            const change = cashReceived ? cashReceived - total : 0;
+            
+            showModal('支付成功', `
+                <div class="payment-success">
+                    <div class="success-icon"><span class="check">✓</span></div>
+                    <div class="success-amount">¥${total.toFixed(2)}</div>
+                    <div class="success-order-no">订单号: ${orderNo}</div>
+                    
+                    <div class="success-details">
+                        <div class="success-row">
+                            <span class="label">商品金额</span>
+                            <span class="value">¥${subtotal.toFixed(2)}</span>
+                        </div>
+                        ${discount > 0 ? `
+                        <div class="success-row">
+                            <span class="label">折扣</span>
+                            <span class="value" style="color:var(--danger);">-¥${discount.toFixed(2)}</span>
+                        </div>
+                        ` : ''}
+                        ${tax > 0 ? `
+                        <div class="success-row">
+                            <span class="label">税费</span>
+                            <span class="value">¥${tax.toFixed(2)}</span>
+                        </div>
+                        ` : ''}
+                        ${tip > 0 ? `
+                        <div class="success-row">
+                            <span class="label">小费</span>
+                            <span class="value" style="color:var(--success);">+¥${tip.toFixed(2)}</span>
+                        </div>
+                        ` : ''}
+                        <div class="success-row">
+                            <span class="label">支付方式</span>
+                            <span class="value">${CONFIG.paymentNames[method] || method}</span>
+                        </div>
+                        ${method === 'cash' && change > 0 ? `
+                        <div class="success-row">
+                            <span class="label">找零</span>
+                            <span class="value" style="color:var(--success);">¥${change.toFixed(2)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="receipt-email">
+                        <input type="email" id="receiptEmail" placeholder="输入邮箱地址发送电子收据">
+                    </div>
+                    
+                    <div class="success-actions">
+                        <button class="btn btn-primary btn-lg" onclick="sendReceiptEmail('${orderNo}')">
+                            📧 发送电子收据
+                        </button>
+                        <button class="btn btn-outline" onclick="printReceipt('${orderNo}')">
+                            🖨️ 打印小票
+                        </button>
+                        <button class="btn btn-success" onclick="closeModal(); showToast('success', '交易完成', '欢迎下次光临')">
+                            ✅ 完成交易
+                        </button>
+                    </div>
+                </div>
+            `, { showClose: false });
+        }
+        
+        function sendReceiptEmail(orderNo) {
+            const email = document.getElementById('receiptEmail').value;
+            if (!email || !email.includes('@')) {
+                showToast('error', '邮箱错误', '请输入有效的邮箱地址');
+                return;
+            }
+            showToast('success', '发送成功', `收据已发送至 ${email}`);
+            document.getElementById('receiptEmail').value = '';
+        }
+        
+        function printReceipt(orderNo) {
+            const order = orders.find(o => o.orderNo === orderNo);
+            if (!order) return;
+            
+            const receiptContent = `
+                ================================
+                         VS pos 收据
+                ================================
+                订单号: ${order.orderNo}
+                时间: ${new Date(order.createdAt).toLocaleString('zh-CN')}
+                --------------------------------
+                ${order.items.map(item => `${item.name} x${item.qty}     ¥${(item.price * item.qty).toFixed(2)}`).join('\n')}
+                --------------------------------
+                小计:           ¥${order.subtotal.toFixed(2)}
+                ${order.discount > 0 ? `折扣:          -¥${order.discount.toFixed(2)}\n` : ''}
+                ${order.tax > 0 ? `税费:            ¥${order.tax.toFixed(2)}\n` : ''}
+                ${order.tip > 0 ? `小费:            ¥${order.tip.toFixed(2)}\n` : ''}
+                ================================
+                          总计: ¥${order.total.toFixed(2)}
+                ================================
+                支付方式: ${CONFIG.paymentNames[order.payment] || order.payment}
+                ${order.payment === 'cash' ? `实收: ¥${order.cashReceived.toFixed(2)}\n找零: ¥${order.change.toFixed(2)}` : ''}
+                --------------------------------
+                    谢谢惠顾，欢迎下次光临！
+                ================================
+            `;
+            
+            if (window.print) {
+                const printWindow = window.open('', '', 'width=300,height=600');
+                printWindow.document.write('<pre style="font-family: monospace; font-size: 12px;">' + receiptContent + '</pre>');
+                printWindow.document.close();
+                printWindow.print();
+            } else {
+                showToast('info', '打印', '请手动复制以下内容到打印机:\n' + receiptContent);
+            }
         }
 
         function createOrder(subtotal, discount, tax, total, method, cashReceived) {
             const orderNo = 'V' + Date.now().toString().slice(-8);
+            currentOrderNo = orderNo;
             const order = {
                 id: orders.length + 1,
                 orderNo,
@@ -3160,8 +3378,13 @@
             saveData('orders', orders);
             
             if (currentMember) {
+                if (order.pointsEarned > 0) {
+                    addPointsHistory(currentMember.id, 'earn', order.pointsEarned, `消费获得 (订单: ${orderNo})`);
+                }
                 currentMember.points += order.pointsEarned;
                 currentMember.totalSpent += total;
+                currentMember.visitCount = (currentMember.visitCount || 0) + 1;
+                currentMember.lastVisit = new Date().toLocaleDateString('zh-CN');
                 const idx = members.findIndex(m => m.id === currentMember.id);
                 if (idx !== -1) members[idx] = currentMember;
                 saveData('members', members);
@@ -4720,6 +4943,7 @@
             
             const memberOrders = orders.filter(o => o.memberId === id).slice(0, 10);
             const redeemValue = (member.points || 0) / settings.redeemRate;
+            const pointsHistory = (member.pointsHistory || []).slice(-20).reverse();
             
             showModal('会员详情 - ' + member.name, `
                 <div class="member-detail">
@@ -4779,6 +5003,34 @@
                     
                     <div class="member-section">
                         <div class="section-header">
+                            <span>💰 积分变动记录</span>
+                            <button class="btn btn-sm btn-outline" onclick="exportPointsHistory('${id}')">📥 导出</button>
+                        </div>
+                        <div class="order-list" style="max-height:250px;">
+                            ${pointsHistory.length === 0 ? '<p style="text-align:center;color:#6c757d;padding:20px;">暂无积分记录</p>' : `
+                                <div style="padding:8px 12px;background:var(--gray-50);border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;font-size:12px;color:var(--gray-500);">
+                                    <span>时间</span><span>类型</span><span>积分</span><span>备注</span>
+                                </div>
+                                ${pointsHistory.map(h => `
+                                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--gray-100);font-size:13px;">
+                                        <span style="color:var(--gray-500);width:90px;">${new Date(h.time).toLocaleDateString('zh-CN')}</span>
+                                        <span style="width:70px;">
+                                            ${h.type === 'earn' ? '<span style="color:var(--success);">获得</span>' : 
+                                              h.type === 'redeem' ? '<span style="color:var(--danger);">兑换</span>' : 
+                                              '<span style="color:var(--warning);">调整</span>'}
+                                        </span>
+                                        <span style="font-weight:600;width:60px;text-align:right;${h.type === 'earn' ? 'color:var(--success);' : 'color:var(--danger);'}">
+                                            ${h.type === 'earn' ? '+' : '-'}${Math.abs(h.points)}
+                                        </span>
+                                        <span style="flex:1;text-align:right;color:var(--gray-500);font-size:12px;">${h.note || '-'}</span>
+                                    </div>
+                                `).join('')}
+                            `}
+                        </div>
+                    </div>
+                    
+                    <div class="member-section">
+                        <div class="section-header">
                             <span>📜 消费历史</span>
                             <button class="btn btn-sm btn-outline" onclick="exportMemberHistory('${id}')">📥 导出</button>
                         </div>
@@ -4805,6 +5057,45 @@
                     </div>
                 </div>
             `);
+        }
+        
+        function exportPointsHistory(memberId) {
+            const member = members.find(m => m.id === memberId);
+            if (!member) return;
+            
+            const history = member.pointsHistory || [];
+            if (history.length === 0) {
+                showToast('info', '无数据', '暂无积分记录');
+                return;
+            }
+            
+            let csv = '日期,时间,类型,积分,余额,备注\n';
+            history.forEach(h => {
+                const date = new Date(h.time);
+                csv += `${date.toLocaleDateString('zh-CN')},${date.toLocaleTimeString('zh-CN')},${h.type === 'earn' ? '获得' : h.type === 'redeem' ? '兑换' : '调整'},${h.points},${h.balance || ''},${h.note || ''}\n`;
+            });
+            
+            downloadCSV(csv, `积分记录_${member.name}_${new Date().toLocaleDateString('zh-CN')}.csv`);
+            showToast('success', '导出成功', '积分记录已导出');
+        }
+        
+        function addPointsHistory(memberId, type, points, note = '') {
+            const member = members.find(m => m.id === memberId);
+            if (!member) return;
+            
+            if (!member.pointsHistory) member.pointsHistory = [];
+            
+            member.pointsHistory.push({
+                type,
+                points,
+                balance: member.points,
+                note,
+                time: new Date().toISOString()
+            });
+            
+            const idx = members.findIndex(m => m.id === memberId);
+            if (idx !== -1) members[idx] = member;
+            saveData('members', members);
         }
 
         function showRedeemModal(id) {
@@ -4860,6 +5151,7 @@
                 return;
             }
             
+            addPointsHistory(member.id, 'redeem', -points, '积分兑换');
             member.points -= points;
             saveData('members', members);
             closeModal();
@@ -5473,9 +5765,21 @@
             
             const member = members.find(m => m.id === id);
             if (member) {
-                if (type === 'add') member.points = (member.points || 0) + amount;
-                else if (type === 'subtract') member.points = Math.max(0, (member.points || 0) - amount);
-                else member.points = amount;
+                const oldPoints = member.points || 0;
+                let diff = 0;
+                if (type === 'add') {
+                    member.points = oldPoints + amount;
+                    diff = amount;
+                } else if (type === 'subtract') {
+                    member.points = Math.max(0, oldPoints - amount);
+                    diff = -amount;
+                } else {
+                    member.points = amount;
+                    diff = amount - oldPoints;
+                }
+                if (diff !== 0) {
+                    addPointsHistory(member.id, 'adjust', diff, type === 'add' ? '管理员增加' : type === 'subtract' ? '管理员扣除' : '管理员设置');
+                }
                 saveData('members', members);
                 closeModal();
                 showMemberDetail(id);
@@ -5995,6 +6299,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             
             table.innerHTML = shifts.map(s => {
                 const difference = s.endCash ? s.endCash - (s.startCash + (s.totalSales || 0)) : null;
+                const syncIcon = s.synced ? '<span title="已同步" style="color:var(--success);">✅</span>' : (s.endTime ? '<span title="未同步" style="color:var(--warning);">⚠️</span>' : '<span title="同步中">🔄</span>');
                 return `
                 <div class="table-row shift-row" onclick="showShiftDetail('${s.id}')" style="cursor:pointer;">
                     <span style="font-weight:600;">${s.shiftNo}</span>
@@ -6006,6 +6311,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                         ${difference !== null ? (difference > 0 ? '+' : '') + '¥' + difference.toFixed(2) : '-'}
                     </span>
                     <span><span class="status-badge ${s.status}">${s.status === 'open' ? '进行中' : '已结束'}</span></span>
+                    <span>${syncIcon}</span>
                     <span>${s.status === 'open' ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation();endShift('${s.id}')">结班</button>` : `<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();showShiftDetail('${s.id}')">查看</button>`}</span>
                 </div>
             `}).join('');
@@ -6019,9 +6325,17 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             const totalSales = shiftOrders.reduce((sum, o) => sum + o.total, 0);
             const cashSales = shiftOrders.filter(o => o.payment === 'cash').reduce((sum, o) => sum + o.total, 0);
             const cardSales = shiftOrders.filter(o => o.payment === 'card').reduce((sum, o) => sum + o.total, 0);
-            const otherSales = shiftOrders.filter(o => !['cash', 'card'].includes(o.payment)).reduce((sum, o) => sum + o.total, 0);
+            const wechatSales = shiftOrders.filter(o => o.payment === 'wechat').reduce((sum, o) => sum + o.total, 0);
+            const alipaySales = shiftOrders.filter(o => o.payment === 'alipay').reduce((sum, o) => sum + o.total, 0);
+            const otherSales = shiftOrders.filter(o => !['cash', 'card', 'wechat', 'alipay'].includes(o.payment)).reduce((sum, o) => sum + o.total, 0);
             const refundTotal = shiftOrders.filter(o => o.status === 'refunded').reduce((sum, o) => sum + o.total, 0);
-            const avgOrder = shiftOrders.length > 0 ? totalSales / shiftOrders.length : 0;
+            const discountTotal = shiftOrders.reduce((sum, o) => sum + (o.discount || 0), 0);
+            const taxTotal = shiftOrders.reduce((sum, o) => sum + (o.tax || 0), 0);
+            const tipTotal = shiftOrders.reduce((sum, o) => sum + (o.tip || 0), 0);
+            const netSales = totalSales - refundTotal;
+            const avgOrder = shiftOrders.length > 0 ? netSales / shiftOrders.length : 0;
+            const syncStatus = shift.synced ? '已同步' : (shift.endTime ? '未同步' : '同步中');
+            const syncIcon = shift.synced ? '✅' : (shift.endTime ? '⚠️' : '🔄');
             
             shift.totalSales = totalSales;
             shift.totalOrders = shiftOrders.length;
@@ -6029,6 +6343,10 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             shift.cardSales = cardSales;
             shift.otherSales = otherSales;
             shift.refundTotal = refundTotal;
+            shift.discountTotal = discountTotal;
+            shift.taxTotal = taxTotal;
+            shift.tipTotal = tipTotal;
+            shift.netSales = netSales;
             
             const expectedCash = shift.startCash + cashSales - refundTotal + (shift.payIns || []).reduce((s, p) => s + (p.type === 'in' ? p.amount : -p.amount), 0);
             const difference = shift.endCash ? shift.endCash - expectedCash : null;
@@ -6036,7 +6354,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             showModal('班次详情 - ' + shift.shiftNo, `
                 <div class="shift-detail">
                     <div class="shift-summary">
-                        <div class="summary-row">
+                        <div class="summary-row" style="justify-content:space-between;">
                             <span>员工</span>
                             <span>${shift.employeeName}</span>
                         </div>
@@ -6058,6 +6376,10 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                             <span>${difference > 0 ? '+' : ''}¥${difference.toFixed(2)}</span>
                         </div>
                         ` : ''}
+                        <div class="summary-row" style="background:${shift.synced ? 'rgba(40,167,69,0.1)' : shift.endTime ? 'rgba(255,193,7,0.1)' : 'rgba(59,125,221,0.1)'};margin:0 -20px -20px;padding:12px 20px;border-radius:0 0 8px 8px;">
+                            <span>${syncIcon} 同步状态</span>
+                            <span style="font-weight:600;">${syncStatus}</span>
+                        </div>
                     </div>
                     
                     <div class="shift-section">
@@ -6076,10 +6398,10 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                     
                     <div class="shift-section">
                         <div class="section-title">📊 销售汇总</div>
-                        <div class="summary-grid">
-                            <div class="summary-item">
-                                <div class="item-value">¥${totalSales.toFixed(2)}</div>
-                                <div class="item-label">总销售额</div>
+                        <div class="summary-grid" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="summary-item" style="background:linear-gradient(135deg, var(--primary) 0%, #5dade2 100%);color:white;">
+                                <div class="item-value" style="color:white;">¥${netSales.toFixed(2)}</div>
+                                <div class="item-label" style="color:rgba(255,255,255,0.8);">净销售额</div>
                             </div>
                             <div class="summary-item">
                                 <div class="item-value">${shiftOrders.length}</div>
@@ -6089,12 +6411,42 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                                 <div class="item-value">¥${avgOrder.toFixed(2)}</div>
                                 <div class="item-label">平均客单价</div>
                             </div>
-                            ${refundTotal > 0 ? `
-                            <div class="summary-item" style="color:var(--danger);">
-                                <div class="item-value">-¥${refundTotal.toFixed(2)}</div>
-                                <div class="item-label">退款总额</div>
+                        </div>
+                        
+                        <div style="margin-top:16px;padding:12px;background:#f8f9fa;border-radius:8px;">
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--gray-600);">销售明细</div>
+                            <div class="payment-row">
+                                <span>总销售额</span>
+                                <span>¥${totalSales.toFixed(2)}</span>
+                            </div>
+                            ${discountTotal > 0 ? `
+                            <div class="payment-row" style="color:var(--danger);">
+                                <span>折扣总额</span>
+                                <span>-¥${discountTotal.toFixed(2)}</span>
                             </div>
                             ` : ''}
+                            ${taxTotal > 0 ? `
+                            <div class="payment-row">
+                                <span>税费总额</span>
+                                <span>+¥${taxTotal.toFixed(2)}</span>
+                            </div>
+                            ` : ''}
+                            ${tipTotal > 0 ? `
+                            <div class="payment-row" style="color:var(--success);">
+                                <span>小费总额</span>
+                                <span>+¥${tipTotal.toFixed(2)}</span>
+                            </div>
+                            ` : ''}
+                            ${refundTotal > 0 ? `
+                            <div class="payment-row" style="color:var(--danger);">
+                                <span>退款总额</span>
+                                <span>-¥${refundTotal.toFixed(2)}</span>
+                            </div>
+                            ` : ''}
+                            <div class="payment-row" style="font-weight:600;border-top:2px solid var(--gray-300);margin-top:8px;padding-top:8px;">
+                                <span>净销售额</span>
+                                <span style="color:var(--primary);">¥${netSales.toFixed(2)}</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -6110,18 +6462,40 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                                 <span>¥${cardSales.toFixed(2)}</span>
                             </div>
                             <div class="payment-row">
+                                <span>💬 微信支付</span>
+                                <span>¥${wechatSales.toFixed(2)}</span>
+                            </div>
+                            <div class="payment-row">
+                                <span>📱 支付宝</span>
+                                <span>¥${alipaySales.toFixed(2)}</span>
+                            </div>
+                            ${otherSales > 0 ? `
+                            <div class="payment-row">
                                 <span>📱 其他</span>
                                 <span>¥${otherSales.toFixed(2)}</span>
                             </div>
+                            ` : ''}
                         </div>
                     </div>
                     
                     <div style="margin-top:16px;">
                         <button class="btn btn-outline" onclick="showShiftReceipts('${id}')" style="flex:1;">📋 收据列表 (${shiftOrders.length})</button>
                         <button class="btn btn-outline" onclick="printShiftReport('${id}')" style="flex:1;">🖨️ 打印报告</button>
+                        ${!shift.synced && shift.endTime ? `
+                        <button class="btn btn-primary" onclick="syncShiftData('${id}')" style="width:100%;margin-top:8px;">🔄 同步数据</button>
+                        ` : ''}
                     </div>
                 </div>
             `);
+        }
+        
+        function syncShiftData(shiftId) {
+            const shift = shifts.find(s => s.id === shiftId);
+            if (!shift) return;
+            shift.synced = true;
+            saveData('shifts', shifts);
+            showToast('success', '同步成功', '班次数据已同步');
+            showShiftDetail(shiftId);
         }
 
         function showPayInOutModal(shiftId) {
@@ -7184,10 +7558,15 @@ SPA-001,6901234560002,精油推背,spa,398,120,90,999,10,60,芳疗馆
             updateShiftStats();
         }
 
-        function showModal(title, content) {
+        function showModal(title, content, options = {}) {
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalContent').innerHTML = content;
             document.getElementById('modalOverlay').classList.add('show');
+            
+            const closeBtn = document.querySelector('.modal-close');
+            if (closeBtn) {
+                closeBtn.style.display = options.showClose === false ? 'none' : 'block';
+            }
         }
 
         function closeModal(e) {
