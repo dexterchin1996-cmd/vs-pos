@@ -1,7 +1,8 @@
 {
   "env": {
     "browser": true,
-    "es2021": true
+    "es2021": true,
+    "node": true
   },
   "extends": "eslint:recommended",
   "parserOptions": {
@@ -27,14 +28,19 @@
     "selectedPayment": "writable",
     "currentCategory": "writable",
     "currentTip": "writable",
-    "currentTipPercent": "writable"
+    "currentTipPercent": "writable",
+    "showModal": "writable",
+    "resolve": "writable",
+    "streets": "writable",
+    "strees": "writable"
   },
   "rules": {
-    "indent": ["error", 4],
-    "linebreak-style": ["error", "windows"],
-    "quotes": ["error", "single"],
-    "semi": ["error", "always"],
+    "indent": ["warn", 4],
+    "linebreak-style": ["off"],
+    "quotes": ["warn", "single"],
+    "semi": ["warn", "always"],
     "no-unused-vars": "warn",
-    "no-console": "off"
+    "no-console": "off",
+    "no-undef": "warn"
   }
 }

@@ -23,15 +23,15 @@ function formatDate(date, format = 'full') {
     if (isNaN(d.getTime())) return '-';
     
     switch(format) {
-        case 'date':
-            return d.toLocaleDateString('zh-CN');
-        case 'time':
-            return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-        case 'short':
-            return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-        case 'full':
-        default:
-            return d.toLocaleString('zh-CN');
+    case 'date':
+        return d.toLocaleDateString('zh-CN');
+    case 'time':
+        return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    case 'short':
+        return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+    case 'full':
+    default:
+        return d.toLocaleString('zh-CN');
     }
 }
 
@@ -102,7 +102,7 @@ function deepClone(obj) {
     if (obj instanceof Object) {
         const cloned = {};
         for (const key in obj) {
-            if (obj.hasOwnProperty(key)) {
+            if (Object.hasOwn(obj, key)) {
                 cloned[key] = deepClone(obj[key]);
             }
         }
@@ -183,7 +183,7 @@ function escapeHtml(text) {
         '<': '&lt;',
         '>': '&gt;',
         '"': '&quot;',
-        "'": '&#039;'
+        '\'': '&#039;'
     };
     return text.replace(/[&<>"']/g, m => map[m]);
 }
@@ -253,7 +253,7 @@ const Storage = {
     size() {
         let total = 0;
         for (let key in localStorage) {
-            if (localStorage.hasOwnProperty(key)) {
+            if (Object.hasOwn(localStorage, key)) {
                 total += localStorage[key].length + key.length;
             }
         }
@@ -370,7 +370,7 @@ function createToastContainer() {
  * @returns {Promise<boolean>} 用户选择
  */
 function confirmAsync(message) {
-    return new Promise((resolve) => {
+    return new Promise((resolve) => { // eslint-disable-line no-unused-vars
         showModal('确认', `
             <div style="text-align:center;padding:20px;">
                 <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
