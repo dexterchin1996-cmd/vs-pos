@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Vsevice - 在线预约</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root {
+            --primary: #1e3c72;
+            --primary-light: #2a5298;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --purple: #9b59b6;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+            --radius: 16px;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-100);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: var(--gray-800);
+        }
+        .app-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .app-header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+        .app-header .subtitle { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+        
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            padding: 12px 16px;
+            background: white;
+            gap: 8px;
+        }
+        .top-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .top-btn.login { background: var(--primary); color: white; }
+        .top-btn.register { background: var(--gray-200); color: var(--gray-700); }
+        .top-btn.logout { background: var(--danger); color: white; display: none; }
+        
+        .user-info {
+            display: none;
+            padding: 12px 16px;
+            background: white;
+            margin-bottom: 8px;
+        }
+        .user-info.show { display: flex; align-items: center; gap: 12px; }
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .user-details { flex: 1; }
+        .user-name { font-weight: 600; }
+        .user-points { font-size: 12px; color: var(--gray-500); }
+        
+        .banner {
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            color: white;
+            padding: 24px 20px;
+            margin: 16px;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+        .banner h2 { margin: 0 0 8px 0; font-size: 20px; }
+        .banner p { margin: 0; opacity: 0.9; font-size: 13px; }
+        
+        .tab-bar {
+            display: flex;
+            padding: 0 16px;
+            gap: 4px;
+            background: white;
+            overflow-x: auto;
+        }
+        .tab {
+            padding: 14px 20px;
+            font-weight: 500;
+            color: var(--gray-600);
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        
+        .panel { display: none; padding: 16px; }
+        .panel.active { display: block; }
+        
+        .service-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .service-card:active { transform: scale(0.98); }
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .service-name { font-size: 18px; font-weight: 600; }
+        .service-price { font-size: 20px; font-weight: 700; color: var(--warning); }
+        .service-meta {
+            display: flex;
+            gap: 16px;
+            color: var(--gray-500);
+            font-size: 13px;
+        }
+        .service-tags { margin-top: 10px; }
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--gray-100);
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--gray-600);
+            margin-right: 6px;
+        }
+        
+        .order-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--warning);
+        }
+        .order-card.completed { border-left-color: var(--success); }
+        .order-card.cancelled { border-left-color: var(--gray-400); }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .order-no { font-size: 12px; color: var(--gray-500); }
+        .order-status {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .order-status.pending { background: rgba(243,156,18,0.1); color: var(--warning); }
+        .order-status.assigned { background: rgba(30,60,114,0.1); color: var(--primary); }
+        .order-status.in_progress { background: rgba(155,89,182,0.1); color: var(--purple); }
+        .order-status.completed { background: rgba(39,174,96,0.1); color: var(--success); }
+        .order-status.cancelled { background: var(--gray-200); color: var(--gray-600); }
+        .order-service { font-weight: 500; }
+        .order-time { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        
+        input, select {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+            border: 1px solid var(--gray-300);
+            border-radius: 10px;
+            font-size: 15px;
+            background: white;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-500);
+        }
+        .empty-state .icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: flex-end;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal {
+            background: white;
+            border-radius: var(--radius) var(--radius) 0 0;
+            padding: 24px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.show .modal { transform: translateY(0); }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title { font-size: 18px; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--gray-500); }
+        
+        .date-picker {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 8px 0;
+            margin: 12px 0;
+        }
+        .date-item {
+            min-width: 60px;
+            padding: 12px 8px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            background: var(--gray-100);
+            transition: all 0.2s;
+        }
+        .date-item.active { background: var(--primary); color: white; }
+        .date-item .day { font-size: 12px; }
+        .date-item .num { font-size: 18px; font-weight: 600; margin-top: 4px; }
+        
+        .time-picker {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .time-item {
+            padding: 12px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            background: var(--gray-100);
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .time-item.active { background: var(--primary); color: white; }
+        .time-item.disabled { opacity: 0.4; pointer-events: none; }
+        
+        .cart-sidebar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            transform: translateY(100%);
+            transition: transform 0.3s;
+            z-index: 100;
+        }
+        .cart-sidebar.show { transform: translateY(0); }
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .cart-count {
+            background: var(--danger);
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+        .cart-actions { display: flex; gap: 12px; }
+        .cart-actions .btn { flex: 1; margin: 0; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <h1>Vsevice 健康中心</h1>
+        <div class="subtitle">专业按摩 · SPA服务 · 美容护理</div>
+    </header>
+
+    <div class="top-bar">
+        <button class="top-btn login" onclick="showLoginModal()">登录</button>
+        <button class="top-btn register" onclick="showRegisterModal()">注册</button>
+        <button class="top-btn logout" id="logoutBtn" onclick="logout()">退出</button>
+    </div>
+
+    <div class="user-info" id="userInfo">
+        <div class="user-avatar" id="userAvatar">👤</div>
+        <div class="user-details">
+            <div class="user-name" id="userName">游客</div>
+            <div class="user-points" id="userPoints">积分: 0</div>
+        </div>
+    </div>
+
+    <div class="banner">
+        <h2>🎉 新会员首次消费享8折</h2>
+        <p>立即注册成为会员，享受更多优惠</p>
+    </div>
+
+    <div class="tab-bar">
+        <div class="tab active" data-tab="services" onclick="switchTab('services')">服务项目</div>
+        <div class="tab" data-tab="orders" onclick="switchTab('orders')">我的订单</div>
+    </div>
+
+    <!-- 服务列表 -->
+    <div id="services-panel" class="panel active">
+        <div id="servicesList"></div>
+    </div>
+
+    <!-- 我的订单 -->
+    <div id="orders-panel" class="panel">
+        <div id="ordersList"></div>
+    </div>
+
+    <!-- 预约购物车 -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <div>
+                <span style="font-weight:600;">已选服务</span>
+                <span class="cart-count" id="cartCount">0</span>
+            </div>
+            <button onclick="clearCart()" style="background:none;border:none;color:var(--gray-500);cursor:pointer;">清空</button>
+        </div>
+        <div id="cartItems" style="margin-bottom:12px;"></div>
+        <div class="cart-actions">
+            <button class="btn btn-primary" onclick="showBookingModal()">立即预约</button>
+        </div>
+    </div>
+
+    <!-- 登录模态框 -->
+    <div id="loginModal" class="modal-overlay" onclick="closeModal(event, 'loginModal')">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">会员登录</div>
+                <button class="modal-close" onclick="closeModalDirect('loginModal')">&times;</button>
+            </div>
+            <input type="tel" id="loginPhone" placeholder="手机号">
+            <button class="btn btn-primary" onclick="doLogin()">登录</button>
+            <p style="text-align:center;color:var(--gray-500);font-size:12px;margin-top:12px;">
+                还没有账号？<a href="#" onclick="showRegisterModal();return false;" style="color:var(--primary);">立即注册</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div id="registerModal" class="modal-overlay" onclick="closeModal(event, 'registerModal')">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">会员注册</div>
+                <button class="modal-close" onclick="closeModalDirect('registerModal')">&times;</button>
+            </div>
+            <input type="text" id="regName" placeholder="姓名">
+            <input type="tel" id="regPhone" placeholder="手机号">
+            <button class="btn btn-success" onclick="doRegister()">注册</button>
+        </div>
+    </div>
+
+    <!-- 预约模态框 -->
+    <div id="bookingModal" class="modal-overlay" onclick="closeModal(event, 'bookingModal')">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">选择预约时间</div>
+                <button class="modal-close" onclick="closeModalDirect('bookingModal')">&times;</button>
+            </div>
+            <div class="date-picker" id="datePicker"></div>
+            <div class="time-picker" id="timePicker"></div>
+            <input type="text" id="bookName" placeholder="您的姓名">
+            <input type="tel" id="bookPhone" placeholder="手机号">
+            <input type="text" id="bookNote" placeholder="备注（可选）">
+            <button class="btn btn-success" onclick="submitBooking()">提交预约</button>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            storage: {
+                services: 'vsevice_services',
+                members: 'vsevice_members',
+                orders: 'vsevice_orders',
+                currentMember: 'vsevice_current_member'
+            }
+        };
+
+        let services = [];
+        let members = [];
+        let orders = [];
+        let currentMember = null;
+        let cart = [];
+        let selectedDate = null;
+        let selectedTime = null;
+
+        function init() {
+            loadData();
+            renderServices();
+            renderOrders();
+            checkLogin();
+        }
+
+        function loadData() {
+            services = JSON.parse(localStorage.getItem(CONFIG.storage.services) || '[]');
+            members = JSON.parse(localStorage.getItem(CONFIG.storage.members) || '[]');
+            orders = JSON.parse(localStorage.getItem(CONFIG.storage.orders) || '[]');
+        }
+
+        function saveData(key, data) {
+            localStorage.setItem(CONFIG.storage[key], JSON.stringify(data));
+        }
+
+        function checkLogin() {
+            const savedPhone = localStorage.getItem(CONFIG.storage.currentMember);
+            if (savedPhone) {
+                currentMember = members.find(m => m.phone === savedPhone);
+                updateUserUI();
+            }
+        }
+
+        function updateUserUI() {
+            const loginBtn = document.querySelector('.top-btn.login');
+            const regBtn = document.querySelector('.top-btn.register');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userInfo = document.getElementById('userInfo');
+
+            if (currentMember) {
+                loginBtn.style.display = 'none';
+                regBtn.style.display = 'none';
+                logoutBtn.style.display = 'block';
+                userInfo.classList.add('show');
+                document.getElementById('userName').textContent = currentMember.name;
+                document.getElementById('userPoints').textContent = `积分: ${currentMember.points}`;
+                document.getElementById('userAvatar').textContent = currentMember.name.charAt(0);
+            } else {
+                loginBtn.style.display = 'block';
+                regBtn.style.display = 'block';
+                logoutBtn.style.display = 'none';
+                userInfo.classList.remove('show');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem(CONFIG.storage.currentMember);
+            currentMember = null;
+            updateUserUI();
+            alert('已退出登录');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === tab + '-panel'));
+            if (tab === 'orders') renderOrders();
+        }
+
+        function renderServices() {
+            const container = document.getElementById('servicesList');
+            if (services.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📋</div>
+                        <p>暂无服务项目</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            services.forEach(s => {
+                const levelDiscounts = { bronze: 0, silver: 5, gold: 10, diamond: 15 };
+                let price = s.price;
+                if (currentMember) {
+                    const discount = levelDiscounts[currentMember.level] || 0;
+                    if (discount > 0) price = Math.round(price * (1 - discount / 100));
+                }
+                
+                html += `
+                    <div class="service-card" onclick="addToCart(${s.id})">
+                        <div class="service-header">
+                            <div class="service-name">${s.name}</div>
+                            <div class="service-price">¥${price}</div>
+                        </div>
+                        <div class="service-meta">
+                            <span>⏱️ ${s.duration}分钟</span>
+                            <span>👣 ${s.tags.join(', ')}</span>
+                        </div>
+                        <div class="service-tags">
+                            ${currentMember ? `<span class="tag" style="background:rgba(39,174,96,0.1);color:var(--success);">会员价</span>` : ''}
+                            <span class="tag">点击预约</span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function addToCart(serviceId) {
+            if (!currentMember) {
+                showLoginModal();
+                return;
+            }
+
+            const service = services.find(s => s.id === serviceId);
+            if (!service) return;
+
+            const levelDiscounts = { bronze: 0, silver: 5, gold: 10, diamond: 15 };
+            let price = service.price;
+            if (currentMember) {
+                const discount = levelDiscounts[currentMember.level] || 0;
+                if (discount > 0) price = Math.round(price * (1 - discount / 100));
+            }
+
+            cart.push({ ...service, finalPrice: price });
+            updateCartUI();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const sidebar = document.getElementById('cartSidebar');
+            const countEl = document.getElementById('cartCount');
+            const itemsEl = document.getElementById('cartItems');
+
+            if (cart.length === 0) {
+                sidebar.classList.remove('show');
+                return;
+            }
+
+            sidebar.classList.add('show');
+            countEl.textContent = cart.length;
+
+            let html = '';
+            let total = 0;
+            cart.forEach((item, idx) => {
+                total += item.finalPrice;
+                html += `
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+                        <div>
+                            <div style="font-weight:500;">${item.name}</div>
+                            <div style="font-size:12px;color:var(--gray-500);">${item.duration}分钟</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="color:var(--warning);font-weight:600;">¥${item.finalPrice}</span>
+                            <button onclick="removeFromCart(${idx})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;">×</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `<div style="text-align:right;padding-top:8px;font-weight:600;">合计: <span style="color:var(--warning);font-size:18px;">¥${total.toFixed(2)}</span></div>`;
+            itemsEl.innerHTML = html;
+        }
+
+        function showBookingModal() {
+            if (cart.length === 0) return;
+
+            document.getElementById('bookName').value = currentMember?.name || '';
+            document.getElementById('bookPhone').value = currentMember?.phone || '';
+            
+            renderDatePicker();
+            renderTimePicker();
+            
+            document.getElementById('bookingModal').classList.add('show');
+        }
+
+        function renderDatePicker() {
+            const container = document.getElementById('datePicker');
+            const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            let html = '';
+            
+            for (let i = 0; i < 7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() + i);
+                const isToday = i === 0;
+                html += `
+                    <div class="date-item ${isToday ? 'active' : ''}" onclick="selectDate(this, ${i})">
+                        <div class="day">${isToday ? '今天' : days[d.getDay()]}</div>
+                        <div class="num">${d.getDate()}</div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+            selectedDate = 0;
+        }
+
+        function selectDate(el, idx) {
+            document.querySelectorAll('.date-item').forEach(d => d.classList.remove('active'));
+            el.classList.add('active');
+            selectedDate = idx;
+        }
+
+        function renderTimePicker() {
+            const container = document.getElementById('timePicker');
+            const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
+            let html = '';
+            times.forEach((t, idx) => {
+                const hour = parseInt(t.split(':')[0]);
+                const isPast = selectedDate === 0 && new Date().getHours() >= hour;
+                html += `
+                    <div class="time-item ${isPast ? 'disabled' : ''}" onclick="selectTime(this)">${t}</div>
+                `;
+            });
+            container.innerHTML = html;
+            selectedTime = null;
+        }
+
+        function selectTime(el) {
+            if (el.classList.contains('disabled')) return;
+            document.querySelectorAll('.time-item').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            selectedTime = el.textContent;
+        }
+
+        function submitBooking() {
+            const name = document.getElementById('bookName').value.trim();
+            const phone = document.getElementById('bookPhone').value.trim();
+            const note = document.getElementById('bookNote').value.trim();
+
+            if (!name || !phone) { alert('请填写姓名和手机号'); return; }
+            if (!selectedTime) { alert('请选择预约时间'); return; }
+
+            const appointmentDate = new Date();
+            appointmentDate.setDate(appointmentDate.getDate() + selectedDate);
+            const [hours, mins] = selectedTime.split(':');
+            appointmentDate.setHours(parseInt(hours), parseInt(mins), 0);
+
+            const levelDiscounts = { bronze: 0, silver: 5, gold: 10, diamond: 15 };
+            let subtotal = 0;
+            const items = cart.map(s => {
+                let price = s.price;
+                if (currentMember) {
+                    const discount = levelDiscounts[currentMember.level] || 0;
+                    if (discount > 0) price = Math.round(price * (1 - discount / 100));
+                }
+                subtotal += price;
+                return {
+                    serviceId: s.id,
+                    serviceName: s.name,
+                    originalPrice: s.price,
+                    price: price,
+                    technicianId: null,
+                    technicianName: '待分配'
+                };
+            });
+
+            const newId = orders.length ? Math.max(...orders.map(o => o.id)) + 1 : 1;
+            const order = {
+                id: newId,
+                orderNo: 'WEB' + Date.now().toString().slice(-8),
+                customerType: 'member',
+                customerName: name,
+                memberId: currentMember?.id || null,
+                agentId: null,
+                items,
+                subtotal,
+                discount: 0,
+                finalAmount: subtotal,
+                pointsUsed: 0,
+                pointsEarned: Math.floor(subtotal),
+                paymentMethod: 'wechat',
+                status: 'pending',
+                note: note || '',
+                appointmentTime: appointmentDate.toISOString(),
+                createdAt: new Date().toISOString(),
+                completedAt: null
+            };
+
+            orders.unshift(order);
+            saveData('orders', orders);
+
+            closeModalDirect('bookingModal');
+            cart = [];
+            updateCartUI();
+            document.getElementById('bookNote').value = '';
+
+            alert(`预约成功！订单号: ${order.orderNo}\n预约时间: ${appointmentDate.toLocaleString()}`);
+            switchTab('orders');
+        }
+
+        function renderOrders() {
+            const container = document.getElementById('ordersList');
+            let myOrders = orders;
+            
+            if (currentMember) {
+                myOrders = orders.filter(o => o.memberId === currentMember.id || o.customerName === currentMember.name);
+            }
+
+            if (myOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📦</div>
+                        <p>暂无订单</p>
+                        <p style="font-size:12px;">选择服务开始预约吧</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const statusNames = {
+                pending: '待确认', assigned: '已分配', in_progress: '服务中',
+                completed: '已完成', cancelled: '已取消'
+            };
+
+            let html = '';
+            myOrders.slice(0, 20).forEach(o => {
+                const serviceNames = o.items.map(i => i.serviceName).join(', ');
+                const aptTime = o.appointmentTime ? new Date(o.appointmentTime).toLocaleString() : new Date(o.createdAt).toLocaleString();
+                
+                html += `
+                    <div class="order-card ${o.status === 'completed' ? 'completed' : ''} ${o.status === 'cancelled' ? 'cancelled' : ''}">
+                        <div class="order-header">
+                            <div class="order-no">${o.orderNo}</div>
+                            <span class="order-status ${o.status}">${statusNames[o.status]}</span>
+                        </div>
+                        <div class="order-service">${serviceNames}</div>
+                        <div class="order-time">📅 ${aptTime}</div>
+                        <div style="margin-top:8px;font-weight:600;color:var(--warning);">¥${o.finalAmount.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('show');
+        }
+
+        function showRegisterModal() {
+            closeModalDirect('loginModal');
+            document.getElementById('registerModal').classList.add('show');
+        }
+
+        function doLogin() {
+            const phone = document.getElementById('loginPhone').value.trim();
+            if (!phone) { alert('请输入手机号'); return; }
+
+            const member = members.find(m => m.phone === phone);
+            if (member) {
+                currentMember = member;
+                localStorage.setItem(CONFIG.storage.currentMember, phone);
+                closeModalDirect('loginModal');
+                updateUserUI();
+                renderServices();
+                alert(`欢迎回来，${member.name}！`);
+            } else {
+                alert('未找到该会员，请先注册');
+            }
+        }
+
+        function doRegister() {
+            const name = document.getElementById('regName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+
+            if (!name || !phone) { alert('请填写姓名和手机号'); return; }
+            if (members.find(m => m.phone === phone)) { alert('该手机号已注册'); return; }
+
+            const newId = members.length ? Math.max(...members.map(m => m.id)) + 1 : 1;
+            const member = {
+                id: newId,
+                name,
+                phone,
+                points: 0,
+                totalSpent: 0,
+                level: 'bronze',
+                createdAt: new Date().toISOString()
+            };
+
+            members.push(member);
+            saveData('members', members);
+            currentMember = member;
+            localStorage.setItem(CONFIG.storage.currentMember, phone);
+
+            closeModalDirect('registerModal');
+            updateUserUI();
+            renderServices();
+            alert(`注册成功，${name}！成为我们的会员享受优惠吧！`);
+        }
+
+        function closeModal(e, id) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById(id).classList.remove('show');
+        }
+
+        function closeModalDirect(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        init();
+    </script>
+</body>
+</html>
