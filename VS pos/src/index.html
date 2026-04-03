@@ -694,7 +694,8 @@
         
         /* 采购订单/生产 */
         .order-list-container { max-height: 300px; overflow-y: auto; }
-        .order-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+        .order-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 8px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+        .order-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .order-id { font-weight: 600; color: var(--primary); }
         .order-info { font-size: 13px; color: var(--gray-600); margin-bottom: 8px; }
@@ -703,6 +704,39 @@
         .po-items-section { margin-top: 16px; border-top: 1px solid var(--gray-200); padding-top: 16px; }
         .po-summary { background: var(--gray-50); padding: 12px; border-radius: 8px; margin-top: 16px; }
         .production-summary { display: flex; justify-content: space-between; padding: 12px; background: var(--success); color: white; border-radius: 8px; margin-top: 16px; font-weight: 600; }
+        
+        /* 拆解功能 */
+        .disassemble-form { padding: 0; }
+        .disassemble-header { background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); color: white; padding: 20px; border-radius: 12px 12px 0 0; }
+        .disassemble-items { padding: 16px 0; }
+        .disassemble-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gray-100); }
+        .disassemble-item-info { flex: 1; }
+        .disassemble-item-name { font-weight: 600; }
+        .disassemble-item-cost { font-size: 12px; color: var(--gray-500); }
+        .disassemble-item-qty { display: flex; align-items: center; gap: 8px; }
+        .disassemble-result { background: var(--gray-50); padding: 16px; border-radius: 8px; margin: 16px 0; }
+        .disassemble-result-title { font-weight: 600; margin-bottom: 12px; color: var(--gray-600); }
+        .component-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--gray-200); }
+        .component-item:last-child { border-bottom: none; }
+        
+        /* 客户显示器 */
+        .display-list { max-height: 400px; overflow-y: auto; }
+        .display-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 12px; transition: all 0.2s; }
+        .display-card:hover { border-color: var(--primary); }
+        .display-icon { width: 48px; height: 48px; background: var(--gray-100); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .display-info { flex: 1; }
+        .display-name { font-weight: 600; font-size: 15px; }
+        .display-ip { font-size: 12px; color: var(--gray-500); }
+        .display-status { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+        .display-status.online { color: var(--success); }
+        .display-status.offline { color: var(--gray-500); }
+        .display-actions { display: flex; gap: 8px; }
+        
+        /* 打印机机组 */
+        .printer-group-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+        .printer-group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .printer-group-categories { display: flex; flex-wrap: wrap; gap: 6px; }
+        .category-tag { padding: 4px 10px; background: var(--gray-100); border-radius: 20px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -745,6 +779,10 @@
                     <div class="nav-item" data-panel="items">
                         <span class="icon">📦</span>
                         <span>商品管理</span>
+                    </div>
+                    <div class="nav-item" data-panel="suppliers">
+                        <span class="icon">🚚</span>
+                        <span>供应商管理</span>
                     </div>
                     <div class="nav-item" data-panel="members">
                         <span class="icon">👥</span>
@@ -1146,6 +1184,57 @@
                     </div>
                 </div>
 
+                <!-- 供应商管理 -->
+                <div id="suppliers-panel" class="panel">
+                    <div class="page-header">
+                        <h2 class="page-title">供应商管理</h2>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" onclick="showAddSupplierModal()">+ 添加供应商</button>
+                            <button class="btn btn-outline" onclick="exportSuppliersCSV()">📥 导出CSV</button>
+                            <button class="btn btn-outline" onclick="showImportSuppliersModal()">📤 导入CSV</button>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="icon">🚚</div>
+                            <div class="value" id="statTotalSuppliers">0</div>
+                            <div class="label">供应商总数</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="icon">✅</div>
+                            <div class="value" id="statActiveSuppliers">0</div>
+                            <div class="label">启用中</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="icon">⚠️</div>
+                            <div class="value" id="statLinkedProducts">0</div>
+                            <div class="label">关联商品</div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" placeholder="搜索供应商..." id="supplierSearch" oninput="renderSuppliersTable()">
+                        <select class="form-select" id="supplierStatusFilter" onchange="renderSuppliersTable()">
+                            <option value="">全部状态</option>
+                            <option value="active">启用</option>
+                            <option value="inactive">禁用</option>
+                        </select>
+                    </div>
+                    
+                    <div class="data-table">
+                        <div class="table-header" style="grid-template-columns: 2fr 1.5fr 2fr 1fr 1fr 1fr;">
+                            <span>名称</span>
+                            <span>联系方式</span>
+                            <span>地址</span>
+                            <span>关联商品</span>
+                            <span>状态</span>
+                            <span>操作</span>
+                        </div>
+                        <div id="suppliersTable"></div>
+                    </div>
+                </div>
+
                 <!-- 会员管理 -->
                 <div id="members-panel" class="panel">
                     <div class="page-header">
@@ -1509,6 +1598,7 @@
                         <div class="settings-tab" onclick="switchSettingsTab('currency', this)">💱 货币</div>
                         <div class="settings-tab" onclick="switchSettingsTab('dining', this)">🍽️ 用餐选项</div>
                         <div class="settings-tab" onclick="switchSettingsTab('kitchen', this)">🍳 厨房打印</div>
+                        <div class="settings-tab" onclick="switchSettingsTab('displays', this)">🖥️ 客户显示器</div>
                         <div class="settings-tab" onclick="switchSettingsTab('integrations', this)">🔗 集成</div>
                         <div class="settings-tab" onclick="switchSettingsTab('offline', this)">📴 离线模式</div>
                         <div class="settings-tab" onclick="switchSettingsTab('apiDocs', this)">📡 API</div>
@@ -2042,6 +2132,18 @@
                         </div>
                     </div>
                     
+                    <!-- 客户显示器 -->
+                    <div id="settings-displays" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">🖥️ 客户显示器</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">连接客户显示器（CDS），在销售时显示购物车和金额信息。</p>
+                            
+                            <div id="customerDisplaysList" class="display-list"></div>
+                            
+                            <button class="btn btn-primary" onclick="showAddDisplayModal()" style="margin-top:16px;width:100%;">+ 添加客户显示器</button>
+                        </div>
+                    </div>
+                    
                     <!-- 支付集成 -->
                     <div id="settings-integrations" class="settings-content" style="display:none;">
                         <div class="settings-section">
@@ -2505,7 +2607,10 @@
                 settings: 'vsevice_settings',
                 features: 'vsevice_features',
                 diningOptions: 'vsevice_dining_options',
-                kitchenPrinters: 'vsevice_kitchen_printers'
+                kitchenPrinters: 'vsevice_kitchen_printers',
+                suppliers: 'vsevice_suppliers',
+                customerDisplays: 'vsevice_customer_displays',
+                printerGroups: 'vsevice_printer_groups'
             },
             categoryNames: { massage: '按摩', spa: 'SPA', beauty: '美容', health: '养生', other: '其他', package: '套票', product: '产品' },
             levelNames: { bronze: '铜卡', silver: '银卡', gold: '金卡', diamond: '钻卡' },
@@ -2523,13 +2628,16 @@
         let commissions = [];
         let suspendedOrders = [];
         let shifts = [];
+        let suppliers = [];
+        let customerDisplays = [];
+        let printerGroups = [];
         let diningOptions = [
             { id: 'dine_in', name: '堂食', icon: '🍽️', active: true, sort: 1 },
             { id: 'takeout', name: '外带', icon: '🥡', active: true, sort: 2 },
             { id: 'delivery', name: '外送', icon: '🚗', active: false, sort: 3 }
         ];
         let kitchenPrinters = [
-            { id: 'kp1', name: '后厨打印机1', categories: ['massage', 'spa'], active: true }
+            { id: 'kp1', name: '后厨打印机1', categories: ['massage', 'spa'], active: true, printOrders: false }
         ];
         let features = {
             shifts: true, timeClock: true, openTickets: true,
@@ -2574,6 +2682,9 @@
             commissions = JSON.parse(localStorage.getItem(CONFIG.storage.commissions) || '[]');
             suspendedOrders = JSON.parse(localStorage.getItem(CONFIG.storage.suspended) || '[]');
             shifts = JSON.parse(localStorage.getItem(CONFIG.storage.shifts) || '[]');
+            suppliers = JSON.parse(localStorage.getItem(CONFIG.storage.suppliers) || '[]');
+            customerDisplays = JSON.parse(localStorage.getItem(CONFIG.storage.customerDisplays) || '[]');
+            printerGroups = JSON.parse(localStorage.getItem(CONFIG.storage.printerGroups) || '[]');
             
             const savedDining = JSON.parse(localStorage.getItem(CONFIG.storage.diningOptions) || '[]');
             if (savedDining.length > 0) diningOptions = savedDining;
@@ -2624,7 +2735,320 @@
                 saveData('members', members);
             }
             
+            if (suppliers.length === 0) {
+                suppliers = [
+                    { id: 'SUP001', name: '泰国进口精油', phone: '086-12345678', email: 'thai@supplier.com', address: '泰国曼谷素坤逸路88号', notes: '主营泰国进口精油和按摩用品', defaultCost: 50, status: 'active', createdAt: new Date().toISOString() },
+                    { id: 'SUP002', name: '芳疗馆批发', phone: '021-88888888', email: 'fangliao@wholesale.com', address: '上海市静安区南京西路100号', notes: '专业芳疗产品供应商', defaultCost: 80, status: 'active', createdAt: new Date().toISOString() },
+                    { id: 'SUP003', name: '足疗用品批发', phone: '020-66666666', email: 'zuoliao@wholesale.com', address: '广州市白云区足疗路200号', notes: '', defaultCost: 30, status: 'active', createdAt: new Date().toISOString() }
+                ];
+                saveData('suppliers', suppliers);
+            }
+            
             updateOrderBadge();
+        }
+        
+        // 供应商管理
+        function renderSuppliersTable() {
+            const table = document.getElementById('suppliersTable');
+            const search = document.getElementById('supplierSearch')?.value?.toLowerCase() || '';
+            const statusFilter = document.getElementById('supplierStatusFilter')?.value || '';
+            
+            let filtered = suppliers.filter(s => {
+                const matchSearch = s.name.toLowerCase().includes(search) || 
+                    (s.phone || '').includes(search) || 
+                    (s.email || '').toLowerCase().includes(search);
+                const matchStatus = !statusFilter || s.status === statusFilter;
+                return matchSearch && matchStatus;
+            });
+            
+            if (filtered.length === 0) {
+                table.innerHTML = '<div class="empty-state"><div class="icon">🚚</div><p>暂无供应商</p></div>';
+                return;
+            }
+            
+            table.innerHTML = filtered.map(s => {
+                const linkedProducts = services.filter(svc => svc.supplier === s.name).length;
+                return `
+                <div class="table-row" style="grid-template-columns: 2fr 1.5fr 2fr 1fr 1fr 1fr;">
+                    <span style="font-weight:600;">${s.name}</span>
+                    <span style="color:var(--gray-600);font-size:12px;">
+                        ${s.phone ? '📞 ' + s.phone + '<br>' : ''}
+                        ${s.email ? '✉️ ' + s.email : ''}
+                    </span>
+                    <span style="color:var(--gray-500);font-size:12px;">${s.address || '-'}</span>
+                    <span style="color:var(--primary);font-weight:600;">${linkedProducts}</span>
+                    <span><span class="status-badge ${s.status === 'active' ? 'active' : 'inactive'}">${s.status === 'active' ? '启用' : '禁用'}</span></span>
+                    <span>
+                        <button class="btn btn-sm btn-outline" onclick="showEditSupplierModal('${s.id}')">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSupplier('${s.id}')">🗑️</button>
+                    </span>
+                </div>
+            `}).join('');
+            
+            document.getElementById('statTotalSuppliers').textContent = suppliers.length;
+            document.getElementById('statActiveSuppliers').textContent = suppliers.filter(s => s.status === 'active').length;
+            document.getElementById('statLinkedProducts').textContent = services.filter(svc => suppliers.some(s => s.name === svc.supplier)).length;
+        }
+        
+        function showAddSupplierModal() {
+            showModal('添加供应商', `
+                <div class="form-group">
+                    <label class="form-label">供应商名称 *</label>
+                    <input type="text" class="form-input" id="supplierName" placeholder="输入供应商名称（唯一）">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">电话</label>
+                        <input type="tel" class="form-input" id="supplierPhone" placeholder="电话">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">邮箱</label>
+                        <input type="email" class="form-input" id="supplierEmail" placeholder="邮箱">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">地址</label>
+                    <textarea class="form-input" id="supplierAddress" rows="2" placeholder="详细地址"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <textarea class="form-input" id="supplierNotes" rows="2" placeholder="备注信息"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">默认采购成本</label>
+                    <input type="number" class="form-input" id="supplierDefaultCost" placeholder="用于自动填充采购订单">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">状态</label>
+                    <select class="form-select" id="supplierStatus">
+                        <option value="active">启用</option>
+                        <option value="inactive">禁用</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveSupplier()">保存</button>
+                </div>
+            `);
+        }
+        
+        function showEditSupplierModal(id) {
+            const supplier = suppliers.find(s => s.id === id);
+            if (!supplier) return;
+            
+            const linkedProducts = services.filter(svc => svc.supplier === supplier.name);
+            
+            showModal('编辑供应商 - ' + supplier.name, `
+                <div class="form-group">
+                    <label class="form-label">供应商名称 *</label>
+                    <input type="text" class="form-input" id="supplierName" value="${supplier.name}">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">电话</label>
+                        <input type="tel" class="form-input" id="supplierPhone" value="${supplier.phone || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">邮箱</label>
+                        <input type="email" class="form-input" id="supplierEmail" value="${supplier.email || ''}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">地址</label>
+                    <textarea class="form-input" id="supplierAddress" rows="2">${supplier.address || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <textarea class="form-input" id="supplierNotes" rows="2">${supplier.notes || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">默认采购成本</label>
+                    <input type="number" class="form-input" id="supplierDefaultCost" value="${supplier.defaultCost || ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">状态</label>
+                    <select class="form-select" id="supplierStatus">
+                        <option value="active" ${supplier.status === 'active' ? 'selected' : ''}>启用</option>
+                        <option value="inactive" ${supplier.status === 'inactive' ? 'selected' : ''}>禁用</option>
+                    </select>
+                </div>
+                ${linkedProducts.length > 0 ? `
+                <div style="margin-top:16px;padding:12px;background:#f8f9fa;border-radius:8px;">
+                    <div style="font-weight:600;margin-bottom:8px;">📦 关联商品 (${linkedProducts.length})</div>
+                    ${linkedProducts.map(p => `
+                        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e9ecef;font-size:13px;">
+                            <span>${p.name}</span>
+                            <span style="color:var(--gray-500);">¥${p.cost || '-'}/件</span>
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveSupplier('${id}')">保存</button>
+                </div>
+            `);
+        }
+        
+        function saveSupplier(editId) {
+            const name = document.getElementById('supplierName').value.trim();
+            if (!name) {
+                showToast('error', '错误', '请输入供应商名称');
+                return;
+            }
+            
+            const existing = suppliers.find(s => s.name === name && s.id !== editId);
+            if (existing) {
+                showToast('error', '错误', '供应商名称已存在');
+                return;
+            }
+            
+            const supplierData = {
+                id: editId || 'SUP' + Date.now().toString().slice(-6),
+                name,
+                phone: document.getElementById('supplierPhone').value.trim(),
+                email: document.getElementById('supplierEmail').value.trim(),
+                address: document.getElementById('supplierAddress').value.trim(),
+                notes: document.getElementById('supplierNotes').value.trim(),
+                defaultCost: parseFloat(document.getElementById('supplierDefaultCost').value) || 0,
+                status: document.getElementById('supplierStatus').value,
+                createdAt: editId ? suppliers.find(s => s.id === editId)?.createdAt : new Date().toISOString()
+            };
+            
+            if (editId) {
+                const idx = suppliers.findIndex(s => s.id === editId);
+                if (idx !== -1) {
+                    const oldName = suppliers[idx].name;
+                    suppliers[idx] = supplierData;
+                    if (oldName !== name) {
+                        services.forEach(svc => {
+                            if (svc.supplier === oldName) svc.supplier = name;
+                        });
+                        saveData('services', services);
+                    }
+                }
+            } else {
+                suppliers.push(supplierData);
+            }
+            
+            saveData('suppliers', suppliers);
+            closeModal();
+            renderSuppliersTable();
+            showToast('success', '保存成功', editId ? '供应商已更新' : '供应商已添加');
+        }
+        
+        function deleteSupplier(id) {
+            const supplier = suppliers.find(s => s.id === id);
+            if (!supplier) return;
+            
+            const linkedProducts = services.filter(svc => svc.supplier === supplier.name);
+            
+            if (linkedProducts.length > 0) {
+                showModal('确认删除', `
+                    <div style="text-align:center;padding:20px;">
+                        <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+                        <p style="margin-bottom:12px;">该供应商有 <strong>${linkedProducts.length}</strong> 个关联商品</p>
+                        <p style="color:var(--gray-500);font-size:13px;">删除后，商品中的供应商信息将清空</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                        <button class="btn btn-danger" onclick="confirmDeleteSupplier('${id}')">确认删除</button>
+                    </div>
+                `);
+            } else {
+                confirmDeleteSupplier(id);
+            }
+        }
+        
+        function confirmDeleteSupplier(id) {
+            suppliers = suppliers.filter(s => s.id !== id);
+            saveData('suppliers', suppliers);
+            closeModal();
+            renderSuppliersTable();
+            showToast('success', '已删除', '供应商已删除');
+        }
+        
+        function exportSuppliersCSV() {
+            if (suppliers.length === 0) {
+                showToast('info', '无数据', '暂无供应商数据');
+                return;
+            }
+            
+            let csv = 'Name,Phone,Email,Address,Notes,Default purchase cost,Status\n';
+            suppliers.forEach(s => {
+                csv += `"${s.name}","${s.phone || ''}","${s.email || ''}","${s.address || ''}","${s.notes || ''}",${s.defaultCost || ''},${s.status}\n`;
+            });
+            
+            downloadCSV(csv, 'suppliers_export.csv');
+            showToast('success', '导出成功', '供应商CSV已导出');
+        }
+        
+        function showImportSuppliersModal() {
+            showModal('导入供应商', `
+                <p style="margin-bottom:16px;">支持CSV格式导入，请按以下格式准备文件：</p>
+                <pre style="background:#f8f9fa;padding:12px;border-radius:4px;font-size:12px;overflow-x:auto;">
+Name,Phone,Email,Address,Notes,Default purchase cost,Status
+供应商A,086-12345678,supplier@email.com,地址,备注,50,active
+供应商B,086-87654321,supplier2@email.com,地址2,,100,active
+                </pre>
+                <div style="margin:16px 0;">
+                    <input type="file" id="supplierCSVFile" accept=".csv" style="display:none;" onchange="importSuppliersCSV(event)">
+                    <button class="btn btn-primary" onclick="document.getElementById('supplierCSVFile').click()">📂 选择CSV文件</button>
+                </div>
+                <div style="margin-top:16px;">
+                    <button class="btn btn-outline" onclick="exportSuppliersTemplate()">📋 下载模板</button>
+                </div>
+            `);
+        }
+        
+        function importSuppliersCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const lines = content.split('\n').filter(line => line.trim());
+                
+                if (lines.length < 2) {
+                    showToast('error', '格式错误', 'CSV文件至少需要标题行和一行数据');
+                    return;
+                }
+                
+                let imported = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(',').map(c => c.replace(/"/g, '').trim());
+                    if (cols.length >= 1 && cols[0]) {
+                        const exists = suppliers.find(s => s.name === cols[0]);
+                        if (!exists) {
+                            suppliers.push({
+                                id: 'SUP' + Date.now().toString().slice(-6) + i,
+                                name: cols[0],
+                                phone: cols[1] || '',
+                                email: cols[2] || '',
+                                address: cols[3] || '',
+                                notes: cols[4] || '',
+                                defaultCost: parseFloat(cols[5]) || 0,
+                                status: cols[6] === 'inactive' ? 'inactive' : 'active',
+                                createdAt: new Date().toISOString()
+                            });
+                            imported++;
+                        }
+                    }
+                }
+                
+                saveData('suppliers', suppliers);
+                closeModal();
+                renderSuppliersTable();
+                showToast('success', '导入成功', `成功导入 ${imported} 个供应商`);
+            };
+            reader.readAsText(file);
+        }
+        
+        function exportSuppliersTemplate() {
+            let csv = 'Name,Phone,Email,Address,Notes,Default purchase cost,Status\n';
+            csv += '"示例供应商","086-12345678","supplier@email.com","地址","备注",100,active\n';
+            downloadCSV(csv, 'suppliers_template.csv');
         }
 
         // 导航
@@ -2654,6 +3078,7 @@
                 case 'tickets': renderTickets(); updateTicketStats(); break;
                 case 'invoices': renderInvoices(); updateInvoiceStats(); break;
                 case 'items': renderItemsTable(); break;
+                case 'suppliers': renderSuppliersTable(); break;
                 case 'members': renderMembersTable(); updateMemberStats(); break;
                 case 'employees': renderEmployeesTable(); updateEmployeeStats(); break;
                 case 'commissions': renderCommissions(); updateCommissionStats(); break;
@@ -5569,6 +5994,372 @@
         function showStockAdjustmentModal() {
             showToast('info', '提示', '库存调整功能开发中');
         }
+        
+        // 拆解功能
+        let disassembles = JSON.parse(localStorage.getItem('vsevice_disassembles') || '[]');
+        
+        function showDisassembleModal(productionId) {
+            const compositeItems = services.filter(s => s.isComposite && (s.stock || 0) > 0);
+            
+            showModal('添加拆解', `
+                <div class="disassemble-form">
+                    <div class="disassemble-header">
+                        <div style="font-size:14px;opacity:0.8;">反向生产 - 将组合商品拆分为原材料</div>
+                    </div>
+                    
+                    <div style="padding:16px;">
+                        <div class="form-group">
+                            <label class="form-label">选择组合商品 *</label>
+                            <select class="form-select" id="disItem" onchange="updateDisassemblePreview()">
+                                <option value="">选择组合商品...</option>
+                                ${compositeItems.map(s => `
+                                    <option value="${s.id}" data-stock="${s.stock || 0}" data-cost="${s.cost || 0}">
+                                        ${s.name} (库存: ${s.stock || 0}, 成本: ¥${s.cost || 0})
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">拆解数量 *</label>
+                            <input type="number" class="form-input" id="disQty" value="1" min="1" onchange="updateDisassemblePreview()">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">备注</label>
+                            <textarea class="form-input" id="disNote" rows="2" placeholder="拆解原因或备注"></textarea>
+                        </div>
+                        
+                        <div id="disassemblePreview" style="display:none;">
+                            <div class="disassemble-result">
+                                <div class="disassemble-result-title">📦 拆解结果预览</div>
+                                <div id="componentPreview"></div>
+                            </div>
+                        </div>
+                        
+                        <div id="disassembleWarning" style="display:none;padding:12px;background:rgba(220,53,69,0.1);border-radius:8px;margin-top:12px;">
+                            <span style="color:var(--danger);">⚠️ 库存不足，无法完成拆解</span>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                        <button class="btn btn-primary" id="saveDisassembleBtn" onclick="saveDisassemble()">保存拆解</button>
+                    </div>
+                </div>
+            `);
+            
+            if (compositeItems.length === 0) {
+                showToast('info', '无可拆解商品', '暂无组合商品或有库存的组合商品');
+            }
+        }
+        
+        function updateDisassemblePreview() {
+            const itemId = document.getElementById('disItem').value;
+            const qty = parseInt(document.getElementById('disQty').value) || 1;
+            const preview = document.getElementById('disassemblePreview');
+            const warning = document.getElementById('disassembleWarning');
+            const saveBtn = document.getElementById('saveDisassembleBtn');
+            
+            if (!itemId) {
+                preview.style.display = 'none';
+                warning.style.display = 'none';
+                return;
+            }
+            
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            const components = item.components || [];
+            
+            if (components.length === 0) {
+                preview.innerHTML = '<p style="color:var(--gray-500);text-align:center;">此商品未配置组件，无法拆解</p>';
+                preview.style.display = 'block';
+                warning.style.display = 'none';
+                saveBtn.disabled = true;
+                return;
+            }
+            
+            if (qty > (item.stock || 0)) {
+                warning.style.display = 'block';
+                preview.style.display = 'none';
+                saveBtn.disabled = true;
+                return;
+            }
+            
+            warning.style.display = 'none';
+            preview.style.display = 'block';
+            saveBtn.disabled = false;
+            
+            let html = '';
+            components.forEach(comp => {
+                const compService = services.find(s => s.id === comp.itemId);
+                const totalQty = comp.qty * qty;
+                html += `
+                    <div class="component-item">
+                        <span>${compService?.name || comp.name || '未知组件'} x ${comp.qty} x ${qty} = <strong>${totalQty}</strong></span>
+                        <span style="color:var(--gray-500);">库存 ${(compService?.stock || 0) + totalQty}</span>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('componentPreview').innerHTML = html;
+        }
+        
+        function saveDisassemble() {
+            const itemId = document.getElementById('disItem').value;
+            const qty = parseInt(document.getElementById('disQty').value) || 1;
+            const note = document.getElementById('disNote').value;
+            
+            if (!itemId) {
+                showToast('error', '错误', '请选择组合商品');
+                return;
+            }
+            
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            if (qty > (item.stock || 0)) {
+                showToast('error', '库存不足', '拆解数量超过当前库存');
+                return;
+            }
+            
+            const components = item.components || [];
+            if (components.length === 0) {
+                showToast('error', '无法拆解', '此商品未配置组件');
+                return;
+            }
+            
+            const disassemble = {
+                id: 'DIS' + Date.now(),
+                itemId,
+                itemName: item.name,
+                qty,
+                components: components.map(c => ({ ...c })),
+                note,
+                date: new Date().toISOString(),
+                status: 'completed'
+            };
+            
+            item.stock -= qty;
+            
+            components.forEach(comp => {
+                const compService = services.find(s => s.id === comp.itemId);
+                if (compService) {
+                    compService.stock = (compService.stock || 0) + (comp.qty * qty);
+                }
+            });
+            
+            saveData('services', services);
+            disassembles.unshift(disassemble);
+            localStorage.setItem('vsevice_disassembles', JSON.stringify(disassembles));
+            
+            closeModal();
+            showDisassemblesList();
+            showToast('success', '拆解完成', `已将 ${item.name} x${qty} 拆解为 ${components.length} 个组件`);
+        }
+        
+        function showDisassemblesList() {
+            const container = document.getElementById('disassemblesList');
+            if (!container) return;
+            
+            if (disassembles.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#6c757d;padding:20px;">暂无拆解记录</p>';
+                return;
+            }
+            
+            container.innerHTML = disassembles.map(d => `
+                <div class="order-card" onclick="showDisassembleDetail('${d.id}')">
+                    <div class="order-header">
+                        <span class="order-id">${d.id}</span>
+                        <span class="status-badge completed">已完成</span>
+                    </div>
+                    <div class="order-info">
+                        <div>商品: ${d.itemName}</div>
+                        <div>数量: ${d.qty}</div>
+                        <div>日期: ${new Date(d.date).toLocaleDateString('zh-CN')}</div>
+                    </div>
+                    <div style="font-size:12px;color:var(--gray-500);">组件: ${d.components?.length || 0} 个</div>
+                </div>
+            `).join('');
+        }
+        
+        function showDisassembleDetail(id) {
+            const dis = disassembles.find(d => d.id === id);
+            if (!dis) return;
+            
+            let componentsHtml = '';
+            dis.components?.forEach(c => {
+                const compService = services.find(s => s.id === c.itemId);
+                componentsHtml += `
+                    <div class="component-item">
+                        <span>${compService?.name || c.name || '未知'} x ${c.qty * dis.qty}</span>
+                        <span style="color:var(--gray-500);">¥${((compService?.cost || 0) * c.qty * dis.qty).toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            
+            showModal('拆解详情 - ' + dis.id, `
+                <div style="padding:0;">
+                    <div style="background:linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);color:white;padding:20px;border-radius:12px 12px 0 0;">
+                        <div style="font-size:18px;font-weight:700;">${dis.itemName} x ${dis.qty}</div>
+                        <div style="font-size:13px;opacity:0.8;margin-top:4px;">${new Date(dis.date).toLocaleString('zh-CN')}</div>
+                    </div>
+                    
+                    <div style="padding:16px;">
+                        <div style="margin-bottom:16px;">
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--gray-600);">📦 消耗的组合商品</div>
+                            <div style="display:flex;justify-content:space-between;padding:8px;background:var(--gray-50);border-radius:6px;">
+                                <span>${dis.itemName}</span>
+                                <span>x ${dis.qty}</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--gray-600);">🧩 产生的组件</div>
+                            <div class="disassemble-result">
+                                ${componentsHtml || '<p style="color:var(--gray-500);">无组件数据</p>'}
+                            </div>
+                        </div>
+                        
+                        ${dis.note ? `
+                        <div style="margin-top:16px;padding:12px;background:var(--gray-50);border-radius:6px;">
+                            <div style="font-weight:600;margin-bottom:4px;">备注</div>
+                            <div style="color:var(--gray-600);font-size:13px;">${dis.note}</div>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="margin-top:16px;display:flex;gap:8px;">
+                            <button class="btn btn-outline" onclick="exportDisassemblePDF('${id}')" style="flex:1;">📄 导出PDF</button>
+                            <button class="btn btn-outline" onclick="exportDisassembleCSV('${id}')" style="flex:1;">📥 导出CSV</button>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function exportDisassemblePDF(id) {
+            const dis = disassembles.find(d => d.id === id);
+            if (!dis) return;
+            
+            let content = `VS pos 拆解单
+================
+拆解单号: ${dis.id}
+日期: ${new Date(dis.date).toLocaleString('zh-CN')}
+
+商品: ${dis.itemName}
+数量: ${dis.qty}
+
+组件明细:
+`;
+            dis.components?.forEach(c => {
+                const compService = services.find(s => s.id === c.itemId);
+                content += `- ${compService?.name || c.name} x ${c.qty * dis.qty}\n`;
+            });
+            
+            content += `
+备注: ${dis.note || '无'}
+`;
+            
+            showToast('info', '导出PDF', 'PDF导出功能开发中');
+        }
+        
+        function exportDisassembleCSV(id) {
+            const dis = disassembles.find(d => d.id === id);
+            if (!dis) return;
+            
+            let csv = `拆解单号,日期,商品,数量,组件名称,组件数量,成本\n`;
+            dis.components?.forEach(c => {
+                const compService = services.find(s => s.id === c.itemId);
+                csv += `${dis.id},${new Date(dis.date).toLocaleDateString('zh-CN')},${dis.itemName},${dis.qty},${compService?.name || ''},${c.qty * dis.qty},${(compService?.cost || 0) * c.qty * dis.qty}\n`;
+            });
+            
+            downloadCSV(csv, `disassemble_${dis.id}.csv`);
+            showToast('success', '导出成功', '拆解CSV已导出');
+        }
+        
+        // 组合商品管理
+        function showCompositeItemModal(itemId) {
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            const currentComponents = item.components || [];
+            
+            showModal('编辑组合商品 - ' + item.name, `
+                <div style="padding:0;">
+                    <div style="background:var(--gray-50);padding:16px;border-radius:8px;margin-bottom:16px;">
+                        <div style="font-weight:600;">${item.name}</div>
+                        <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">当前库存: ${item.stock || 0}</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <label class="form-label" style="margin:0;">组件列表</label>
+                            <button class="btn btn-sm btn-outline" onclick="addComponentRow()">+ 添加组件</button>
+                        </div>
+                        <div id="componentsList">
+                            ${currentComponents.map((c, idx) => `
+                                <div class="component-row" style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+                                    <select class="form-select" style="flex:2;" onchange="updateComponentCost(this)">
+                                        <option value="">选择组件...</option>
+                                        ${services.filter(s => s.id !== itemId).map(s => `<option value="${s.id}" data-cost="${s.cost || 0}" ${c.itemId === s.id ? 'selected' : ''}>${s.name} (¥${s.cost || 0})</option>`).join('')}
+                                    </select>
+                                    <input type="number" class="form-input" style="width:80px;" placeholder="用量" value="${c.qty}" min="1">
+                                    <button class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">🗑️</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                        <button class="btn btn-primary" onclick="saveCompositeItem('${itemId}')">保存</button>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function addComponentRow() {
+            const list = document.getElementById('componentsList');
+            list.innerHTML += `
+                <div class="component-row" style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+                    <select class="form-select" style="flex:2;" onchange="updateComponentCost(this)">
+                        <option value="">选择组件...</option>
+                        ${services.map(s => `<option value="${s.id}" data-cost="${s.cost || 0}">${s.name} (¥${s.cost || 0})</option>`).join('')}
+                    </select>
+                    <input type="number" class="form-input" style="width:80px;" placeholder="用量" value="1" min="1">
+                    <button class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">🗑️</button>
+                </div>
+            `;
+        }
+        
+        function updateComponentCost(el) {
+        }
+        
+        function saveCompositeItem(itemId) {
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            const components = [];
+            document.querySelectorAll('.component-row').forEach(row => {
+                const select = row.querySelector('select');
+                const qty = parseInt(row.querySelector('input').value) || 1;
+                if (select.value) {
+                    components.push({
+                        itemId: select.value,
+                        qty
+                    });
+                }
+            });
+            
+            item.components = components;
+            item.isComposite = components.length > 0;
+            saveData('services', services);
+            
+            closeModal();
+            renderItemsTable();
+            showToast('success', '已保存', '组合商品配置已更新');
+        }
 
         function showAddMemberModal() {
             const cardNo = 'VIP' + String(Date.now()).slice(-6);
@@ -6679,6 +7470,12 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             el.classList.add('active');
             document.querySelectorAll('.settings-content').forEach(c => c.style.display = 'none');
             document.getElementById('settings-' + tab).style.display = 'block';
+            
+            if (tab === 'displays') {
+                renderCustomerDisplays();
+            } else if (tab === 'kitchen') {
+                renderKitchenPrinters();
+            }
         }
 
         function loadFeatures() {
@@ -6878,43 +7675,270 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
         function renderKitchenPrinters() {
             const container = document.getElementById('kitchenPrinterGroups');
             if (!container) return;
-            container.innerHTML = kitchenPrinters.map(group => `
-                <div style="padding:16px;background:#f8f9fa;border-radius:8px;margin-bottom:12px;">
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-                        <span style="font-size:20px;">🖨️</span>
-                        <input type="text" class="form-input" value="${group.name}" onchange="updateKitchenPrinterName('${group.id}', this.value)" style="flex:1;">
-                        <label class="toggle-switch" style="transform:scale(0.8);">
-                            <input type="checkbox" ${group.active ? 'checked' : ''} onchange="toggleKitchenPrinter('${group.id}')">
-                            <span class="toggle-slider"></span>
-                        </label>
-                        <button class="btn btn-sm btn-danger" onclick="deleteKitchenPrinter('${group.id}')">🗑️</button>
+            
+            if (kitchenPrinters.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:40px;color:var(--gray-500);">
+                        <div style="font-size:48px;margin-bottom:16px;">🖨️</div>
+                        <p>暂无打印机组</p>
+                        <p style="font-size:12px;margin-top:8px;">点击下方按钮创建第一个打印机组</p>
                     </div>
-                    <div style="font-size:12px;color:#6c757d;margin-bottom:8px;">关联分类：</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                        ${Object.entries(CONFIG.categoryNames).map(([cat, name]) => `
-                            <label style="display:flex;align-items:center;gap:4px;padding:6px 12px;background:${group.categories.includes(cat) ? 'var(--primary)' : '#fff'};color:${group.categories.includes(cat) ? '#fff' : '#333'};border-radius:20px;font-size:12px;cursor:pointer;">
-                                <input type="checkbox" style="display:none;" ${group.categories.includes(cat) ? 'checked' : ''} onchange="toggleKitchenPrinterCategory('${group.id}', '${cat}')">
-                                ${name}
+                `;
+                return;
+            }
+            
+            container.innerHTML = kitchenPrinters.map(group => `
+                <div class="printer-group-card">
+                    <div class="printer-group-header">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <span style="font-size:24px;">🖨️</span>
+                            <div>
+                                <input type="text" class="form-input" value="${group.name}" onchange="updateKitchenPrinterName('${group.id}', this.value)" style="font-weight:600;padding:6px 12px;width:180px;">
+                                <div style="font-size:11px;color:var(--gray-500);margin-top:4px;">IP: ${group.ip || '未配置'}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <label class="toggle-switch" style="transform:scale(0.8);">
+                                <input type="checkbox" ${group.active ? 'checked' : ''} onchange="toggleKitchenPrinter('${group.id}')">
+                                <span class="toggle-slider"></span>
                             </label>
-                        `).join('')}
+                            <button class="btn btn-sm btn-outline" onclick="editKitchenPrinter('${group.id}')">⚙️</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteKitchenPrinter('${group.id}')">🗑️</button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom:12px;">
+                        <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">关联分类：</div>
+                        <div class="printer-group-categories">
+                            ${Object.entries(CONFIG.categoryNames).map(([cat, name]) => `
+                                <span class="category-tag ${group.categories.includes(cat) ? 'active' : ''}" onclick="toggleKitchenPrinterCategory('${group.id}', '${cat}')" style="${group.categories.includes(cat) ? 'background:var(--primary);color:white;' : ''}">
+                                    ${name}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex;gap:8px;font-size:12px;color:var(--gray-500);">
+                        <span>📋 打印收据: ${group.printReceipts ? '✅' : '❌'}</span>
+                        <span>🍳 打印厨房订单: ${group.printOrders ? '✅' : '❌'}</span>
+                        <span>📄 纸宽: ${group.paperWidth || 58}mm</span>
                     </div>
                 </div>
             `).join('');
         }
-
-        function addKitchenPrinterGroup() {
-            const newGroup = {
-                id: 'kp_' + Date.now(),
-                name: '新打印机组 ' + (kitchenPrinters.length + 1),
-                categories: [],
-                active: true
-            };
-            kitchenPrinters.push(newGroup);
-            saveData('kitchenPrinters', kitchenPrinters);
-            renderKitchenPrinters();
-            showToast('success', '成功', '打印机组已添加');
+        
+        function editKitchenPrinter(id) {
+            const printer = kitchenPrinters.find(p => p.id === id);
+            if (!printer) return;
+            
+            showModal('编辑打印机 - ' + printer.name, `
+                <div class="form-group">
+                    <label class="form-label">名称</label>
+                    <input type="text" class="form-input" id="editPrinterName" value="${printer.name}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">型号</label>
+                    <select class="form-select" id="editPrinterModel">
+                        <option value="epson">Epson</option>
+                        <option value="star">Star</option>
+                        <option value="xprinter">Xprinter</option>
+                        <option value="sunmi">Sunmi</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">接口类型</label>
+                    <select class="form-select" id="editPrinterInterface">
+                        <option value="ethernet" ${printer.interface === 'ethernet' ? 'selected' : ''}>以太网</option>
+                        <option value="bluetooth" ${printer.interface === 'bluetooth' ? 'selected' : ''}>蓝牙</option>
+                        <option value="usb" ${printer.interface === 'usb' ? 'selected' : ''}>USB</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">IP地址</label>
+                    <input type="text" class="form-input" id="editPrinterIp" value="${printer.ip || ''}" placeholder="192.168.1.100">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">纸宽</label>
+                    <select class="form-select" id="editPrinterWidth">
+                        <option value="58" ${(printer.paperWidth || 58) === 58 ? 'selected' : ''}>58mm</option>
+                        <option value="80" ${printer.paperWidth === 80 ? 'selected' : ''}>80mm</option>
+                    </select>
+                </div>
+                <div style="padding:12px;background:#f8f9fa;border-radius:8px;margin:16px 0;">
+                    <div class="setting-item" style="padding:8px 0;border:none;">
+                        <div class="setting-info">
+                            <div class="setting-name">打印收据和账单</div>
+                            <div class="setting-desc">启用后打印销售收据</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="editPrintReceipts" ${printer.printReceipts ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item" style="padding:8px 0;border:none;">
+                        <div class="setting-info">
+                            <div class="setting-name">打印厨房订单</div>
+                            <div class="setting-desc">启用后打印厨房订单</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="editPrintOrders" ${printer.printOrders ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item" style="padding:8px 0;border:none;">
+                        <div class="setting-info">
+                            <div class="setting-name">每件商品单独打印</div>
+                            <div class="setting-desc">每件商品打印一张订单票</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="editSingleItem" ${printer.singleItem ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">关联分类</label>
+                    <div class="printer-group-categories" style="margin-top:8px;">
+                        ${Object.entries(CONFIG.categoryNames).map(([cat, name]) => `
+                            <span class="category-tag ${printer.categories.includes(cat) ? 'active' : ''}" onclick="togglePrinterCategoryInEdit('${id}', '${cat}', this)" style="${printer.categories.includes(cat) ? 'background:var(--primary);color:white;' : ''}">
+                                ${name}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-outline" onclick="testPrinter('${id}')">🖨️ 测试</button>
+                    <button class="btn btn-primary" onclick="savePrinterEdit('${id}')">保存</button>
+                </div>
+            `);
         }
-
+        
+        function togglePrinterCategoryInEdit(id, category, el) {
+            const isActive = el.classList.contains('active');
+            el.classList.toggle('active');
+            el.style.background = isActive ? '' : 'var(--primary)';
+            el.style.color = isActive ? '' : 'white';
+        }
+        
+        function savePrinterEdit(id) {
+            const printer = kitchenPrinters.find(p => p.id === id);
+            if (!printer) return;
+            
+            printer.name = document.getElementById('editPrinterName').value;
+            printer.model = document.getElementById('editPrinterModel').value;
+            printer.interface = document.getElementById('editPrinterInterface').value;
+            printer.ip = document.getElementById('editPrinterIp').value;
+            printer.paperWidth = parseInt(document.getElementById('editPrinterWidth').value);
+            printer.printReceipts = document.getElementById('editPrintReceipts').checked;
+            printer.printOrders = document.getElementById('editPrintOrders').checked;
+            printer.singleItem = document.getElementById('editSingleItem').checked;
+            
+            const categories = [];
+            document.querySelectorAll('.category-tag.active').forEach(tag => {
+                const cat = tag.textContent.trim();
+                const found = Object.entries(CONFIG.categoryNames).find(([, name]) => name === cat);
+                if (found) categories.push(found[0]);
+            });
+            printer.categories = categories;
+            
+            saveData('kitchenPrinters', kitchenPrinters);
+            closeModal();
+            renderKitchenPrinters();
+            showToast('success', '已保存', '打印机设置已更新');
+        }
+        
+        function testPrinter(id) {
+            const printer = kitchenPrinters.find(p => p.id === id);
+            showToast('info', '测试打印', `正在发送测试页到 ${printer?.name || '打印机'}...`);
+            setTimeout(() => showToast('success', '完成', '测试页已发送'), 1500);
+        }
+        
+        function addKitchenPrinterGroup() {
+            showModal('添加打印机', `
+                <div class="form-group">
+                    <label class="form-label">名称 *</label>
+                    <input type="text" class="form-input" id="newPrinterName" placeholder="例如：厨房打印机1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">型号</label>
+                    <select class="form-select" id="newPrinterModel">
+                        <option value="epson">Epson</option>
+                        <option value="star">Star</option>
+                        <option value="xprinter">Xprinter</option>
+                        <option value="sunmi">Sunmi</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">接口类型</label>
+                    <select class="form-select" id="newPrinterInterface">
+                        <option value="ethernet">以太网</option>
+                        <option value="bluetooth">蓝牙</option>
+                        <option value="usb">USB</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">IP地址</label>
+                    <input type="text" class="form-input" id="newPrinterIp" placeholder="192.168.1.100">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">纸宽</label>
+                    <select class="form-select" id="newPrinterWidth">
+                        <option value="58">58mm</option>
+                        <option value="80">80mm</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">关联分类</label>
+                    <div class="printer-group-categories" style="margin-top:8px;">
+                        ${Object.entries(CONFIG.categoryNames).map(([cat, name]) => `
+                            <span class="category-tag" onclick="this.classList.toggle('active');this.style.background=this.classList.contains('active')?'var(--primary)':'';this.style.color=this.classList.contains('active')?'white':''">${name}</span>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveNewPrinter()">添加</button>
+                </div>
+            `);
+        }
+        
+        function saveNewPrinter() {
+            const name = document.getElementById('newPrinterName').value.trim();
+            if (!name) {
+                showToast('error', '错误', '请输入打印机名称');
+                return;
+            }
+            
+            const categories = [];
+            document.querySelectorAll('.printer-group-categories .category-tag.active').forEach(tag => {
+                const cat = tag.textContent.trim();
+                const found = Object.entries(CONFIG.categoryNames).find(([, n]) => n === cat);
+                if (found) categories.push(found[0]);
+            });
+            
+            const newPrinter = {
+                id: 'kp_' + Date.now(),
+                name,
+                model: document.getElementById('newPrinterModel').value,
+                interface: document.getElementById('newPrinterInterface').value,
+                ip: document.getElementById('newPrinterIp').value,
+                paperWidth: parseInt(document.getElementById('newPrinterWidth').value) || 58,
+                categories,
+                active: true,
+                printReceipts: false,
+                printOrders: false
+            };
+            
+            kitchenPrinters.push(newPrinter);
+            saveData('kitchenPrinters', kitchenPrinters);
+            closeModal();
+            renderKitchenPrinters();
+            showToast('success', '已添加', `${name} 已添加`);
+        }
+        
         function updateKitchenPrinterName(id, name) {
             const group = kitchenPrinters.find(g => g.id === id);
             if (group) {
@@ -6922,7 +7946,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 saveData('kitchenPrinters', kitchenPrinters);
             }
         }
-
+        
         function toggleKitchenPrinter(id) {
             const group = kitchenPrinters.find(g => g.id === id);
             if (group) {
@@ -6930,7 +7954,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 saveData('kitchenPrinters', kitchenPrinters);
             }
         }
-
+        
         function toggleKitchenPrinterCategory(groupId, category) {
             const group = kitchenPrinters.find(g => g.id === groupId);
             if (group) {
@@ -6944,13 +7968,202 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 renderKitchenPrinters();
             }
         }
-
+        
         function deleteKitchenPrinter(id) {
             if (confirm('确定要删除此打印机组吗？')) {
                 kitchenPrinters = kitchenPrinters.filter(g => g.id !== id);
                 saveData('kitchenPrinters', kitchenPrinters);
                 renderKitchenPrinters();
                 showToast('success', '已删除', '打印机组已删除');
+            }
+        }
+        
+        // 客户显示器
+        function renderCustomerDisplays() {
+            const container = document.getElementById('customerDisplaysList');
+            if (!container) return;
+            
+            if (customerDisplays.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:40px;color:var(--gray-500);">
+                        <div style="font-size:48px;margin-bottom:16px;">🖥️</div>
+                        <p>暂无已配对的客户显示器</p>
+                        <p style="font-size:12px;margin-top:8px;">点击上方按钮添加客户显示器</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = customerDisplays.map(d => `
+                <div class="display-card">
+                    <div class="display-icon">🖥️</div>
+                    <div class="display-info">
+                        <div class="display-name">${d.name}</div>
+                        <div class="display-ip">${d.ip}</div>
+                        <div class="display-status ${d.status === 'online' ? 'online' : 'offline'}">
+                            <span>${d.status === 'online' ? '●' : '○'}</span>
+                            <span>${d.status === 'online' ? '已连接' : '离线'}</span>
+                        </div>
+                    </div>
+                    <div class="display-actions">
+                        <button class="btn btn-sm btn-outline" onclick="editDisplay('${d.id}')">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteDisplay('${d.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showAddDisplayModal() {
+            showModal('添加客户显示器', `
+                <div class="disassemble-form">
+                    <div style="padding:0 0 16px 0;">
+                        <div style="text-align:center;padding:20px;background:linear-gradient(135deg, var(--primary) 0%, #5dade2 100%);color:white;border-radius:12px 12px 0 0;">
+                            <div style="font-size:14px;opacity:0.8;margin-bottom:8px;">请确保CDS应用在同一Wi-Fi下运行</div>
+                        </div>
+                        
+                        <div style="padding:16px;">
+                            <div class="form-group">
+                                <label class="form-label">显示器名称</label>
+                                <input type="text" class="form-input" id="displayName" placeholder="例如：前台客户屏">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">IP地址</label>
+                                <div style="display:flex;gap:8px;">
+                                    <input type="text" class="form-input" id="displayIp" placeholder="例如：192.168.1.100" style="flex:1;">
+                                    <button class="btn btn-outline" onclick="searchDisplays()">🔍 搜索</button>
+                                </div>
+                            </div>
+                            
+                            <div id="searchResults" style="display:none;margin-top:16px;">
+                                <div style="font-weight:600;margin-bottom:8px;color:var(--gray-600);">搜索到的设备</div>
+                                <div id="displaySearchResults"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                        <button class="btn btn-primary" onclick="pairDisplay()">🔗 配对</button>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function searchDisplays() {
+            showToast('info', '搜索中', '正在搜索同一Wi-Fi下的CDS设备...');
+            
+            setTimeout(() => {
+                const mockDevices = [
+                    { name: 'CDS-001', ip: '192.168.1.101' },
+                    { name: 'CDS-002', ip: '192.168.1.102' }
+                ];
+                
+                const results = document.getElementById('searchResults');
+                const resultsList = document.getElementById('displaySearchResults');
+                
+                if (mockDevices.length > 0) {
+                    results.style.display = 'block';
+                    resultsList.innerHTML = mockDevices.map(d => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--gray-50);border-radius:8px;margin-bottom:8px;cursor:pointer;" onclick="selectDisplayDevice('${d.ip}', '${d.name}')">
+                            <div>
+                                <div style="font-weight:600;">${d.name}</div>
+                                <div style="font-size:12px;color:var(--gray-500);">${d.ip}</div>
+                            </div>
+                            <span style="color:var(--primary);">选择</span>
+                        </div>
+                    `).join('');
+                } else {
+                    results.style.display = 'block';
+                    resultsList.innerHTML = '<p style="text-align:center;color:var(--gray-500);padding:20px;">未搜索到设备，请手动输入IP地址</p>';
+                }
+            }, 1500);
+        }
+        
+        function selectDisplayDevice(ip, name) {
+            document.getElementById('displayIp').value = ip;
+            document.getElementById('displayName').value = name;
+            document.getElementById('searchResults').style.display = 'none';
+        }
+        
+        function pairDisplay() {
+            const name = document.getElementById('displayName').value.trim();
+            const ip = document.getElementById('displayIp').value.trim();
+            
+            if (!name || !ip) {
+                showToast('error', '错误', '请输入显示器名称和IP地址');
+                return;
+            }
+            
+            const exists = customerDisplays.find(d => d.ip === ip);
+            if (exists) {
+                showToast('error', '错误', '此显示器已配对');
+                return;
+            }
+            
+            const display = {
+                id: 'DISP' + Date.now(),
+                name,
+                ip,
+                status: 'offline',
+                pairedAt: new Date().toISOString()
+            };
+            
+            customerDisplays.push(display);
+            saveData('customerDisplays', customerDisplays);
+            
+            closeModal();
+            renderCustomerDisplays();
+            showToast('success', '配对成功', `${name} 已配对`);
+        }
+        
+        function editDisplay(id) {
+            const display = customerDisplays.find(d => d.id === id);
+            if (!display) return;
+            
+            showModal('编辑显示器', `
+                <div class="form-group">
+                    <label class="form-label">显示器名称</label>
+                    <input type="text" class="form-input" id="editDisplayName" value="${display.name}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">IP地址</label>
+                    <input type="text" class="form-input" id="editDisplayIp" value="${display.ip}" readonly style="background:var(--gray-100);">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveDisplayEdit('${id}')">保存</button>
+                </div>
+            `);
+        }
+        
+        function saveDisplayEdit(id) {
+            const display = customerDisplays.find(d => d.id === id);
+            if (!display) return;
+            
+            const name = document.getElementById('editDisplayName').value.trim();
+            if (!name) {
+                showToast('error', '错误', '请输入显示器名称');
+                return;
+            }
+            
+            display.name = name;
+            saveData('customerDisplays', customerDisplays);
+            
+            closeModal();
+            renderCustomerDisplays();
+            showToast('success', '已保存', '显示器信息已更新');
+        }
+        
+        function deleteDisplay(id) {
+            const display = customerDisplays.find(d => d.id === id);
+            if (!display) return;
+            
+            if (confirm(`确定要解除配对 ${display.name} 吗？`)) {
+                customerDisplays = customerDisplays.filter(d => d.id !== id);
+                saveData('customerDisplays', customerDisplays);
+                renderCustomerDisplays();
+                showToast('success', '已解除', '显示器配对已解除');
             }
         }
 
