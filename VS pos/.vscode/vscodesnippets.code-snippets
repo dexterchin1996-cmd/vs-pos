@@ -1,0 +1,312 @@
+{
+  "VS Pos - 函数": {
+    "prefix": "vsf",
+    "body": [
+      "function ${1:functionName}(${2:param}) {",
+      "    $0",
+      "}"
+    ],
+    "description": "VS Pos 函数模板"
+  },
+  "VS Pos - 异步函数": {
+    "prefix": "vsasync",
+    "body": [
+      "async function ${1:functionName}(${2:param}) {",
+      "    try {",
+      "        $0",
+      "    } catch (error) {",
+      "        console.error(error);",
+      "    }",
+      "}"
+    ],
+    "description": "VS Pos 异步函数模板"
+  },
+  "VS Pos - 数据渲染表格": {
+    "prefix": "vsrender",
+    "body": [
+      "function render${1:Name}() {",
+      "    const table = document.getElementById('${2:tableId}');",
+      "    if (!table) return;",
+      "    ",
+      "    const search = document.getElementById('${3:searchId}')?.value?.toLowerCase() || '';",
+      "    const filterSelect = document.getElementById('${4:filterId}')?.value || 'all';",
+      "    ",
+      "    let filtered = [...${5:data}];",
+      "    ",
+      "    if (filterSelect !== 'all') {",
+      "        filtered = filtered.filter(item => item.${6:field} === filterSelect);",
+      "    }",
+      "    ",
+      "    if (search) {",
+      "        filtered = filtered.filter(item =>",
+      "            item.name.toLowerCase().includes(search)",
+      "        );",
+      "    }",
+      "    ",
+      "    if (filtered.length === 0) {",
+      "        table.innerHTML = '<div class=\"empty-state\"><div class=\"icon\">📭</div><p>暂无数据</p></div>';",
+      "        return;",
+      "    }",
+      "    ",
+      "    table.innerHTML = filtered.map(${7:item} => `",
+      "        <div class=\"table-row\">",
+      "            <span>\\${${7:item}.name}</span>",
+      "            <span>",
+      "                <button class=\"btn btn-sm btn-outline\" onclick=\"edit${1:Name}('\\${${7:item}.id}')\">编辑</button>",
+      "                <button class=\"btn btn-sm btn-danger\" onclick=\"delete${1:Name}('\\${${7:item}.id}')\" style=\"margin-left:4px;\">删除</button>",
+      "            </span>",
+      "        </div>",
+      "    `).join('');",
+      "}"
+    ],
+    "description": "VS Pos 数据渲染模板"
+  },
+  "VS Pos - 模态框": {
+    "prefix": "vsmodal",
+    "body": [
+      "function show${1:Name}Modal(${2:id}) {",
+      "    showModal('${3:标题}', `",
+      "        <div class=\"form-row\">",
+      "            <div class=\"form-group\">",
+      "                <label class=\"form-label\">${4:标签}</label>",
+      "                <input type=\"text\" class=\"form-input\" id=\"${5:inputId}\" placeholder=\"${6:占位符}\">",
+      "            </div>",
+      "        </div>",
+      "        <div class=\"form-row\">",
+      "            <div class=\"form-group\">",
+      "                <label class=\"form-label\">${7:标签2}</label>",
+      "                <select class=\"form-select\" id=\"${8:selectId}\">",
+      "                    <option value=\"option1\">选项1</option>",
+      "                    <option value=\"option2\">选项2</option>",
+      "                </select>",
+      "            </div>",
+      "        </div>",
+      "        <div class=\"modal-footer\">",
+      "            <button class=\"btn btn-outline\" onclick=\"closeModal()\">取消</button>",
+      "            <button class=\"btn btn-primary\" onclick=\"${9:saveFunction}('${2:id}')\">保存</button>",
+      "        </div>",
+      "    `);",
+      "}"
+    ],
+    "description": "VS Pos 模态框模板"
+  },
+  "VS Pos - 统计卡片": {
+    "prefix": "vsstat",
+    "body": [
+      "<div class=\"stat-card ${1:success}\">",
+      "    <div class=\"icon\">${2:📊}</div>",
+      "    <div class=\"value\" id=\"${3:statId}\">0</div>",
+      "    <div class=\"label\">${4:标签名}</div>",
+      "</div>"
+    ],
+    "description": "VS Pos 统计卡片模板"
+  },
+  "VS Pos - 统计更新函数": {
+    "prefix": "vsstatfunc",
+    "body": [
+      "function update${1:Name}Stats() {",
+      "    const total = ${2:data}.length;",
+      "    const count = ${3:data}.filter(d => d.${4:field}).length;",
+      "    const amount = ${5:data}.reduce((sum, d) => sum + (d.${6:amountField} || 0), 0);",
+      "    ",
+      "    if (document.getElementById('${7:statTotalId}')) document.getElementById('${7:statTotalId}').textContent = total;",
+      "    if (document.getElementById('${8:statCountId}')) document.getElementById('${8:statCountId}').textContent = count;",
+      "    if (document.getElementById('${9:statAmountId}')) document.getElementById('${9:statAmountId}').textContent = `¥${amount.toFixed(0)}`;",
+      "}"
+    ],
+    "description": "VS Pos 统计更新函数模板"
+  },
+  "VS Pos - 表格头部": {
+    "prefix": "vstableheader",
+    "body": [
+      "<div class=\"data-table\">",
+      "    <div class=\"table-header\" style=\"grid-template-columns: ${1:1fr 1fr 100px auto};\">",
+      "        <span>${2:列1}</span>",
+      "        <span>${3:列2}</span>",
+      "        <span>${4:列3}</span>",
+      "        <span>${5:操作}</span>",
+      "    </div>",
+      "    <div id=\"${6:tableId}\"></div>",
+      "</div>"
+    ],
+    "description": "VS Pos 表格头部模板"
+  },
+  "VS Pos - 表格行": {
+    "prefix": "vstablerow",
+    "body": [
+      "<div class=\"table-row\">",
+      "    <span>\\${${1:item}.name}</span>",
+      "    <span>\\${${1:item}.phone || '-'}</span>",
+      "    <span><span class=\"status-badge \\${${1:item}.status === 'active' ? 'active' : 'cancelled'}\">\\${${1:item}.status === 'active' ? '正常' : '已禁用'}</span></span>",
+      "    <span>",
+      "        <button class=\"btn btn-sm btn-outline\" onclick=\"edit${2:Name}('\\${${1:item}.id}')\">编辑</button>",
+      "        <button class=\"btn btn-sm btn-danger\" onclick=\"delete${2:Name}('\\${${1:item}.id}')\" style=\"margin-left:4px;\">删除</button>",
+      "    </span>",
+      "</div>"
+    ],
+    "description": "VS Pos 表格行模板"
+  },
+  "VS Pos - 表单行": {
+    "prefix": "vsformrow",
+    "body": [
+      "<div class=\"form-row\">",
+      "    <div class=\"form-group\">",
+      "        <label class=\"form-label\">${1:标签1}</label>",
+      "        <input type=\"${2:text}\" class=\"form-input\" id=\"${3:inputId1}\" placeholder=\"${4:占位符1}\">",
+      "    </div>",
+      "    <div class=\"form-group\">",
+      "        <label class=\"form-label\">${5:标签2}</label>",
+      "        <input type=\"${6:text}\" class=\"form-input\" id=\"${7:inputId2}\" placeholder=\"${8:占位符2}\">",
+      "    </div>",
+      "</div>"
+    ],
+    "description": "VS Pos 表单行模板"
+  },
+  "VS Pos - 添加表单": {
+    "prefix": "vsaddform",
+    "body": [
+      "function showAdd${1:Name}Modal() {",
+      "    showModal('添加${2:标题}', `",
+      "        <div class=\"form-group\">",
+      "            <label class=\"form-label\">名称 *</label>",
+      "            <input type=\"text\" class=\"form-input\" id=\"new${1:Name}Name\" placeholder=\"输入名称\" required>",
+      "        </div>",
+      "        <div class=\"form-row\">",
+      "            <div class=\"form-group\">",
+      "                <label class=\"form-label\">电话</label>",
+      "                <input type=\"tel\" class=\"form-input\" id=\"new${1:Name}Phone\" placeholder=\"输入电话\">",
+      "            </div>",
+      "            <div class=\"form-group\">",
+      "                <label class=\"form-label\">状态</label>",
+      "                <select class=\"form-select\" id=\"new${1:Name}Status\">",
+      "                    <option value=\"active\">正常</option>",
+      "                    <option value=\"inactive\">禁用</option>",
+      "                </select>",
+      "            </div>",
+      "        </div>",
+      "        <div class=\"modal-footer\">",
+      "            <button class=\"btn btn-outline\" onclick=\"closeModal()\">取消</button>",
+      "            <button class=\"btn btn-primary\" onclick=\"addNew${1:Name}()\">添加</button>",
+      "        </div>",
+      "    `);",
+      "}",
+      "",
+      "function addNew${1:Name}() {",
+      "    const name = document.getElementById('new${1:Name}Name').value.trim();",
+      "    const phone = document.getElementById('new${1:Name}Phone').value.trim();",
+      "    const status = document.getElementById('new${1:Name}Status').value;",
+      "    ",
+      "    if (!name) { alert('请输入名称'); return; }",
+      "    ",
+      "    ${3:data}.push({",
+      "        id: '${3:data}'.slice(0, 2).toUpperCase() + Date.now(),",
+      "        name,",
+      "        phone,",
+      "        status,",
+      "        createdAt: new Date().toISOString()",
+      "    });",
+      "    ",
+      "    saveData('${3:data}', ${3:data});",
+      "    closeModal();",
+      "    render${1:Name}();",
+      "    alert('添加成功');",
+      "}"
+    ],
+    "description": "VS Pos 添加表单完整模板"
+  },
+  "VS Pos - 删除确认": {
+    "prefix": "vsdelete",
+    "body": [
+      "function delete${1:Name}(id) {",
+      "    if (confirm('确定删除此项？')) {",
+      "        ${2:data} = ${2:data}.filter(d => d.id !== id);",
+      "        saveData('${2:data}', ${2:data});",
+      "        render${1:Name}();",
+      "    }",
+      "}"
+    ],
+    "description": "VS Pos 删除确认函数"
+  },
+  "VS Pos - 筛选栏": {
+    "prefix": "vsfilter",
+    "body": [
+      "<div class=\"filter-bar\">",
+      "    <input type=\"text\" id=\"${1:searchId}\" placeholder=\"搜索...\" class=\"search-input\" oninput=\"render${2:Table}()\">",
+      "    <select id=\"${3:filterId}\" onchange=\"render${2:Table}()\">",
+      "        <option value=\"all\">全部</option>",
+      "        <option value=\"active\">正常</option>",
+      "        <option value=\"inactive\">禁用</option>",
+      "    </select>",
+      "    <select id=\"${4:sortId}\" onchange=\"render${2:Table}()\">",
+      "        <option value=\"createdAt\">时间</option>",
+      "        <option value=\"name\">名称</option>",
+      "        <option value=\"amount\">金额</option>",
+      "    </select>",
+      "</div>"
+    ],
+    "description": "VS Pos 筛选栏模板"
+  },
+  "VS Pos - localStorage 加载": {
+    "prefix": "vsload",
+    "body": [
+      "function load${1:Name}Data() {",
+      "    const saved = localStorage.getItem(CONFIG.storage.${2:key});",
+      "    if (saved) {",
+      "        ${3:data} = JSON.parse(saved);",
+      "    }",
+      "}"
+    ],
+    "description": "VS Pos localStorage 加载"
+  },
+  "VS Pos - localStorage 保存": {
+    "prefix": "vssave",
+    "body": [
+      "function save${1:Name}Data() {",
+      "    localStorage.setItem(CONFIG.storage.${2:key}, JSON.stringify(${3:data}));",
+      "}"
+    ],
+    "description": "VS Pos localStorage 保存"
+  },
+  "VS Pos - 导航项": {
+    "prefix": "vsnav",
+    "body": [
+      "<div class=\"nav-item\" data-panel=\"${1:panel}\">",
+      "    <span class=\"icon\">${2:📋}</span>",
+      "    <span>${3:标题}</span>",
+      "    ${4:condition ? '<span class=\"badge\">0</span>' : ''}",
+      "</div>"
+    ],
+    "description": "VS Pos 导航项模板"
+  },
+  "VS Pos - 页面头部": {
+    "prefix": "vspageheader",
+    "body": [
+      "<div class=\"page-header\">",
+      "    <h2 class=\"page-title\">${1:页面标题}</h2>",
+      "    <div class=\"page-actions\">",
+      "        <button class=\"btn btn-primary\" onclick=\"showAdd${2:Name}Modal()\">+ 添加${3:名称}</button>",
+      "        <button class=\"btn btn-outline\" onclick=\"export${2:Name}()\">📥 导出</button>",
+      "    </div>",
+      "</div>"
+    ],
+    "description": "VS Pos 页面头部模板"
+  },
+  "VS Pos - 控制台日志": {
+    "prefix": "vslog",
+    "body": [
+      "console.log('${1:调试信息}:', ${2:value});"
+    ],
+    "description": "VS Pos 控制台日志"
+  },
+  "VS Pos - 空状态": {
+    "prefix": "vsempty",
+    "body": [
+      "<div class=\"empty-state\">",
+      "    <div class=\"icon\">${1:📭}</div>",
+      "    <p>${2:暂无数据}</p>",
+      "    <button class=\"btn btn-primary\" onclick=\"showAdd${3:Name}Modal()\">+ 添加${4:名称}</button>",
+      "</div>"
+    ],
+    "description": "VS Pos 空状态模板"
+  }
+}

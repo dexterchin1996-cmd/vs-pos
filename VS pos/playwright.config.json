@@ -1,0 +1,24 @@
+{
+  "node": {
+    "useContainerSupport": true
+  },
+  "spec_dir": "tests",
+  "spec_files": [
+    "**/*.test.js",
+    "**/*.spec.js"
+  ],
+  "helpers": [
+    "helpers/**/*.js"
+  ],
+  "browser": "chromium",
+  "browserConsoleErrors": true,
+  "reporter": "spec",
+  "resultDb": true,
+  "coloredOutput": true,
+  "waitForAnimations": true,
+  "animationWaitMs": 500,
+  "screenshotOnFailure": true,
+  "screenshotsFolder": "tests/screenshots",
+  "videoOnFailureOnly": true,
+  "videosFolder": "tests/videos"
+}

@@ -1,0 +1,40 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 12,
+    "sourceType": "script"
+  },
+  "globals": {
+    "CONFIG": "readonly",
+    "services": "writable",
+    "orders": "writable",
+    "tickets": "writable",
+    "invoices": "writable",
+    "members": "writable",
+    "employees": "writable",
+    "commissions": "writable",
+    "suspendedOrders": "writable",
+    "shifts": "writable",
+    "features": "writable",
+    "settings": "writable",
+    "cart": "writable",
+    "currentCustomerType": "writable",
+    "currentMember": "writable",
+    "selectedPayment": "writable",
+    "currentCategory": "writable",
+    "currentTip": "writable",
+    "currentTipPercent": "writable"
+  },
+  "rules": {
+    "indent": ["error", 4],
+    "linebreak-style": ["error", "windows"],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "no-unused-vars": "warn",
+    "no-console": "off"
+  }
+}

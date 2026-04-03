@@ -1,0 +1,80 @@
+# VS pos .gitignore
+
+# 依赖
+node_modules/
+.browserslistrc
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/*.code-snippets
+!.vscode/README.md
+!.vscode.vscodecount
+*.sublime-workspace
+*.sublime-project
+.idea/
+*.swp
+*.swo
+*~
+.vs/
+
+# 测试
+coverage/
+.nyc_output/
+tests/screenshots/
+tests/videos/
+*.test.js.snap
+
+# 构建
+dist/
+build/
+out/
+webpack/
+rollup/
+.parcel-cache/
+
+# 环境
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# 备份
+*.bak
+*.backup
+*.old
+backup/
+
+# 本地开发
+.temp/
+.tmp/
+local/
+tmp/
+
+# 第三方库
+lib/
+vendor/
+public/lib/
+
+# 其他
+*.ics
+*.ics?
+.vscode-test/
+webhint.err

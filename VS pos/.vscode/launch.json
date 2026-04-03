@@ -1,0 +1,73 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "在浏览器中打开 (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "file": "${workspaceFolder}/src/index.html",
+      "runtimeArgs": ["--new-window"],
+      "preLaunchTask": null,
+      "postDebugTask": null
+    },
+    {
+      "name": "在 Edge 中打开",
+      "type": "edge",
+      "request": "launch",
+      "file": "${workspaceFolder}/src/index.html"
+    },
+    {
+      "name": "调试: VS pos",
+      "type": "chrome",
+      "request": "launch",
+      "file": "${workspaceFolder}/src/index.html",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": false,
+      "smartStep": true,
+      "skipFiles": [
+        "**/node_modules/**",
+        "**/vendor/**"
+      ]
+    },
+    {
+      "name": "调试: VS pos (无刷新)",
+      "type": "chrome",
+      "request": "launch",
+      "file": "${workspaceFolder}/src/index.html",
+      "webRoot": "${workspaceFolder}",
+      "runtimeArgs": ["--disable-javascript-pages"]
+    },
+    {
+      "name": "Live Server: 启动",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["live-server", "src", "--port=3000", "--browser=Chrome"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Node: 运行脚本",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/${input:scriptName}.js",
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "调试 + Live Server",
+      "configurations": ["Live Server: 启动", "调试: VS pos"],
+      "stopAll": true
+    }
+  ],
+  "inputs": [
+    {
+      "id": "scriptName",
+      "type": "pickString",
+      "options": ["lint", "format", "test"],
+      "description": "选择要运行的脚本"
+    }
+  ]
+}

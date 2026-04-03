@@ -1,0 +1,26 @@
+[core]
+    autocrlf = true
+    eol = crlf
+    fileMode = false
+    safecrlf = warn
+
+[user]
+    name = VS Pos Developer
+    email = developer@vsevice.local
+
+[alias]
+    st = status
+    co = checkout
+    br = branch
+    ci = commit
+    lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+    last = log -1 --stat
+
+[color]
+    ui = auto
+
+[push]
+    default = simple
+
+[pull]
+    rebase = false

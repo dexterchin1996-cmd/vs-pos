@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Vsevice - 技师端</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root {
+            --primary: #1e3c72;
+            --primary-light: #2a5298;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --purple: #9b59b6;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+            --radius: 16px;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-100);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: var(--gray-800);
+        }
+        .app-header {
+            background: linear-gradient(135deg, var(--purple), #8e44ad);
+            color: white;
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+        .app-header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+        .app-header .subtitle { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+        
+        .technician-selector {
+            padding: 16px;
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .tech-selector-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .tech-selector-row select {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 10px;
+            font-size: 15px;
+        }
+        .status-toggle {
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .status-toggle.free { background: var(--success); color: white; }
+        .status-toggle.busy { background: var(--danger); color: white; }
+        
+        .tab-bar {
+            display: flex;
+            padding: 12px 16px;
+            background: white;
+            gap: 4px;
+        }
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+        .tab.active { background: var(--purple); color: white; }
+        .tab .badge-count {
+            display: inline-block;
+            background: var(--danger);
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+        
+        .panel { display: none; padding: 16px; }
+        .panel.active { display: block; }
+        
+        .task-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--warning);
+            transition: all 0.2s;
+        }
+        .task-card.in-progress { border-left-color: var(--purple); }
+        .task-card.completed { border-left-color: var(--success); opacity: 0.7; }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .task-order-no {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+        .task-customer { font-size: 18px; font-weight: 600; }
+        .task-service { color: var(--purple); margin-top: 4px; }
+        .task-time {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--gray-600);
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        .task-time .icon { font-size: 16px; }
+        
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); }
+        
+        .commission-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .commission-info { flex: 1; }
+        .commission-amount { font-size: 20px; font-weight: 700; color: var(--success); }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        .stat-value { font-size: 20px; font-weight: 700; color: var(--primary); }
+        .stat-label { font-size: 11px; color: var(--gray-500); margin-top: 4px; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-500);
+        }
+        .empty-state .icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+        
+        .timer {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--purple);
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .timer.running { background: var(--success); }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <h1>Vsevice 技师端</h1>
+        <div class="subtitle">任务管理 · 佣金查看</div>
+    </header>
+
+    <div class="technician-selector">
+        <div class="tech-selector-row">
+            <select id="techSelect" onchange="switchTechnician()">
+                <option value="">请选择技师</option>
+            </select>
+            <button id="statusBtn" class="status-toggle free" onclick="toggleMyStatus()">
+                空闲
+            </button>
+        </div>
+    </div>
+
+    <div class="tab-bar">
+        <div class="tab active" data-tab="pending" onclick="switchTab('pending')">
+            待服务 <span class="badge-count" id="pendingCount">0</span>
+        </div>
+        <div class="tab" data-tab="progress" onclick="switchTab('progress')">
+            服务中 <span class="badge-count" id="progressCount">0</span>
+        </div>
+        <div class="tab" data-tab="completed" onclick="switchTab('completed')">
+            已完成
+        </div>
+        <div class="tab" data-tab="commission" onclick="switchTab('commission')">
+            佣金
+        </div>
+    </div>
+
+    <!-- 待服务 -->
+    <div id="pending-panel" class="panel active">
+        <div id="pendingList"></div>
+    </div>
+
+    <!-- 服务中 -->
+    <div id="progress-panel" class="panel">
+        <div id="progressList"></div>
+    </div>
+
+    <!-- 已完成 -->
+    <div id="completed-panel" class="panel">
+        <div id="completedList"></div>
+    </div>
+
+    <!-- 佣金 -->
+    <div id="commission-panel" class="panel">
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="statPendingCommission">¥0</div>
+                <div class="stat-label">待领取</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statTotalCommission">¥0</div>
+                <div class="stat-label">累计佣金</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statTodayEarning">¥0</div>
+                <div class="stat-label">今日收入</div>
+            </div>
+        </div>
+        <div id="commissionList"></div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            storage: {
+                technicians: 'vsevice_technicians',
+                orders: 'vsevice_orders',
+                commissions: 'vsevice_commissions'
+            }
+        };
+
+        let technicians = [];
+        let orders = [];
+        let commissions = [];
+        let currentTechId = null;
+        let serviceTimer = null;
+        let serviceStartTime = null;
+
+        function init() {
+            loadData();
+            renderTechSelect();
+            initTab();
+        }
+
+        function loadData() {
+            technicians = JSON.parse(localStorage.getItem(CONFIG.storage.technicians) || '[]');
+            orders = JSON.parse(localStorage.getItem(CONFIG.storage.orders) || '[]');
+            commissions = JSON.parse(localStorage.getItem(CONFIG.storage.commissions) || '[]');
+        }
+
+        function saveData(key, data) {
+            localStorage.setItem(CONFIG.storage[key], JSON.stringify(data));
+        }
+
+        function renderTechSelect() {
+            const select = document.getElementById('techSelect');
+            let html = '<option value="">请选择技师</option>';
+            technicians.forEach(t => {
+                html += `<option value="${t.id}">${t.name} (${t.status === 'free' ? '空闲' : '忙碌'})</option>`;
+            });
+            select.innerHTML = html;
+        }
+
+        function switchTechnician() {
+            const id = parseInt(document.getElementById('techSelect').value);
+            if (!id) {
+                currentTechId = null;
+                return;
+            }
+            currentTechId = id;
+            const tech = technicians.find(t => t.id === id);
+            if (tech) {
+                const btn = document.getElementById('statusBtn');
+                btn.className = `status-toggle ${tech.status}`;
+                btn.textContent = tech.status === 'free' ? '空闲' : '忙碌';
+            }
+            renderAll();
+        }
+
+        function toggleMyStatus() {
+            if (!currentTechId) { alert('请先选择技师'); return; }
+            const tech = technicians.find(t => t.id === currentTechId);
+            if (tech) {
+                tech.status = tech.status === 'free' ? 'busy' : 'free';
+                saveData('technicians', technicians);
+                const btn = document.getElementById('statusBtn');
+                btn.className = `status-toggle ${tech.status}`;
+                btn.textContent = tech.status === 'free' ? '空闲' : '忙碌';
+                renderTechSelect();
+                document.getElementById('techSelect').value = currentTechId;
+            }
+        }
+
+        function initTab() {
+            switchTab('pending');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === tab + '-panel'));
+            renderAll();
+        }
+
+        function renderAll() {
+            if (!currentTechId) {
+                ['pending', 'progress', 'completed'].forEach(type => {
+                    document.getElementById(type + 'List').innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">👤</div>
+                            <p>请先选择技师</p>
+                        </div>
+                    `;
+                });
+                return;
+            }
+
+            const techOrders = orders.filter(o => o.items.some(i => i.technicianId === currentTechId));
+            const pending = techOrders.filter(o => o.status === 'assigned');
+            const progress = techOrders.filter(o => o.status === 'in_progress');
+            const completed = techOrders.filter(o => o.status === 'completed');
+
+            document.getElementById('pendingCount').textContent = pending.length;
+            document.getElementById('progressCount').textContent = progress.length;
+
+            renderTaskList('pending', pending);
+            renderTaskList('progress', progress);
+            renderTaskList('completed', completed);
+            renderMyCommission();
+        }
+
+        function renderTaskList(type, orderList) {
+            const container = document.getElementById(type + 'List');
+            
+            if (orderList.length === 0) {
+                const messages = {
+                    pending: { icon: '📋', text: '暂无待服务订单' },
+                    progress: { icon: '⏳', text: '暂无服务中订单' },
+                    completed: { icon: '✅', text: '暂无已完成订单' }
+                };
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">${messages[type].icon}</div>
+                        <p>${messages[type].text}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            orderList.forEach(order => {
+                const myItem = order.items.find(i => i.technicianId === currentTechId);
+                const orderDate = new Date(order.createdAt);
+                const timeStr = orderDate.toLocaleDateString() + ' ' + orderDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                html += `
+                    <div class="task-card ${type === 'progress' ? 'in-progress' : ''} ${type === 'completed' ? 'completed' : ''}">
+                        <div class="task-header">
+                            <div>
+                                <div class="task-order-no">${order.orderNo}</div>
+                                <div class="task-customer">${order.customerName}</div>
+                                <div class="task-service">${myItem?.serviceName || '服务'}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:20px; font-weight:700; color:var(--success);">¥${myItem?.price || 0}</div>
+                            </div>
+                        </div>
+                        <div class="task-time">
+                            <span class="icon">🕐</span>
+                            <span>${timeStr}</span>
+                            ${type === 'progress' && serviceStartTime ? `<span class="timer running" id="serviceTimer">⏱️ <span id="timerDisplay">00:00</span></span>` : ''}
+                        </div>
+                        <div class="task-actions">
+                            ${type === 'pending' ? `
+                                <button class="btn btn-primary" onclick="startService(${order.id})">开始服务</button>
+                            ` : ''}
+                            ${type === 'progress' ? `
+                                <button class="btn btn-success" onclick="finishService(${order.id})">完成服务</button>
+                            ` : ''}
+                            <button class="btn btn-outline" onclick="viewOrderDetail(${order.id})">查看详情</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            if (type === 'progress' && serviceStartTime) {
+                updateTimer();
+            }
+        }
+
+        function startService(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = 'in_progress';
+                saveData('orders', orders);
+                serviceStartTime = Date.now();
+                
+                // 设置空闲状态
+                const tech = technicians.find(t => t.id === currentTechId);
+                if (tech && tech.status === 'free') {
+                    tech.status = 'busy';
+                    saveData('technicians', technicians);
+                    document.getElementById('statusBtn').className = 'status-toggle busy';
+                    document.getElementById('statusBtn').textContent = '忙碌';
+                }
+                
+                renderAll();
+                
+                // 开始计时
+                serviceTimer = setInterval(updateTimer, 1000);
+            }
+        }
+
+        function updateTimer() {
+            if (!serviceStartTime) return;
+            const elapsed = Math.floor((Date.now() - serviceStartTime) / 1000);
+            const mins = Math.floor(elapsed / 60);
+            const secs = elapsed % 60;
+            const display = document.getElementById('timerDisplay');
+            if (display) display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function finishService(orderId) {
+            if (!confirm('确定完成服务吗？')) return;
+            
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = 'completed';
+                order.completedAt = new Date().toISOString();
+                saveData('orders', orders);
+                
+                // 设置空闲状态
+                const tech = technicians.find(t => t.id === currentTechId);
+                if (tech) {
+                    tech.status = 'free';
+                    saveData('technicians', technicians);
+                    document.getElementById('statusBtn').className = 'status-toggle free';
+                    document.getElementById('statusBtn').textContent = '空闲';
+                }
+                
+                // 清除计时器
+                if (serviceTimer) {
+                    clearInterval(serviceTimer);
+                    serviceTimer = null;
+                    serviceStartTime = null;
+                }
+                
+                renderAll();
+                alert('服务已完成！');
+            }
+        }
+
+        function viewOrderDetail(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            
+            let html = `<p><strong>订单号:</strong> ${order.orderNo}</p>`;
+            html += `<p><strong>客户:</strong> ${order.customerName}</p>`;
+            html += `<p><strong>电话:</strong> ${order.customerPhone || '无'}</p>`;
+            html += `<p><strong>下单时间:</strong> ${new Date(order.createdAt).toLocaleString()}</p>`;
+            html += `<hr style="margin:12px 0;">`;
+            order.items.forEach(item => {
+                html += `<p>${item.serviceName} - ¥${item.price}</p>`;
+            });
+            html += `<hr style="margin:12px 0;">`;
+            html += `<p><strong>实收:</strong> <span style="color:var(--success); font-weight:700;">¥${order.finalAmount.toFixed(2)}</span></p>`;
+            if (order.note) html += `<p><strong>备注:</strong> ${order.note}</p>`;
+            
+            showModal('订单详情', html);
+        }
+
+        function renderMyCommission() {
+            const myCommissions = commissions.filter(c => c.userId === currentTechId && c.role === 'technician');
+            const pending = myCommissions.filter(c => c.status === 'pending');
+            const paid = myCommissions.filter(c => c.status === 'paid');
+            const today = new Date().toDateString();
+            const todayComm = myCommissions.filter(c => new Date(c.createdAt).toDateString() === today);
+
+            document.getElementById('statPendingCommission').textContent = `¥${pending.reduce((s, c) => s + c.amount, 0).toFixed(2)}`;
+            document.getElementById('statTotalCommission').textContent = `¥${myCommissions.reduce((s, c) => s + c.amount, 0).toFixed(2)}`;
+            document.getElementById('statTodayEarning').textContent = `¥${todayComm.reduce((s, c) => s + c.amount, 0).toFixed(2)}`;
+
+            const container = document.getElementById('commissionList');
+            if (myCommissions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">💰</div>
+                        <p>暂无佣金记录</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            myCommissions.forEach(c => {
+                html += `
+                    <div class="commission-card">
+                        <div class="commission-info">
+                            <div style="font-weight:500;">${c.serviceName}</div>
+                            <div style="font-size:12px; color:var(--gray-500);">订单: ${c.orderNo} · ${new Date(c.createdAt).toLocaleDateString()}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="commission-amount">¥${c.amount.toFixed(2)}</div>
+                            <span style="font-size:11px; color:${c.status === 'pending' ? 'var(--warning)' : 'var(--success)'};">
+                                ${c.status === 'pending' ? '待领取' : '已领取'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function showModal(title, content) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;';
+            overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
+            overlay.innerHTML = `
+                <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:400px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <div style="font-size:18px;font-weight:600;">${title}</div>
+                        <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;font-size:24px;cursor:pointer;">&times;</button>
+                    </div>
+                    <div style="color:var(--gray-700);line-height:1.6;">${content}</div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        init();
+    </script>
+</body>
+</html>

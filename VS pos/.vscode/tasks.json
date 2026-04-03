@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "打开 VS pos",
+      "type": "shell",
+      "command": "start ${workspaceFolder}\\src\\index.html",
+      "problemMatcher": []
+    },
+    {
+      "label": "格式化代码",
+      "type": "process",
+      "command": "npx prettier --write src/index.html",
+      "problemMatcher": []
+    },
+    {
+      "label": "ESLint 检查",
+      "type": "process",
+      "command": "npx eslint src/index.html",
+      "problemMatcher": []
+    }
+  ]
+}

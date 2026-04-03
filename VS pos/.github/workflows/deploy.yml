@@ -1,0 +1,36 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # 部署脚本
+          echo "Deploying to GitHub Pages..."
+          
+      - name: Create Release
+        if: github.event_name == 'release'
+        run: |
+          # 发布脚本
+          echo "Creating release..."
+
+  backup:
+    name: Backup Data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Backup
+        run: |
+          echo "Backing up data..."

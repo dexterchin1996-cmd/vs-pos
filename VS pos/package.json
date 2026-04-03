@@ -1,0 +1,58 @@
+{
+  "name": "vs-pos",
+  "version": "1.0.0",
+  "description": "VS pos - 专业按摩/SPA POS系统",
+  "main": "src/index.html",
+  "scripts": {
+    "start": "start src/index.html",
+    "dev": "npx live-server src --port=3000 --host=localhost",
+    "lint": "npx eslint src/index.html src/api-reference.js",
+    "lint:fix": "npx eslint src/index.html src/api-reference.js --fix",
+    "format": "npx prettier --write \"src/**/*.html\" \"src/**/*.js\"",
+    "format:check": "npx prettier --check \"src/**/*.html\" \"src/**/*.js\"",
+    "format:fix": "npm run format",
+    "test": "npx jest tests/",
+    "test:watch": "npx jest tests/ --watch",
+    "test:coverage": "npx jest tests/ --coverage",
+    "playwright": "npx playwright test",
+    "playwright:install": "npx playwright install chromium",
+    "build": "echo 'Build complete!'",
+    "clean": "rm -rf node_modules package-lock.json",
+    "reinstall": "npm run clean && npm install",
+    "open:vscode": "code .",
+    "open:folder": "explorer ."
+  },
+  "keywords": [
+    "pos",
+    "point-of-sale",
+    "massage",
+    "spa",
+    "beauty",
+    "pos-system",
+    "retail",
+    "service-industry"
+  ],
+  "author": "VS Pos Team",
+  "contributors": [],
+  "funding": {},
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.0",
+    "live-server": "^1.2.2",
+    "jest": "^29.7.0",
+    "@playwright/test": "^1.41.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vspos/vs-pos.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vspos/vs-pos/issues"
+  },
+  "homepage": "https://github.com/vspos/vs-pos#readme"
+}

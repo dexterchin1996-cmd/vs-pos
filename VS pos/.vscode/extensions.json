@@ -1,0 +1,34 @@
+{
+  "recommendations": [
+    {
+      "id": "esbenp.prettier-vscode",
+      "name": "Prettier - Code formatter",
+      "description": "代码格式化工具，支持 HTML/CSS/JS"
+    },
+    {
+      "id": "dbaeumer.vscode-eslint",
+      "name": "ESLint",
+      "description": "JavaScript 语法检查"
+    },
+    {
+      "id": "formulahendry.auto-rename-tag",
+      "name": "Auto Rename Tag",
+      "description": "自动重命名 HTML 标签"
+    },
+    {
+      "id": "ecmel.vscode-html-css",
+      "name": "HTML CSS Support",
+      "description": "HTML 中 CSS 类名补全"
+    },
+    {
+      "id": "christian-kohler.path-intellisense",
+      "name": "Path Intellisense",
+      "description": "文件路径自动补全"
+    },
+    {
+      "id": "ms-vscode.vscode-javascript-snippet-pack",
+      "name": "JavaScript (ES6) code snippets",
+      "description": "JavaScript ES6 代码片段"
+    }
+  ]
+}
