@@ -499,6 +499,50 @@
         .api-desc { margin-left: auto; font-size: 12px; color: var(--gray-500); }
         .code-block pre { margin: 0; white-space: pre-wrap; }
         .import-options { background: var(--gray-50); padding: 12px; border-radius: 8px; }
+        
+        /* 手风琴折叠面板 */
+        .accordion-group { border: 1px solid var(--gray-200); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+        .accordion-group.active { border-color: var(--primary); }
+        .accordion-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--gray-50); cursor: pointer; font-weight: 600; font-size: 14px; }
+        .accordion-header:hover { background: var(--gray-100); }
+        .accordion-arrow { font-size: 10px; color: var(--gray-500); transition: transform 0.2s; }
+        .accordion-content { padding: 16px; background: var(--white); }
+        
+        /* 商品表单容器 */
+        .item-form-container { max-height: 60vh; overflow-y: auto; }
+        
+        /* 单选按钮组 */
+        .radio-group { display: flex; gap: 16px; padding: 8px 0; }
+        .radio-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; }
+        
+        /* 货币输入框 */
+        .currency-input { position: relative; display: flex; align-items: center; }
+        .currency-symbol { position: absolute; left: 12px; color: var(--gray-500); font-weight: 500; }
+        .currency-input .form-input { padding-left: 28px; }
+        
+        /* 图片上传区域 */
+        .image-upload-area { border: 2px dashed var(--gray-300); border-radius: 8px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .image-upload-area:hover { border-color: var(--primary); background: var(--gray-50); }
+        
+        /* 小尺寸输入框 */
+        .form-input-sm { padding: 6px 10px; font-size: 13px; }
+        
+        /* 开台卡片样式 */
+        .ticket-card { background: var(--white); border-radius: 8px; padding: 16px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s; }
+        .ticket-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-1px); }
+        .ticket-card.selected { border: 2px solid var(--primary); }
+        
+        /* POS 商品网格 */
+        @media (min-width: 768px) {
+            .pos-items-grid { grid-template-columns: repeat(4, 1fr) !important; }
+        }
+        
+        /* 客户显示器配对 */
+        .device-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--gray-50); border-radius: 8px; margin-bottom: 8px; }
+        .device-card .device-icon { font-size: 24px; }
+        .device-card .device-info { flex: 1; }
+        .device-card .device-name { font-weight: 600; font-size: 14px; }
+        .device-card .device-ip { font-size: 12px; color: var(--gray-500); }
     </style>
 </head>
 <body>
@@ -2799,6 +2843,10 @@
         }
 
         // 开台管理
+        // 开台多选状态
+        let ticketSelectMode = false;
+        let selectedTickets = [];
+
         function renderTickets() {
             const grid = document.getElementById('ticketGrid');
             const filter = document.getElementById('ticketFilterStatus')?.value || 'all';
@@ -2811,16 +2859,193 @@
                 return;
             }
             
-            grid.innerHTML = filtered.map(t => `
-                <div class="ticket-card ${t.status === 'open' ? 'occupied' : ''}" onclick="openTicket('${t.id}')">
-                    <div class="ticket-number">${t.name}</div>
-                    <div class="ticket-status">
-                        <span class="status-badge ${t.status}">${t.status === 'open' ? '开放' : '已结账'}</span>
+            grid.innerHTML = filtered.map(t => {
+                const itemCount = t.items ? t.items.reduce((sum, i) => sum + (i.qty || 1), 0) : 0;
+                const isSelected = selectedTickets.includes(t.id);
+                return `
+                    <div class="ticket-card ${t.status === 'open' ? 'occupied' : ''} ${isSelected ? 'selected' : ''}" 
+                         onclick="${ticketSelectMode ? `toggleTicketSelect('${t.id}')` : `openTicket('${t.id}')`}"
+                         oncontextmenu="showTicketMenu(event, '${t.id}')">
+                        ${ticketSelectMode ? `<div style="position:absolute;top:8px;left:8px;"><input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation();toggleTicketSelect('${t.id}')"></div>` : ''}
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div>
+                                <div style="font-weight:600;font-size:15px;">${t.name}</div>
+                                <div style="font-size:12px;color:#6c757d;margin-top:2px;">${new Date(t.createdAt).toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+                                <div style="font-size:12px;color:#6c757d;">${t.employeeName || '未分配员工'}</div>
+                                <div style="font-size:11px;color:#999;margin-top:4px;">${itemCount} 件商品</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-weight:700;font-size:16px;color:var(--primary);">¥${t.total.toFixed(2)}</div>
+                                <span class="status-badge ${t.status}" style="margin-top:4px;">${t.status === 'open' ? '未支付' : '已结账'}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="ticket-amount">¥${t.total.toFixed(2)}</div>
-                    <div class="ticket-time">${new Date(t.createdAt).toLocaleString()}</div>
+                `;
+            }).join('');
+            
+            // 多选工具栏
+            if (ticketSelectMode && selectedTickets.length > 0) {
+                grid.innerHTML += `
+                    <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--dark);color:white;padding:12px 24px;border-radius:12px;display:flex;gap:16px;align-items:center;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:100;">
+                        <span>已选择 ${selectedTickets.length} 个</span>
+                        <button class="btn btn-sm" style="background:#28a745;color:white;" onclick="mergeSelectedTickets()">合并</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSelectedTickets()">删除</button>
+                        <button class="btn btn-sm btn-outline" style="color:white;border-color:rgba(255,255,255,0.3);" onclick="exitTicketSelectMode()">取消</button>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleTicketSelectMode() {
+            ticketSelectMode = !ticketSelectMode;
+            if (!ticketSelectMode) selectedTickets = [];
+            renderTickets();
+        }
+
+        function exitTicketSelectMode() {
+            ticketSelectMode = false;
+            selectedTickets = [];
+            renderTickets();
+        }
+
+        function toggleTicketSelect(id) {
+            const idx = selectedTickets.indexOf(id);
+            if (idx > -1) {
+                selectedTickets.splice(idx, 1);
+            } else {
+                selectedTickets.push(id);
+            }
+            renderTickets();
+        }
+
+        function mergeSelectedTickets() {
+            if (selectedTickets.length < 2) {
+                showToast('warning', '提示', '请至少选择2个台位进行合并');
+                return;
+            }
+            
+            showModal('合并台位', `
+                <p style="margin-bottom:16px;">将 ${selectedTickets.length} 个台位合并为一个新台位</p>
+                <div class="form-group">
+                    <label class="form-label">新台位名称</label>
+                    <input type="text" class="form-input" id="mergeTicketName" value="合并台位" placeholder="输入新台位名称">
                 </div>
-            `).join('');
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="confirmMergeTickets()">合并</button>
+                </div>
+            `);
+        }
+
+        function confirmMergeTickets() {
+            const newName = document.getElementById('mergeTicketName').value.trim() || '合并台位';
+            const selected = tickets.filter(t => selectedTickets.includes(t.id));
+            
+            // 合并商品
+            const mergedItems = [];
+            selected.forEach(t => {
+                if (t.items) mergedItems.push(...t.items);
+            });
+            
+            // 创建新台位
+            const newTicket = {
+                id: 'T' + Date.now(),
+                name: newName,
+                items: mergedItems,
+                total: mergedItems.reduce((sum, i) => sum + (i.price * i.qty), 0),
+                status: 'open',
+                createdAt: new Date().toISOString(),
+                employeeName: '合并'
+            };
+            
+            // 删除旧台位
+            tickets = tickets.filter(t => !selectedTickets.includes(t.id));
+            tickets.unshift(newTicket);
+            
+            saveData('tickets', tickets);
+            closeModal();
+            exitTicketSelectMode();
+            renderTickets();
+            updateTicketStats();
+            showToast('success', '已合并', `已合并为"${newName}"`);
+        }
+
+        function deleteSelectedTickets() {
+            if (!confirm(`确定要删除选中的 ${selectedTickets.length} 个台位吗？`)) return;
+            tickets = tickets.filter(t => !selectedTickets.includes(t.id));
+            saveData('tickets', tickets);
+            closeModal();
+            exitTicketSelectMode();
+            renderTickets();
+            updateTicketStats();
+            showToast('success', '已删除', `已删除 ${selectedTickets.length} 个台位`);
+        }
+
+        function showTicketMenu(event, id) {
+            event.preventDefault();
+            const ticket = tickets.find(t => t.id === id);
+            if (!ticket) return;
+            
+            showModal('台位操作', `
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button class="btn btn-outline" onclick="closeModal();openTicket('${id}')">📂 打开</button>
+                    <button class="btn btn-outline" onclick="closeModal();renameTicket('${id}')">✏️ 重命名</button>
+                    <button class="btn btn-outline" onclick="closeModal();duplicateTicket('${id}')">📋 复制</button>
+                    <button class="btn btn-danger" onclick="closeModal();deleteSingleTicket('${id}')">🗑️ 删除</button>
+                </div>
+            `);
+        }
+
+        function renameTicket(id) {
+            const ticket = tickets.find(t => t.id === id);
+            if (!ticket) return;
+            showModal('重命名台位', `
+                <div class="form-group">
+                    <label class="form-label">台位名称</label>
+                    <input type="text" class="form-input" id="renameTicketInput" value="${ticket.name}">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="confirmRenameTicket('${id}')">保存</button>
+                </div>
+            `);
+        }
+
+        function confirmRenameTicket(id) {
+            const ticket = tickets.find(t => t.id === id);
+            if (ticket) {
+                ticket.name = document.getElementById('renameTicketInput').value.trim();
+                saveData('tickets', tickets);
+                closeModal();
+                renderTickets();
+                showToast('success', '已重命名', `台位已改名为"${ticket.name}"`);
+            }
+        }
+
+        function duplicateTicket(id) {
+            const ticket = tickets.find(t => t.id === id);
+            if (!ticket) return;
+            
+            const newTicket = {
+                ...JSON.parse(JSON.stringify(ticket)),
+                id: 'T' + Date.now(),
+                name: ticket.name + ' (副本)',
+                createdAt: new Date().toISOString()
+            };
+            
+            tickets.unshift(newTicket);
+            saveData('tickets', tickets);
+            renderTickets();
+            showToast('success', '已复制', `台位"${newTicket.name}"已创建`);
+        }
+
+        function deleteSingleTicket(id) {
+            if (!confirm('确定要删除此台位吗？')) return;
+            tickets = tickets.filter(t => t.id !== id);
+            saveData('tickets', tickets);
+            renderTickets();
+            updateTicketStats();
+            showToast('success', '已删除', '台位已删除');
         }
 
         function updateTicketStats() {
@@ -2832,9 +3057,20 @@
         }
 
         function showNewTicketModal() {
+            // 预定义台位列表
+            const predefined = ['桌1', '桌2', '桌3', '桌4', '包间A', '包间B', 'VIP1', 'VIP2'];
             showModal('新建开台', `
                 <div class="form-group">
-                    <label class="form-label">台位名称</label>
+                    <label class="form-label">选择或创建台位</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+                        ${predefined.map(name => `
+                            <button class="btn btn-outline btn-sm" onclick="selectPredefinedTicket('${name}')" style="min-width:60px;">${name}</button>
+                        `).join('')}
+                    </div>
+                    <div style="text-align:center;color:#999;margin-bottom:12px;">或输入自定义名称</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">自定义名称</label>
                     <input type="text" class="form-input" id="newTicketName" placeholder="例如: 桌1、包间A">
                 </div>
                 <div class="form-group" style="margin-top:12px;">
@@ -2848,9 +3084,13 @@
             `);
         }
 
+        function selectPredefinedTicket(name) {
+            document.getElementById('newTicketName').value = name;
+        }
+
         function createNewTicket() {
             const name = document.getElementById('newTicketName').value.trim();
-            if (!name) { alert('请输入台位名称'); return; }
+            if (!name) { showToast('error', '错误', '请输入台位名称'); return; }
             
             const ticket = {
                 id: 'T' + Date.now(),
@@ -2867,6 +3107,7 @@
             closeModal();
             renderTickets();
             updateTicketStats();
+            showToast('success', '已创建', `台位"${name}"已创建`);
         }
 
         function openTicket(id) {
@@ -2874,7 +3115,7 @@
             if (!ticket) return;
             
             if (ticket.status === 'closed') {
-                alert('此台位已结账');
+                showToast('info', '提示', '此台位已结账');
                 return;
             }
             
@@ -3169,76 +3410,638 @@
 
         function showAddItemModal() {
             showModal('添加商品', `
-                <div class="form-row">
-                    <div class="form-group" style="flex:2;">
-                        <label class="form-label">商品名称 *</label>
-                        <input type="text" class="form-input" id="newItemName" placeholder="输入商品名称" required>
+                <div class="item-form-container">
+                    <!-- 基本信息组 -->
+                    <div class="accordion-group active">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>📋 基本信息</span>
+                            <span class="accordion-arrow">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="form-group">
+                                <label class="form-label">商品名称 *</label>
+                                <input type="text" class="form-input" id="newItemName" placeholder="输入商品名称（最多64字符）" maxlength="64" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">SKU *</label>
+                                    <input type="text" class="form-input" id="newItemSku" placeholder="唯一SKU编码">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">条码</label>
+                                    <div style="display:flex;gap:8px;">
+                                        <input type="text" class="form-input" id="newItemBarcode" placeholder="商品条码" style="flex:1;">
+                                        <button class="btn btn-outline" onclick="scanBarcode('newItemBarcode')" style="padding:8px 12px;">📷</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">描述</label>
+                                <textarea class="form-input" id="newItemDescription" rows="3" placeholder="商品详细描述（最多500字符）" maxlength="500"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">分类</label>
+                                    <select class="form-select" id="newItemCategory">
+                                        <option value="massage">按摩</option>
+                                        <option value="spa">SPA</option>
+                                        <option value="beauty">美容</option>
+                                        <option value="health">养生</option>
+                                        <option value="package">套票</option>
+                                        <option value="product">产品</option>
+                                        <option value="other">其他</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">销售方式</label>
+                                    <div class="radio-group">
+                                        <label class="radio-label"><input type="radio" name="newItemSoldBy" value="piece" checked> 按件</label>
+                                        <label class="radio-label"><input type="radio" name="newItemSoldBy" value="weight"> 按重量</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">上架销售</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="newItemActive" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">SKU编码</label>
-                        <input type="text" class="form-input" id="newItemSku" placeholder="如: MAS-001">
+                    
+                    <!-- 销售组 -->
+                    <div class="accordion-group active">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>💰 销售</span>
+                            <span class="accordion-arrow">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">售价 (¥) *</label>
+                                    <div class="currency-input">
+                                        <span class="currency-symbol">¥</span>
+                                        <input type="number" class="form-input" id="newItemPrice" placeholder="0.00" step="0.01" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">成本价 (¥)</label>
+                                    <div class="currency-input">
+                                        <span class="currency-symbol">¥</span>
+                                        <input type="number" class="form-input" id="newItemCost" placeholder="0.00" step="0.01">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">时长 (分钟)</label>
+                                    <input type="number" class="form-input" id="newItemDuration" placeholder="60" value="60">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">税费</label>
+                                    <select class="form-select" id="newItemTax">
+                                        <option value="">无</option>
+                                        <option value="standard">标准税率 6%</option>
+                                        <option value="reduced">优惠税率 3%</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">折扣</label>
+                                    <select class="form-select" id="newItemDiscount">
+                                        <option value="">无</option>
+                                        <option value="member">会员折扣</option>
+                                        <option value="vip">VIP折扣</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">佣金比例 (%)</label>
+                                <input type="number" class="form-input" id="newItemCommission" placeholder="60" value="60" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 库存组 -->
+                    <div class="accordion-group">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>📦 库存</span>
+                            <span class="accordion-arrow">▶</span>
+                        </div>
+                        <div class="accordion-content" style="display:none;">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">追踪库存</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="newItemTrackStock" checked onchange="toggleStockFields(this, 'new')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div id="newStockFields">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">当前库存</label>
+                                        <input type="number" class="form-input" id="newItemStock" value="999" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">低库存阈值</label>
+                                        <input type="number" class="form-input" id="newItemLowStock" value="10" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">最优库存</label>
+                                        <input type="number" class="form-input" id="newItemOptimalStock" placeholder="50" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="newNoStockFields" style="display:none;">
+                                <p style="color:#6c757d;font-size:13px;">不追踪库存</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 展示组 -->
+                    <div class="accordion-group">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>🎨 展示</span>
+                            <span class="accordion-arrow">▶</span>
+                        </div>
+                        <div class="accordion-content" style="display:none;">
+                            <div class="form-group">
+                                <label class="form-label">图标颜色</label>
+                                <div class="color-picker">
+                                    <span class="color-option selected" style="background:#3b7ddd;" onclick="selectItemColor(this, '#3b7ddd')"></span>
+                                    <span class="color-option" style="background:#28a745;" onclick="selectItemColor(this, '#28a745')"></span>
+                                    <span class="color-option" style="background:#ffc107;" onclick="selectItemColor(this, '#ffc107')"></span>
+                                    <span class="color-option" style="background:#dc3545;" onclick="selectItemColor(this, '#dc3545')"></span>
+                                    <span class="color-option" style="background:#6f42c1;" onclick="selectItemColor(this, '#6f42c1')"></span>
+                                    <span class="color-option" style="background:#e83e8c;" onclick="selectItemColor(this, '#e83e8c')"></span>
+                                    <span class="color-option" style="background:#17a2b8;" onclick="selectItemColor(this, '#17a2b8')"></span>
+                                </div>
+                                <input type="hidden" id="newItemColor" value="#3b7ddd">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">商品图片</label>
+                                <div class="image-upload-area" id="newItemImageArea" onclick="document.getElementById('newItemImageInput').click()">
+                                    <div style="font-size:32px;margin-bottom:8px;">🖼️</div>
+                                    <div>点击上传图片</div>
+                                    <div style="font-size:11px;color:#6c757d;">建议正方形图片 (150x150)</div>
+                                </div>
+                                <input type="file" id="newItemImageInput" accept="image/*" style="display:none;" onchange="previewItemImage(this, 'newItemImageArea')">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 变体组 -->
+                    <div class="accordion-group">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>🔄 变体</span>
+                            <span class="accordion-arrow">▶</span>
+                        </div>
+                        <div class="accordion-content" style="display:none;">
+                            <div style="margin-bottom:12px;">
+                                <button class="btn btn-outline btn-sm" onclick="addVariantOption()">+ 添加选项</button>
+                                <span style="font-size:12px;color:#6c757d;margin-left:8px;">(最多3个选项)</span>
+                            </div>
+                            <div id="variantOptionsList"></div>
+                            <div id="variantTableContainer" style="display:none;margin-top:16px;">
+                                <div style="font-size:13px;color:#6c757d;margin-bottom:8px;">已生成 <span id="variantCount">0</span> 个变体</div>
+                                <div class="data-table" style="font-size:12px;">
+                                    <div class="table-header" style="grid-template-columns:2fr 1fr 1fr 80px auto;">
+                                        <span>变体名称</span><span>SKU</span><span>条码</span><span>价格</span><span>操作</span>
+                                    </div>
+                                    <div id="variantTableBody"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 组合商品组 -->
+                    <div class="accordion-group">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>📦 组合商品</span>
+                            <span class="accordion-arrow">▶</span>
+                        </div>
+                        <div class="accordion-content" style="display:none;">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">是否组合商品</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="newItemIsComposite" onchange="toggleCompositeFields(this, 'new')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div id="newCompositeFields" style="display:none;margin-top:12px;">
+                                <div id="compositeComponentsList"></div>
+                                <button class="btn btn-outline btn-sm" onclick="addCompositeComponent('new')" style="margin-top:8px;">+ 添加组件</button>
+                                <div style="margin-top:12px;padding:12px;background:#f8f9fa;border-radius:8px;">
+                                    <span style="font-size:12px;color:#6c757d;">组合成本: </span>
+                                    <span id="newCompositeCost" style="font-weight:600;">¥0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他信息 -->
+                    <div class="accordion-group">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>📝 其他</span>
+                            <span class="accordion-arrow">▶</span>
+                        </div>
+                        <div class="accordion-content" style="display:none;">
+                            <div class="form-group">
+                                <label class="form-label">供应商</label>
+                                <input type="text" class="form-input" id="newItemSupplier" placeholder="供应商信息">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">标签 (逗号分隔)</label>
+                                <input type="text" class="form-input" id="newItemTags" placeholder="如: 热门,推荐">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">备注</label>
+                                <textarea class="form-input" id="newItemNotes" rows="2" placeholder="商品备注信息"></textarea>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">条码</label>
-                        <input type="text" class="form-input" id="newItemBarcode" placeholder="商品条码">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">分类</label>
-                        <select class="form-select" id="newItemCategory">
-                            <option value="massage">按摩</option>
-                            <option value="spa">SPA</option>
-                            <option value="beauty">美容</option>
-                            <option value="health">养生</option>
-                            <option value="package">套票</option>
-                            <option value="product">产品</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">售价 (¥) *</label>
-                        <input type="number" class="form-input" id="newItemPrice" placeholder="0.00" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">成本价 (¥)</label>
-                        <input type="number" class="form-input" id="newItemCost" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">时长 (分钟)</label>
-                        <input type="number" class="form-input" id="newItemDuration" placeholder="60" value="60">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">库存数量</label>
-                        <input type="number" class="form-input" id="newItemStock" placeholder="999" value="999">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">库存预警值</label>
-                        <input type="number" class="form-input" id="newItemLowStock" placeholder="10" value="10">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">佣金比例 (%)</label>
-                        <input type="number" class="form-input" id="newItemCommission" placeholder="60" value="60">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">供应商</label>
-                    <input type="text" class="form-input" id="newItemSupplier" placeholder="供应商信息">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">标签 (逗号分隔)</label>
-                    <input type="text" class="form-input" id="newItemTags" placeholder="如: 热门,推荐">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">备注</label>
-                    <textarea class="form-input" id="newItemNotes" rows="2" placeholder="商品备注信息"></textarea>
-                </div>
-                <div class="modal-footer">
+                <div class="modal-footer" style="margin-top:16px;">
                     <button class="btn btn-outline" onclick="closeModal()">取消</button>
-                    <button class="btn btn-primary" onclick="addNewItem()">添加</button>
+                    <button class="btn btn-primary" onclick="addNewItem()">添加商品</button>
+                </div>
+            `);
+        }
+        
+        function toggleAccordion(header) {
+            const group = header.parentElement;
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('.accordion-arrow');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                arrow.textContent = '▼';
+                group.classList.add('active');
+            } else {
+                content.style.display = 'none';
+                arrow.textContent = '▶';
+                group.classList.remove('active');
+            }
+        }
+        
+        function selectItemColor(el, color) {
+            document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('newItemColor').value = color;
+        }
+        
+        function previewItemImage(input, areaId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById(areaId).innerHTML = `<img src="${e.target.result}" style="max-width:150px;max-height:150px;border-radius:8px;">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function scanBarcode(inputId) {
+            showToast('info', '扫描条码', '请使用扫码器扫描商品条码');
+        }
+        
+        function toggleStockFields(checkbox, prefix) {
+            const stockFields = document.getElementById(prefix + 'StockFields');
+            const noStockFields = document.getElementById(prefix + 'NoStockFields');
+            if (checkbox.checked) {
+                stockFields.style.display = 'block';
+                noStockFields.style.display = 'none';
+            } else {
+                stockFields.style.display = 'none';
+                noStockFields.style.display = 'block';
+            }
+        }
+        
+        function toggleCompositeFields(checkbox, prefix) {
+            const fields = document.getElementById(prefix + 'CompositeFields');
+            fields.style.display = checkbox.checked ? 'block' : 'none';
+        }
+        
+        function addCompositeComponent(prefix) {
+            const list = document.getElementById(prefix + 'CompositeComponentsList');
+            const idx = list.children.length;
+            const div = document.createElement('div');
+            div.className = 'composite-component';
+            div.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center;';
+            div.innerHTML = `
+                <select class="form-select" style="flex:2;" onchange="updateCompositeCost('${prefix}')">
+                    <option value="">选择组件...</option>
+                    ${services.map(s => `<option value="${s.id}" data-cost="${s.cost}">${s.name}</option>`).join('')}
+                </select>
+                <input type="number" class="form-input" style="width:80px;" placeholder="数量" value="1" min="1" onchange="updateCompositeCost('${prefix}')">
+                <button class="btn btn-sm btn-danger" onclick="this.parentElement.remove();updateCompositeCost('${prefix}')">🗑️</button>
+            `;
+            list.appendChild(div);
+        }
+        
+        function updateCompositeCost(prefix) {
+            let total = 0;
+            document.querySelectorAll(`#${prefix}CompositeComponentsList .composite-component`).forEach(row => {
+                const select = row.querySelector('select');
+                const qty = parseInt(row.querySelector('input[type="number"]').value) || 0;
+                if (select.value) {
+                    const cost = parseFloat(select.options[select.selectedIndex].dataset.cost) || 0;
+                    total += cost * qty;
+                }
+            });
+            document.getElementById(prefix + 'CompositeCost').textContent = '¥' + total.toFixed(2);
+        }
+        
+        function addVariantOption() {
+            const container = document.getElementById('variantOptionsList');
+            if (container.children.length >= 3) {
+                showToast('warning', '提示', '最多只能添加3个选项');
+                return;
+            }
+            const idx = container.children.length;
+            const div = document.createElement('div');
+            div.className = 'variant-option';
+            div.style.cssText = 'background:#f8f9fa;padding:12px;border-radius:8px;margin-bottom:8px;';
+            div.innerHTML = `
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                    <input type="text" class="form-input" placeholder="选项名称 (如: 时长)" style="flex:1;" onchange="generateVariants()">
+                    <button class="btn btn-sm btn-danger" onclick="this.parentElement.parentElement.remove();generateVariants()">🗑️</button>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    <input type="text" class="form-input" placeholder="选项值1" style="width:100px;" onchange="generateVariants()">
+                    <input type="text" class="form-input" placeholder="选项值2" style="width:100px;" onchange="generateVariants()">
+                    <button class="btn btn-sm btn-outline" onclick="addVariantValue(this)">+</button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+        
+        function addVariantValue(btn) {
+            const container = btn.parentElement;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-input';
+            input.placeholder = '选项值';
+            input.style.width = '100px';
+            input.onchange = generateVariants;
+            container.insertBefore(input, btn);
+        }
+        
+        function generateVariants() {
+            const options = document.querySelectorAll('.variant-option');
+            const values = [];
+            options.forEach(opt => {
+                const name = opt.querySelector('input').value;
+                const vals = Array.from(opt.querySelectorAll('input:not(:first)'))
+                    .map(i => i.value.trim())
+                    .filter(v => v);
+                if (name && vals.length) values.push({ name, values: vals });
+            });
+            
+            if (values.length === 0) {
+                document.getElementById('variantTableContainer').style.display = 'none';
+                return;
+            }
+            
+            const combinations = cartesian(values);
+            document.getElementById('variantCount').textContent = combinations.length;
+            document.getElementById('variantTableContainer').style.display = 'block';
+            
+            const tbody = document.getElementById('variantTableBody');
+            tbody.innerHTML = combinations.map((combo, i) => {
+                const name = combo.map(c => c.value).join(' / ');
+                return `
+                    <div class="table-row" style="grid-template-columns:2fr 1fr 1fr 80px auto;">
+                        <span>${name}</span>
+                        <input type="text" class="form-input form-input-sm" placeholder="SKU">
+                        <input type="text" class="form-input form-input-sm" placeholder="条码">
+                        <input type="number" class="form-input form-input-sm" placeholder="价格">
+                        <button class="btn btn-sm btn-danger">🗑️</button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function cartesian(arrays) {
+            return arrays.reduce((acc, arr) => {
+                return acc.flatMap(x => arr.values.map(v => [...x, { name: arr.name, value: v }]));
+            }, [{}]);
+        }
+        
+        function addNewItem() {
+            const name = document.getElementById('newItemName').value.trim();
+            const sku = document.getElementById('newItemSku').value.trim();
+            const barcode = document.getElementById('newItemBarcode').value.trim();
+            const category = document.getElementById('newItemCategory').value;
+            const price = parseFloat(document.getElementById('newItemPrice').value);
+            const cost = parseFloat(document.getElementById('newItemCost').value) || 0;
+            const duration = parseInt(document.getElementById('newItemDuration').value) || 60;
+            const trackStock = document.getElementById('newItemTrackStock').checked;
+            const stock = trackStock ? parseInt(document.getElementById('newItemStock').value) || 999 : 999;
+            const lowStockAlert = trackStock ? parseInt(document.getElementById('newItemLowStock').value) || 10 : 10;
+            const commission = parseFloat(document.getElementById('newItemCommission').value) || 60;
+            const supplier = document.getElementById('newItemSupplier').value.trim();
+            const tagsStr = document.getElementById('newItemTags').value.trim();
+            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()) : [];
+            const active = document.getElementById('newItemActive').checked;
+            const color = document.getElementById('newItemColor').value;
+            
+            if (!name || !price) { showToast('error', '错误', '请填写名称和价格'); return; }
+            
+            const id = 'S' + Date.now();
+            services.push({ id, sku, barcode, name, category, price, cost, duration, stock, lowStockAlert, supplier, tags, commission, active, image: '', color, trackStock });
+            saveData('services', services);
+            closeModal();
+            renderItemsTable();
+            renderItemsGrid();
+            showToast('success', '成功', '商品已添加');
+        }
+        
+        function showEditItemModal(id) {
+            const item = services.find(s => s.id === id);
+            if (!item) return;
+            
+            showModal('编辑商品', `
+                <div class="item-form-container">
+                    <!-- 基本信息组 -->
+                    <div class="accordion-group active">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>📋 基本信息</span>
+                            <span class="accordion-arrow">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="form-group">
+                                <label class="form-label">商品名称 *</label>
+                                <input type="text" class="form-input" id="editItemName" value="${item.name}" maxlength="64" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">SKU *</label>
+                                    <input type="text" class="form-input" id="editItemSku" value="${item.sku || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">条码</label>
+                                    <div style="display:flex;gap:8px;">
+                                        <input type="text" class="form-input" id="editItemBarcode" value="${item.barcode || ''}" style="flex:1;">
+                                        <button class="btn btn-outline" onclick="scanBarcode('editItemBarcode')" style="padding:8px 12px;">📷</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">描述</label>
+                                <textarea class="form-input" id="editItemDescription" rows="3">${item.description || ''}</textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">分类</label>
+                                    <select class="form-select" id="editItemCategory">
+                                        <option value="massage" ${item.category === 'massage' ? 'selected' : ''}>按摩</option>
+                                        <option value="spa" ${item.category === 'spa' ? 'selected' : ''}>SPA</option>
+                                        <option value="beauty" ${item.category === 'beauty' ? 'selected' : ''}>美容</option>
+                                        <option value="health" ${item.category === 'health' ? 'selected' : ''}>养生</option>
+                                        <option value="package" ${item.category === 'package' ? 'selected' : ''}>套票</option>
+                                        <option value="product" ${item.category === 'product' ? 'selected' : ''}>产品</option>
+                                        <option value="other" ${item.category === 'other' ? 'selected' : ''}>其他</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">销售方式</label>
+                                    <div class="radio-group">
+                                        <label class="radio-label"><input type="radio" name="editItemSoldBy" value="piece" ${item.soldBy !== 'weight' ? 'checked' : ''}> 按件</label>
+                                        <label class="radio-label"><input type="radio" name="editItemSoldBy" value="weight" ${item.soldBy === 'weight' ? 'checked' : ''}> 按重量</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">上架销售</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="editItemActive" ${item.active !== false ? 'checked' : ''}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 销售组 -->
+                    <div class="accordion-group active">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>💰 销售</span>
+                            <span class="accordion-arrow">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">售价 (¥) *</label>
+                                    <div class="currency-input">
+                                        <span class="currency-symbol">¥</span>
+                                        <input type="number" class="form-input" id="editItemPrice" value="${item.price}" step="0.01" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">成本价 (¥)</label>
+                                    <div class="currency-input">
+                                        <span class="currency-symbol">¥</span>
+                                        <input type="number" class="form-input" id="editItemCost" value="${item.cost || 0}" step="0.01">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">时长 (分钟)</label>
+                                    <input type="number" class="form-input" id="editItemDuration" value="${item.duration || 60}">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">佣金比例 (%)</label>
+                                <input type="number" class="form-input" id="editItemCommission" value="${item.commission || 60}" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 库存组 -->
+                    <div class="accordion-group">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>📦 库存</span>
+                            <span class="accordion-arrow">▶</span>
+                        </div>
+                        <div class="accordion-content" style="display:none;">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">追踪库存</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="editItemTrackStock" ${item.trackStock !== false ? 'checked' : ''} onchange="toggleStockFields(this, 'edit')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div id="editStockFields" style="${item.trackStock !== false ? '' : 'display:none;'}">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">当前库存</label>
+                                        <input type="number" class="form-input" id="editItemStock" value="${item.stock || 999}" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">低库存阈值</label>
+                                        <input type="number" class="form-input" id="editItemLowStock" value="${item.lowStockAlert || 10}" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="editNoStockFields" style="${item.trackStock !== false ? 'display:none;' : ''}">
+                                <p style="color:#6c757d;font-size:13px;">不追踪库存</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 展示组 -->
+                    <div class="accordion-group">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>🎨 展示</span>
+                            <span class="accordion-arrow">▶</span>
+                        </div>
+                        <div class="accordion-content" style="display:none;">
+                            <div class="form-group">
+                                <label class="form-label">图标颜色</label>
+                                <div class="color-picker">
+                                    ${['#3b7ddd','#28a745','#ffc107','#dc3545','#6f42c1','#e83e8c','#17a2b8'].map(c => `
+                                        <span class="color-option ${item.color === c ? 'selected' : ''}" style="background:${c};" onclick="selectItemColor(this, '${c}')"></span>
+                                    `).join('')}
+                                </div>
+                                <input type="hidden" id="editItemColor" value="${item.color || '#3b7ddd'}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他信息 -->
+                    <div class="accordion-group">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span>📝 其他</span>
+                            <span class="accordion-arrow">▶</span>
+                        </div>
+                        <div class="accordion-content" style="display:none;">
+                            <div class="form-group">
+                                <label class="form-label">供应商</label>
+                                <input type="text" class="form-input" id="editItemSupplier" value="${item.supplier || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">标签 (逗号分隔)</label>
+                                <input type="text" class="form-input" id="editItemTags" value="${(item.tags || []).join(', ')}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">备注</label>
+                                <textarea class="form-input" id="editItemNotes" rows="2">${item.notes || ''}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="margin-top:16px;">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-danger" onclick="deleteItem('${item.id}')">删除</button>
+                    <button class="btn btn-primary" onclick="saveEditItem('${item.id}')">保存</button>
                 </div>
             `);
         }
