@@ -3712,11 +3712,15 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
 
         function processSplitPayments(payments) {
             let subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-            let discount = parseFloat(document.getElementById('discountValue')?.value) || 0;
+            let discount = 0;
+            const discountType = document.getElementById('discountType')?.value;
+            const discountValue = parseFloat(document.getElementById('discountValue')?.value) || 0;
+            if (discountType === 'percent') discount = subtotal * (discountValue / 100);
+            else if (discountType === 'fixed') discount = discountValue;
             let tax = settings.tax?.enabled ? calculateTax(subtotal - discount) : 0;
             
             payments.forEach(p => {
-                createOrder(subtotal, discount, tax, p.amount, p.method);
+                createOrder(subtotal, discount, tax, p.amount, p.method, p.amount);
             });
             
             finishCheckout();
@@ -3819,15 +3823,31 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
         }
 
         function completePayment(method, total, cashReceived) {
-            createOrder(0, 0, 0, total, method, cashReceived);
+            let subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            let discount = 0;
+            const discountType = document.getElementById('discountType')?.value;
+            const discountValue = parseFloat(document.getElementById('discountValue')?.value) || 0;
+            if (discountType === 'percent') discount = subtotal * (discountValue / 100);
+            else if (discountType === 'fixed') discount = discountValue;
+            
+            const afterDiscount = subtotal - discount;
+            const tax = settings.tax?.enabled ? calculateTax(afterDiscount) : 0;
+            const tip = currentTip;
+            const finalTotal = roundAmount(afterDiscount + tax + tip);
+            
+            createOrder(subtotal, discount, tax, finalTotal, method, cashReceived);
             finishCheckout();
-            showPaymentSuccess(total, method, currentOrderNo);
+            showPaymentSuccess(finalTotal, method, currentOrderNo, cashReceived);
         }
         
-        function showPaymentSuccess(total, method, orderNo) {
+        function showPaymentSuccess(total, method, orderNo, cashReceived) {
             const tip = currentTip;
             const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-            let discount = parseFloat(document.getElementById('discountValue')?.value) || 0;
+            let discount = 0;
+            const discountType = document.getElementById('discountType')?.value;
+            const discountValue = parseFloat(document.getElementById('discountValue')?.value) || 0;
+            if (discountType === 'percent') discount = subtotal * (discountValue / 100);
+            else if (discountType === 'fixed') discount = discountValue;
             let tax = settings.tax?.enabled ? calculateTax(subtotal - discount) : 0;
             const change = cashReceived ? cashReceived - total : 0;
             
