@@ -736,7 +736,57 @@
         .printer-group-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
         .printer-group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .printer-group-categories { display: flex; flex-wrap: wrap; gap: 6px; }
-        .category-tag { padding: 4px 10px; background: var(--gray-100); border-radius: 20px; font-size: 12px; }
+        .category-tag { padding: 4px 10px; background: var(--gray-100); border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .category-tag.active { background: var(--primary); color: white; }
+        
+        /* 库存调整 */
+        .adjustment-form { padding: 0; }
+        .adjustment-item { display: flex; gap: 8px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gray-100); }
+        .adjustment-qty { display: flex; align-items: center; gap: 8px; }
+        .adjustment-qty input { width: 80px; text-align: center; }
+        .stock-positive { color: var(--success); font-weight: 600; }
+        .stock-negative { color: var(--danger); font-weight: 600; }
+        
+        /* 调拨单 */
+        .transfer-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+        .transfer-card:hover { border-color: var(--primary); }
+        .transfer-status { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .transfer-status.draft { background: var(--gray-200); color: var(--gray-600); }
+        .transfer-status.transit { background: rgba(59,125,221,0.15); color: var(--primary); }
+        .transfer-status.transferred { background: rgba(40,167,69,0.15); color: var(--success); }
+        
+        /* 盘点 */
+        .count-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gray-100); }
+        .count-expected { font-weight: 600; }
+        .count-diff { font-weight: 700; }
+        .count-diff.positive { color: var(--success); }
+        .count-diff.negative { color: var(--danger); }
+        
+        /* 税费/折扣 */
+        .tax-row, .discount-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gray-100); }
+        .tax-rate, .discount-value { font-weight: 600; color: var(--primary); }
+        
+        /* 修饰符 */
+        .modifier-option { display: flex; gap: 8px; align-items: center; padding: 8px 0; }
+        .modifier-option input:first-child { flex: 2; }
+        .modifier-option input:last-child { flex: 1; text-align: right; }
+        
+        /* 导入进度 */
+        .import-progress { padding: 20px; }
+        .progress-bar { height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; margin: 16px 0; }
+        .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s; }
+        
+        /* 标签打印 */
+        .label-preview { display: grid; gap: 4px; padding: 16px; }
+        .label-item { border: 1px dashed var(--gray-300); padding: 8px; text-align: center; font-size: 10px; background: white; }
+        .label-item .name { font-weight: 600; margin-bottom: 4px; }
+        .label-item .price { color: var(--primary); font-size: 12px; }
+        .label-item .barcode { font-family: monospace; margin-top: 4px; }
+        
+        /* 变体 */
+        .variant-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 60px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--gray-100); }
+        .variant-options { display: flex; gap: 4px; flex-wrap: wrap; }
+        .variant-option-tag { padding: 2px 6px; background: var(--gray-100); border-radius: 4px; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -1593,6 +1643,10 @@
                         <div class="settings-tab" onclick="switchSettingsTab('receipt', this)">🧾 收据设置</div>
                         <div class="settings-tab" onclick="switchSettingsTab('features', this)">🎛️ 功能开关</div>
                         <div class="settings-tab" onclick="switchSettingsTab('tax', this)">🧾 税费配置</div>
+                        <div class="settings-tab" onclick="switchSettingsTab('discounts', this)">🏷️ 折扣配置</div>
+                        <div class="settings-tab" onclick="switchSettingsTab('modifiers', this)">🎛️ 修饰符</div>
+                        <div class="settings-tab" onclick="switchSettingsTab('loyalty', this)">⭐ 会员积分</div>
+                        <div class="settings-tab" onclick="switchSettingsTab('paymentTypes', this)">💳 支付类型</div>
                         <div class="settings-tab" onclick="switchSettingsTab('printer', this)">🖨️ 打印机</div>
                         <div class="settings-tab" onclick="switchSettingsTab('tips', this)">💰 小费</div>
                         <div class="settings-tab" onclick="switchSettingsTab('currency', this)">💱 货币</div>
@@ -1897,7 +1951,27 @@
                     <!-- 税费配置 -->
                     <div id="settings-tax" class="settings-content" style="display:none;">
                         <div class="settings-section">
-                            <div class="settings-section-title">税费设置</div>
+                            <div class="settings-section-title">税费管理</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">管理多个税费，可为不同商品或分类设置不同税率。</p>
+                            
+                            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                                <button class="btn btn-primary" onclick="showAddTaxModal()">+ 添加税费</button>
+                            </div>
+                            
+                            <div id="taxesList" class="data-table" style="box-shadow:none;">
+                                <div class="table-header" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+                                    <span>名称</span>
+                                    <span>税率</span>
+                                    <span>计算方式</span>
+                                    <span>状态</span>
+                                    <span>操作</span>
+                                </div>
+                                <div id="taxesTableBody"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <div class="settings-section-title">基础设置</div>
                             <div class="setting-item">
                                 <div class="setting-info">
                                     <div class="setting-name">启用税费</div>
@@ -1919,6 +1993,89 @@
                                     <option value="included">包含在价格内 (Price includes tax)</option>
                                 </select>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 折扣配置 -->
+                    <div id="settings-discounts" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">折扣管理</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">管理预设折扣，可限制仅特定员工使用。</p>
+                            
+                            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                                <button class="btn btn-primary" onclick="showAddDiscountModal()">+ 添加折扣</button>
+                            </div>
+                            
+                            <div id="discountsList" class="data-table" style="box-shadow:none;">
+                                <div class="table-header" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+                                    <span>名称</span>
+                                    <span>类型</span>
+                                    <span>值</span>
+                                    <span>受限访问</span>
+                                    <span>操作</span>
+                                </div>
+                                <div id="discountsTableBody"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 修饰符配置 -->
+                    <div id="settings-modifiers" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">商品修饰符</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">配置商品选项，如尺寸、颜色等。</p>
+                            
+                            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                                <button class="btn btn-primary" onclick="showAddModifierModal()">+ 添加修饰符</button>
+                            </div>
+                            
+                            <div id="modifiersList"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 会员积分 -->
+                    <div id="settings-loyalty" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">⭐ 会员积分设置</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">配置会员积分获取和兑换规则。</p>
+                            
+                            <div class="form-group">
+                                <label>每消费 ¥1 获得积分</label>
+                                <input type="number" id="earningRate" value="1" min="0" class="form-input" style="width:120px;">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>积分兑换比例</label>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span>每</span>
+                                    <input type="number" id="redeemRate" value="100" min="1" class="form-input" style="width:100px;">
+                                    <span>积分可抵扣 ¥1</span>
+                                </div>
+                            </div>
+                            
+                            <div style="padding:16px;background:#f8f9fa;border-radius:8px;margin:16px 0;">
+                                <div style="font-weight:600;margin-bottom:8px;">当前设置预览</div>
+                                <div style="font-size:13px;color:#6c757d;">
+                                    <div>• 消费 ¥100 可获得 <strong style="color:var(--primary);">100</strong> 积分</div>
+                                    <div>• <strong style="color:var(--primary);">100</strong> 积分可抵扣 ¥1</div>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-primary" onclick="saveLoyaltySettings()">保存设置</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 支付类型 -->
+                    <div id="settings-paymentTypes" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">💳 支付类型</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">管理可用的支付方式及其设置。</p>
+                            
+                            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                                <button class="btn btn-primary" onclick="showAddPaymentTypeModal()">+ 添加支付类型</button>
+                            </div>
+                            
+                            <div id="paymentTypesList"></div>
                         </div>
                     </div>
                     
@@ -2453,13 +2610,18 @@
                             <div style="display:flex;gap:12px;margin-bottom:16px;">
                                 <button class="btn btn-primary" onclick="showProductionModal()">+ 创建生产</button>
                                 <button class="btn btn-outline" onclick="showProductionsList()">📋 生产历史</button>
+                                <button class="btn btn-outline" onclick="showDisassemblesList()">🔧 拆解历史</button>
                             </div>
                             <div id="productionsList" class="order-list-container"></div>
+                            <div id="disassemblesList" class="order-list-container"></div>
                         </div>
                         
                         <div class="settings-section">
                             <div class="settings-section-title">库存调整</div>
-                            <button class="btn btn-outline" onclick="showStockAdjustmentModal()">📊 库存调整记录</button>
+                            <div style="display:flex;gap:12px;">
+                                <button class="btn btn-primary" onclick="showAddStockAdjustmentModal()">+ 新建调整</button>
+                                <button class="btn btn-outline" onclick="showStockAdjustmentHistory()">📊 调整记录</button>
+                            </div>
                         </div>
                     </div>
                     
@@ -5181,80 +5343,360 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             const item = services.find(s => s.id === id);
             if (!item) return;
             
+            const variants = item.variants || [];
+            const components = item.components || [];
+            
             showModal('编辑商品 - ' + item.name, `
-                <div class="form-row">
-                    <div class="form-group" style="flex:2;">
-                        <label class="form-label">商品名称 *</label>
-                        <input type="text" class="form-input" id="editItemName" value="${item.name}" required>
+                <div style="max-height:70vh;overflow-y:auto;padding-right:4px;">
+                    <div class="form-row">
+                        <div class="form-group" style="flex:2;">
+                            <label class="form-label">商品名称 *</label>
+                            <input type="text" class="form-input" id="editItemName" value="${item.name}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">SKU编码</label>
+                            <input type="text" class="form-input" id="editItemSku" value="${item.sku || ''}">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">SKU编码</label>
-                        <input type="text" class="form-input" id="editItemSku" value="${item.sku || ''}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">条码</label>
+                            <input type="text" class="form-input" id="editItemBarcode" value="${item.barcode || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">分类</label>
+                            <select class="form-select" id="editItemCategory">
+                                <option value="massage" ${item.category === 'massage' ? 'selected' : ''}>按摩</option>
+                                <option value="spa" ${item.category === 'spa' ? 'selected' : ''}>SPA</option>
+                                <option value="beauty" ${item.category === 'beauty' ? 'selected' : ''}>美容</option>
+                                <option value="health" ${item.category === 'health' ? 'selected' : ''}>养生</option>
+                                <option value="package" ${item.category === 'package' ? 'selected' : ''}>套票</option>
+                                <option value="product" ${item.category === 'product' ? 'selected' : ''}>产品</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">售价 (¥) *</label>
+                            <input type="number" class="form-input" id="editItemPrice" value="${item.price}" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">成本价 (¥)</label>
+                            <input type="number" class="form-input" id="editItemCost" value="${item.cost || 0}" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">时长 (分钟)</label>
+                            <input type="number" class="form-input" id="editItemDuration" value="${item.duration}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">库存</label>
+                            <input type="number" class="form-input" id="editItemStock" value="${item.stock}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">预警值</label>
+                            <input type="number" class="form-input" id="editItemLowStock" value="${item.lowStockAlert}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">佣金 (%)</label>
+                            <input type="number" class="form-input" id="editItemCommission" value="${item.commission || 60}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">供应商</label>
+                            <input type="text" class="form-input" id="editItemSupplier" value="${item.supplier || ''}" list="supplierList">
+                            <datalist id="supplierList">
+                                ${suppliers.map(s => `<option value="${s.name}">`).join('')}
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">状态</label>
+                            <select class="form-select" id="editItemActive">
+                                <option value="true" ${item.active ? 'selected' : ''}>在售</option>
+                                <option value="false" ${!item.active ? 'selected' : ''}>已下架</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:16px;padding-top:16px;border-top:2px solid var(--gray-200);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <div style="font-weight:600;">🎛️ 变体</div>
+                            <button class="btn btn-sm btn-outline" onclick="showVariantsEditor('${id}')">编辑变体</button>
+                        </div>
+                        ${variants.length > 0 ? `
+                            <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">${variants.length} 个变体</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                                ${variants.map(v => `
+                                    <span style="padding:4px 8px;background:var(--gray-100);border-radius:4px;font-size:12px;">
+                                        ${v.options?.join(' / ') || '默认'}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        ` : '<div style="font-size:12px;color:var(--gray-400);">暂无变体</div>'}
+                    </div>
+                    
+                    <div style="margin-top:16px;padding-top:16px;border-top:2px solid var(--gray-200);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <div style="font-weight:600;">📦 组合商品</div>
+                            <button class="btn btn-sm btn-outline" onclick="showCompositeEditor('${id}')">编辑组件</button>
+                        </div>
+                        ${components.length > 0 ? `
+                            <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">${components.length} 个组件</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                                ${components.map(c => {
+                                    const comp = services.find(s => s.id === c.itemId);
+                                    return `<span style="padding:4px 8px;background:var(--gray-100);border-radius:4px;font-size:12px;">${comp?.name || c.name} x${c.qty}</span>`;
+                                }).join('')}
+                            </div>
+                            <div style="margin-top:8px;font-size:12px;">
+                                预计成本: <strong style="color:var(--primary);">¥${components.reduce((s, c) => {
+                                    const comp = services.find(sv => sv.id === c.itemId);
+                                    return s + (comp?.cost || 0) * c.qty;
+                                }, 0).toFixed(2)}</strong>
+                            </div>
+                        ` : '<div style="font-size:12px;color:var(--gray-400);">非组合商品</div>'}
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">条码</label>
-                        <input type="text" class="form-input" id="editItemBarcode" value="${item.barcode || ''}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">分类</label>
-                        <select class="form-select" id="editItemCategory">
-                            <option value="massage" ${item.category === 'massage' ? 'selected' : ''}>按摩</option>
-                            <option value="spa" ${item.category === 'spa' ? 'selected' : ''}>SPA</option>
-                            <option value="beauty" ${item.category === 'beauty' ? 'selected' : ''}>美容</option>
-                            <option value="health" ${item.category === 'health' ? 'selected' : ''}>养生</option>
-                            <option value="package" ${item.category === 'package' ? 'selected' : ''}>套票</option>
-                            <option value="product" ${item.category === 'product' ? 'selected' : ''}>产品</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">售价 (¥) *</label>
-                        <input type="number" class="form-input" id="editItemPrice" value="${item.price}" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">成本价 (¥)</label>
-                        <input type="number" class="form-input" id="editItemCost" value="${item.cost || 0}" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">时长 (分钟)</label>
-                        <input type="number" class="form-input" id="editItemDuration" value="${item.duration}">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">库存</label>
-                        <input type="number" class="form-input" id="editItemStock" value="${item.stock}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">预警值</label>
-                        <input type="number" class="form-input" id="editItemLowStock" value="${item.lowStockAlert}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">佣金 (%)</label>
-                        <input type="number" class="form-input" id="editItemCommission" value="${item.commission || 60}">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">供应商</label>
-                        <input type="text" class="form-input" id="editItemSupplier" value="${item.supplier || ''}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">状态</label>
-                        <select class="form-select" id="editItemActive">
-                            <option value="true" ${item.active ? 'selected' : ''}>在售</option>
-                            <option value="false" ${!item.active ? 'selected' : ''}>已下架</option>
-                        </select>
-                    </div>
-                </div>
+                
                 <div class="modal-footer">
                     <button class="btn btn-outline" onclick="closeModal()">取消</button>
                     <button class="btn btn-primary" onclick="updateItem('${id}')">保存</button>
                 </div>
             `);
+        }
+        
+        function showVariantsEditor(itemId) {
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            const variants = item.variants || [];
+            
+            showModal('编辑变体 - ' + item.name, `
+                <div style="max-height:60vh;overflow-y:auto;">
+                    <div class="form-group">
+                        <label class="form-label">选项组</label>
+                        <div id="variantOptionsContainer">
+                            <div style="margin-bottom:12px;">
+                                <input type="text" class="form-input" id="variantOpt1Name" placeholder="选项名称 (如: 颜色, 尺寸)" value="${item.variantOptions?.[0]?.name || ''}" style="margin-bottom:8px;">
+                                <input type="text" class="form-input" id="variantOpt1Values" placeholder="选项值,逗号分隔 (如: 红色,蓝色,绿色)" value="${item.variantOptions?.[0]?.values?.join(',') || ''}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:16px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-weight:600;">变体列表</span>
+                            <button class="btn btn-sm btn-outline" onclick="generateVariants('${itemId}')">生成变体</button>
+                        </div>
+                        
+                        <div class="variant-row" style="font-weight:600;background:var(--gray-50);padding:8px;">
+                            <span>选项</span>
+                            <span>SKU</span>
+                            <span>条码</span>
+                            <span>价格</span>
+                            <span>成本</span>
+                            <span>库存</span>
+                        </div>
+                        ${variants.map((v, idx) => `
+                            <div class="variant-row">
+                                <div class="variant-options">
+                                    ${(v.options || []).map(o => `<span class="variant-option-tag">${o}</span>`).join('')}
+                                </div>
+                                <input type="text" class="form-input" style="padding:6px;font-size:12px;" value="${v.sku || ''}" placeholder="SKU">
+                                <input type="text" class="form-input" style="padding:6px;font-size:12px;" value="${v.barcode || ''}" placeholder="条码">
+                                <input type="number" class="form-input" style="padding:6px;font-size:12px;" value="${v.price || item.price}" placeholder="价格">
+                                <input type="number" class="form-input" style="padding:6px;font-size:12px;" value="${v.cost || 0}" placeholder="成本">
+                                <input type="number" class="form-input" style="padding:6px;font-size:12px;" value="${v.stock || 0}" placeholder="库存">
+                            </div>
+                        `).join('')}
+                        ${variants.length === 0 ? '<p style="text-align:center;color:var(--gray-500);padding:20px;">点击"生成变体"创建变体</p>' : ''}
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveVariants('${itemId}')">保存</button>
+                </div>
+            `);
+        }
+        
+        function generateVariants(itemId) {
+            const opt1Name = document.getElementById('variantOpt1Name').value.trim();
+            const opt1Values = document.getElementById('variantOpt1Values').value.split(',').map(v => v.trim()).filter(v => v);
+            
+            if (!opt1Values.length) {
+                showToast('error', '错误', '请输入至少一个选项值');
+                return;
+            }
+            
+            const variants = opt1Values.map(value => ({
+                options: [value],
+                sku: '',
+                barcode: '',
+                price: 0,
+                cost: 0,
+                stock: 0
+            }));
+            
+            const container = document.getElementById('variantOptionsContainer');
+            container.innerHTML += `<input type="hidden" id="generatedVariants" value='${JSON.stringify(variants)}'>`;
+            
+            const item = services.find(s => s.id === itemId);
+            if (item) {
+                item.variantOptions = [{ name: opt1Name, values: opt1Values }];
+                item.variants = variants;
+            }
+            
+            showVariantsEditor(itemId);
+        }
+        
+        function saveVariants(itemId) {
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            const variantRows = document.querySelectorAll('.variant-row:not([style*="font-weight"])');
+            const variants = [];
+            
+            variantRows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                const optionsDiv = row.querySelector('.variant-options');
+                const optionTags = optionsDiv?.querySelectorAll('.variant-option-tag');
+                
+                variants.push({
+                    options: Array.from(optionTags || []).map(t => t.textContent),
+                    sku: inputs[0]?.value || '',
+                    barcode: inputs[1]?.value || '',
+                    price: parseFloat(inputs[2]?.value) || item.price,
+                    cost: parseFloat(inputs[3]?.value) || 0,
+                    stock: parseInt(inputs[4]?.value) || 0
+                });
+            });
+            
+            item.variants = variants;
+            saveData('services', services);
+            
+            closeModal();
+            showToast('success', '已保存', '变体配置已保存');
+        }
+        
+        function showCompositeEditor(itemId) {
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            const components = item.components || [];
+            
+            showModal('编辑组合商品 - ' + item.name, `
+                <div style="max-height:60vh;overflow-y:auto;">
+                    <div class="form-group">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <label class="form-label" style="margin:0;">组件列表</label>
+                            <button class="btn btn-sm btn-outline" onclick="addComponentToItem('${itemId}')">+ 添加组件</button>
+                        </div>
+                        <div id="itemComponentsList">
+                            ${components.map((c, idx) => {
+                                const comp = services.find(s => s.id === c.itemId);
+                                return `
+                                <div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+                                    <div style="flex:1;">
+                                        <div style="font-weight:500;">${comp?.name || '未知'}</div>
+                                        <div style="font-size:12px;color:var(--gray-500);">库存: ${comp?.stock || 0}</div>
+                                    </div>
+                                    <input type="number" class="form-input" style="width:60px;text-align:center;" value="${c.qty}" min="1" onchange="updateComponentQty('${itemId}', ${idx}, this.value)">
+                                    <button class="btn btn-sm btn-danger" onclick="removeComponentFromItem('${itemId}', ${idx})">🗑️</button>
+                                </div>
+                            `}).join('')}
+                            ${components.length === 0 ? '<p style="text-align:center;color:var(--gray-500);padding:20px;">点击上方按钮添加组件</p>' : ''}
+                        </div>
+                    </div>
+                    
+                    ${components.length > 0 ? `
+                    <div style="padding:12px;background:var(--gray-50);border-radius:8px;margin-top:16px;">
+                        <div style="font-weight:600;margin-bottom:8px;">成本计算</div>
+                        <div style="font-size:13px;">
+                            ${components.map(c => {
+                                const comp = services.find(s => s.id === c.itemId);
+                                return `<div style="display:flex;justify-content:space-between;padding:4px 0;">
+                                    <span>${comp?.name || '未知'} x ${c.qty}</span>
+                                    <span>¥${((comp?.cost || 0) * c.qty).toFixed(2)}</span>
+                                </div>`;
+                            }).join('')}
+                            <div style="border-top:1px solid var(--gray-300);margin-top:8px;padding-top:8px;font-weight:600;">
+                                <div style="display:flex;justify-content:space-between;">
+                                    <span>总成本</span>
+                                    <span style="color:var(--primary);">¥${components.reduce((s, c) => {
+                                        const comp = services.find(sv => sv.id === c.itemId);
+                                        return s + (comp?.cost || 0) * c.qty;
+                                    }, 0).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveCompositeConfig('${itemId}')">保存</button>
+                </div>
+            `);
+        }
+        
+        function addComponentToItem(itemId) {
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            item.components = item.components || [];
+            const available = services.filter(s => s.id !== itemId && !item.components.find(c => c.itemId === s.id));
+            
+            showModal('添加组件', `
+                <div style="max-height:300px;overflow-y:auto;">
+                    ${available.slice(0, 20).map(s => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--gray-100);cursor:pointer;" onclick="selectComponentForItem('${itemId}', '${s.id}')">
+                            <div>
+                                <div style="font-weight:500;">${s.name}</div>
+                                <div style="font-size:12px;color:var(--gray-500);">成本: ¥${(s.cost || 0).toFixed(2)}</div>
+                            </div>
+                            <span style="color:var(--primary);">+</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `);
+        }
+        
+        function selectComponentForItem(itemId, compId) {
+            const item = services.find(s => s.id === itemId);
+            const comp = services.find(s => s.id === compId);
+            if (!item || !comp) return;
+            
+            item.components.push({ itemId: compId, qty: 1 });
+            closeModal();
+            showCompositeEditor(itemId);
+        }
+        
+        function updateComponentQty(itemId, idx, value) {
+            const item = services.find(s => s.id === itemId);
+            if (!item || !item.components[idx]) return;
+            item.components[idx].qty = parseInt(value) || 1;
+        }
+        
+        function removeComponentFromItem(itemId, idx) {
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            item.components.splice(idx, 1);
+            showCompositeEditor(itemId);
+        }
+        
+        function saveCompositeConfig(itemId) {
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            item.isComposite = (item.components || []).length > 0;
+            saveData('services', services);
+            
+            closeModal();
+            showToast('success', '已保存', '组合商品配置已保存');
         }
         
         function updateItem(id) {
@@ -5993,6 +6435,736 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
 
         function showStockAdjustmentModal() {
             showToast('info', '提示', '库存调整功能开发中');
+        }
+        
+        // 库存调整
+        let stockAdjustments = JSON.parse(localStorage.getItem('vsevice_stock_adjustments') || '[]');
+        
+        function showAddStockAdjustmentModal() {
+            showModal('新建库存调整', `
+                <div class="adjustment-form">
+                    <div style="padding:16px;">
+                        <div class="form-group">
+                            <label class="form-label">调整原因 *</label>
+                            <select class="form-select" id="adjReason">
+                                <option value="receive">📦 收货 (Receive Items)</option>
+                                <option value="count">📋 盘点 (Inventory Count)</option>
+                                <option value="loss">📉 损耗 (Loss)</option>
+                                <option value="damaged">💔 损坏 (Damaged)</option>
+                                <option value="return">↩️ 退货 (Return)</option>
+                                <option value="other">📝 其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">备注</label>
+                            <textarea class="form-input" id="adjNote" rows="2" placeholder="可选备注"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <label class="form-label" style="margin:0;">商品列表</label>
+                                <button class="btn btn-sm btn-outline" onclick="showItemSearchForAdjustment()">+ 添加商品</button>
+                            </div>
+                            <div id="adjustmentItemsList">
+                                <p style="text-align:center;color:var(--gray-500);padding:20px;">点击上方按钮添加商品</p>
+                            </div>
+                        </div>
+                        
+                        <div id="adjustmentSummary" style="display:none;padding:12px;background:var(--gray-50);border-radius:8px;margin-top:16px;">
+                            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+                                <span>调整项数</span>
+                                <span id="adjItemCount">0</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+                                <span>净变动</span>
+                                <span id="adjNetChange" class="stock-positive">+0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                        <button class="btn btn-outline" onclick="saveAdjustmentAsDraft()">💾 存为草稿</button>
+                        <button class="btn btn-primary" onclick="executeStockAdjustment()">✓ 执行调整</button>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function showItemSearchForAdjustment() {
+            showModal('选择商品', `
+                <div style="padding:0;">
+                    <div style="padding:16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);">
+                        <input type="text" class="form-input" id="adjItemSearch" placeholder="搜索商品名称/SKU/条码..." oninput="searchItemsForAdjustment()">
+                    </div>
+                    <div id="adjItemResults" style="max-height:400px;overflow-y:auto;padding:16px;">
+                        ${services.filter(s => s.active).slice(0, 20).map(s => `
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--gray-100);cursor:pointer;" onclick="addItemToAdjustment('${s.id}')">
+                                <div>
+                                    <div style="font-weight:500;">${s.name}</div>
+                                    <div style="font-size:12px;color:var(--gray-500);">${s.sku || s.id} | 库存: ${s.stock || 0}</div>
+                                </div>
+                                <span style="color:var(--primary);font-size:20px;">+</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `);
+        }
+        
+        function searchItemsForAdjustment() {
+            const query = document.getElementById('adjItemSearch').value.toLowerCase();
+            const results = services.filter(s => 
+                s.active && (
+                    s.name.toLowerCase().includes(query) ||
+                    (s.sku || '').toLowerCase().includes(query) ||
+                    (s.barcode || '').toLowerCase().includes(query)
+                )
+            ).slice(0, 20);
+            
+            document.getElementById('adjItemResults').innerHTML = results.map(s => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--gray-100);cursor:pointer;" onclick="addItemToAdjustment('${s.id}')">
+                    <div>
+                        <div style="font-weight:500;">${s.name}</div>
+                        <div style="font-size:12px;color:var(--gray-500);">${s.sku || s.id} | 库存: ${s.stock || 0}</div>
+                    </div>
+                    <span style="color:var(--primary);font-size:20px;">+</span>
+                </div>
+            `).join('') || '<p style="text-align:center;color:var(--gray-500);padding:20px;">未找到商品</p>';
+        }
+        
+        function addItemToAdjustment(itemId) {
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            const existing = window.adjustmentItems || [];
+            if (existing.find(i => i.itemId === itemId)) {
+                showToast('warning', '已添加', '此商品已在列表中');
+                return;
+            }
+            
+            window.adjustmentItems = [...existing, { 
+                itemId: item.id, 
+                name: item.name, 
+                sku: item.sku,
+                currentStock: item.stock || 0,
+                qty: 0,
+                cost: item.cost || 0
+            }];
+            
+            closeModal();
+            renderAdjustmentItemsList();
+        }
+        
+        function renderAdjustmentItemsList() {
+            const list = document.getElementById('adjustmentItemsList');
+            const items = window.adjustmentItems || [];
+            
+            if (items.length === 0) {
+                list.innerHTML = '<p style="text-align:center;color:var(--gray-500);padding:20px;">点击上方按钮添加商品</p>';
+                document.getElementById('adjustmentSummary').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('adjustmentSummary').style.display = 'block';
+            
+            let itemCount = 0;
+            let netChange = 0;
+            
+            list.innerHTML = items.map((item, idx) => {
+                itemCount++;
+                netChange += item.qty;
+                return `
+                <div class="adjustment-item">
+                    <div style="flex:1;">
+                        <div style="font-weight:500;">${item.name}</div>
+                        <div style="font-size:12px;color:var(--gray-500);">当前库存: ${item.currentStock}</div>
+                    </div>
+                    <div class="adjustment-qty">
+                        <input type="number" class="form-input" value="${item.qty}" 
+                            onchange="updateAdjustmentQty(${idx}, this.value)"
+                            style="width:80px;text-align:center;">
+                    </div>
+                    <button class="btn btn-sm btn-danger" onclick="removeAdjustmentItem(${idx})">🗑️</button>
+                </div>
+            `}).join('');
+            
+            document.getElementById('adjItemCount').textContent = itemCount;
+            const netEl = document.getElementById('adjNetChange');
+            netEl.textContent = (netChange >= 0 ? '+' : '') + netChange;
+            netEl.className = netChange >= 0 ? 'stock-positive' : 'stock-negative';
+        }
+        
+        function updateAdjustmentQty(idx, value) {
+            if (window.adjustmentItems && window.adjustmentItems[idx]) {
+                window.adjustmentItems[idx].qty = parseInt(value) || 0;
+                renderAdjustmentItemsList();
+            }
+        }
+        
+        function removeAdjustmentItem(idx) {
+            if (window.adjustmentItems) {
+                window.adjustmentItems.splice(idx, 1);
+                renderAdjustmentItemsList();
+            }
+        }
+        
+        function executeStockAdjustment() {
+            const items = window.adjustmentItems || [];
+            if (items.length === 0) {
+                showToast('error', '错误', '请添加至少一个商品');
+                return;
+            }
+            
+            const reason = document.getElementById('adjReason').value;
+            const note = document.getElementById('adjNote').value;
+            
+            const adjustment = {
+                id: 'SA' + Date.now(),
+                reason,
+                note,
+                items: items.filter(i => i.qty !== 0),
+                status: 'completed',
+                date: new Date().toISOString(),
+                employee: '当前员工'
+            };
+            
+            adjustment.items.forEach(item => {
+                const service = services.find(s => s.id === item.itemId);
+                if (service) {
+                    service.stock = (service.stock || 0) + item.qty;
+                    if (reason === 'receive' && item.cost) {
+                        const oldStock = service.stock - item.qty;
+                        const totalCost = (oldStock * (service.cost || 0)) + (item.qty * item.cost);
+                        service.cost = totalCost / service.stock;
+                    }
+                }
+            });
+            
+            saveData('services', services);
+            stockAdjustments.unshift(adjustment);
+            localStorage.setItem('vsevice_stock_adjustments', JSON.stringify(stockAdjustments));
+            
+            window.adjustmentItems = [];
+            closeModal();
+            showStockAdjustmentHistory();
+            showToast('success', '调整完成', `已调整 ${adjustment.items.length} 个商品`);
+        }
+        
+        function saveAdjustmentAsDraft() {
+            const items = window.adjustmentItems || [];
+            if (items.length === 0) {
+                showToast('error', '错误', '请添加至少一个商品');
+                return;
+            }
+            
+            const reason = document.getElementById('adjReason').value;
+            const note = document.getElementById('adjNote').value;
+            
+            const adjustment = {
+                id: 'SA' + Date.now(),
+                reason,
+                note,
+                items: items,
+                status: 'draft',
+                date: new Date().toISOString(),
+                employee: '当前员工'
+            };
+            
+            stockAdjustments.unshift(adjustment);
+            localStorage.setItem('vsevice_stock_adjustments', JSON.stringify(stockAdjustments));
+            
+            window.adjustmentItems = [];
+            closeModal();
+            showStockAdjustmentHistory();
+            showToast('success', '已保存', '草稿已保存');
+        }
+        
+        function showStockAdjustmentHistory() {
+            showModal('库存调整记录', `
+                <div style="padding:0;">
+                    <div style="padding:16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);">
+                        <button class="btn btn-primary" onclick="closeModal();showAddStockAdjustmentModal();">+ 新建调整</button>
+                    </div>
+                    <div style="max-height:500px;overflow-y:auto;">
+                        ${stockAdjustments.length === 0 ? `
+                            <div style="text-align:center;padding:40px;color:var(--gray-500);">
+                                <div style="font-size:48px;margin-bottom:16px;">📦</div>
+                                <p>暂无调整记录</p>
+                            </div>
+                        ` : stockAdjustments.map(adj => `
+                            <div class="order-card" onclick="showStockAdjustmentDetail('${adj.id}')">
+                                <div class="order-header">
+                                    <span class="order-id">${adj.id}</span>
+                                    <span class="status-badge ${adj.status === 'draft' ? 'pending' : 'completed'}">${adj.status === 'draft' ? '草稿' : '已完成'}</span>
+                                </div>
+                                <div class="order-info">
+                                    <div>原因: ${CONFIG.adjustmentReasons[adj.reason] || adj.reason}</div>
+                                    <div>商品: ${adj.items.length} 项</div>
+                                    <div>日期: ${new Date(adj.date).toLocaleDateString('zh-CN')}</div>
+                                </div>
+                                ${adj.status !== 'draft' ? `
+                                <div style="font-size:13px;color:var(--gray-500);">
+                                    净变动: <span class="${adj.items.reduce((s,i) => s+i.qty, 0) >= 0 ? 'stock-positive' : 'stock-negative'}">
+                                        ${adj.items.reduce((s,i) => s+i.qty, 0) >= 0 ? '+' : ''}${adj.items.reduce((s,i) => s+i.qty, 0)}
+                                    </span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `);
+        }
+        
+        function showStockAdjustmentDetail(id) {
+            const adj = stockAdjustments.find(a => a.id === id);
+            if (!adj) return;
+            
+            showModal('调整详情 - ' + adj.id, `
+                <div style="padding:0;">
+                    <div style="background:linear-gradient(135deg, var(--primary) 0%, #5dade2 100%);color:white;padding:20px;">
+                        <div style="font-size:18px;font-weight:700;">${CONFIG.adjustmentReasons[adj.reason] || adj.reason}</div>
+                        <div style="font-size:13px;opacity:0.8;margin-top:4px;">${new Date(adj.date).toLocaleString('zh-CN')}</div>
+                    </div>
+                    
+                    <div style="padding:16px;">
+                        <div style="margin-bottom:16px;">
+                            <div style="font-weight:600;margin-bottom:8px;">商品明细</div>
+                            ${adj.items.map(item => `
+                                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+                                    <div>
+                                        <div style="font-weight:500;">${item.name}</div>
+                                        <div style="font-size:12px;color:var(--gray-500);">SKU: ${item.sku || '-'}</div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="font-weight:600;">${item.qty >= 0 ? '+' : ''}${item.qty}</div>
+                                        <div style="font-size:12px;color:var(--gray-500);">从 ${item.currentStock}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        ${adj.note ? `
+                        <div style="padding:12px;background:var(--gray-50);border-radius:8px;margin-bottom:16px;">
+                            <div style="font-weight:600;margin-bottom:4px;">备注</div>
+                            <div style="color:var(--gray-600);">${adj.note}</div>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="display:flex;gap:8px;">
+                            ${adj.status === 'draft' ? `
+                                <button class="btn btn-primary" onclick="executeDraftAdjustment('${id}')" style="flex:1;">✓ 执行调整</button>
+                                <button class="btn btn-danger" onclick="deleteDraftAdjustment('${id}')" style="flex:1;">🗑️ 删除</button>
+                            ` : `
+                                <button class="btn btn-outline" onclick="exportAdjustmentCSV('${id}')" style="flex:1;">📥 导出CSV</button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function executeDraftAdjustment(id) {
+            const adj = stockAdjustments.find(a => a.id === id);
+            if (!adj) return;
+            
+            adj.items.forEach(item => {
+                const service = services.find(s => s.id === item.itemId);
+                if (service) {
+                    service.stock = (service.stock || 0) + item.qty;
+                }
+            });
+            
+            saveData('services', services);
+            adj.status = 'completed';
+            localStorage.setItem('vsevice_stock_adjustments', JSON.stringify(stockAdjustments));
+            
+            closeModal();
+            showStockAdjustmentHistory();
+            showToast('success', '已执行', '调整已完成');
+        }
+        
+        function deleteDraftAdjustment(id) {
+            stockAdjustments = stockAdjustments.filter(a => a.id !== id);
+            localStorage.setItem('vsevice_stock_adjustments', JSON.stringify(stockAdjustments));
+            closeModal();
+            showStockAdjustmentHistory();
+            showToast('success', '已删除', '草稿已删除');
+        }
+        
+        function exportAdjustmentCSV(id) {
+            const adj = stockAdjustments.find(a => a.id === id);
+            if (!adj) return;
+            
+            let csv = '商品名称,SKU,原库存,调整数量,新库存\n';
+            adj.items.forEach(item => {
+                csv += `"${item.name}","${item.sku || ''}",${item.currentStock},${item.qty},${item.currentStock + item.qty}\n`;
+            });
+            
+            downloadCSV(csv, `adjustment_${adj.id}.csv`);
+            showToast('success', '已导出', '调整记录CSV已导出');
+        }
+        
+        // 配置调整原因
+        CONFIG.adjustmentReasons = {
+            receive: '收货',
+            count: '盘点',
+            loss: '损耗',
+            damaged: '损坏',
+            return: '退货',
+            other: '其他'
+        };
+        
+        // 调拨单
+        let transferOrders = JSON.parse(localStorage.getItem('vsevice_transfer_orders') || '[]');
+        let stores = [
+            { id: 'store1', name: '总店' },
+            { id: 'store2', name: '分店A' },
+            { id: 'store3', name: '分店B' }
+        ];
+        
+        function showAddTransferModal() {
+            showModal('新建调拨单', `
+                <div style="padding:16px;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">源门店 *</label>
+                            <select class="form-select" id="transferSource">
+                                <option value="">选择源门店...</option>
+                                ${stores.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">目标门店 *</label>
+                            <select class="form-select" id="transferDest">
+                                <option value="">选择目标门店...</option>
+                                ${stores.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">调拨日期</label>
+                        <input type="date" class="form-input" id="transferDate" value="${new Date().toISOString().slice(0,10)}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-input" id="transferNote" rows="2" placeholder="可选备注"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <label class="form-label" style="margin:0;">商品列表</label>
+                            <button class="btn btn-sm btn-outline" onclick="showItemSearchForTransfer()">+ 添加商品</button>
+                        </div>
+                        <div id="transferItemsList">
+                            <p style="text-align:center;color:var(--gray-500);padding:20px;">点击上方按钮添加商品</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-outline" onclick="saveTransferAsDraft()">💾 存为草稿</button>
+                    <button class="btn btn-primary" onclick="createTransferOrder()">✓ 创建调拨</button>
+                </div>
+            `);
+        }
+        
+        function showItemSearchForTransfer() {
+            showModal('选择商品', `
+                <div style="padding:0;">
+                    <div style="padding:16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);">
+                        <input type="text" class="form-input" id="transferItemSearch" placeholder="搜索商品..." oninput="searchItemsForTransfer()">
+                    </div>
+                    <div id="transferItemResults" style="max-height:400px;overflow-y:auto;padding:16px;">
+                        ${services.filter(s => s.active).slice(0, 20).map(s => `
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--gray-100);cursor:pointer;" onclick="addItemToTransfer('${s.id}')">
+                                <div>
+                                    <div style="font-weight:500;">${s.name}</div>
+                                    <div style="font-size:12px;color:var(--gray-500);">${s.sku || s.id} | 库存: ${s.stock || 0}</div>
+                                </div>
+                                <span style="color:var(--primary);">+</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `);
+        }
+        
+        function searchItemsForTransfer() {
+            const query = document.getElementById('transferItemSearch').value.toLowerCase();
+            const results = services.filter(s => 
+                s.active && s.name.toLowerCase().includes(query)
+            ).slice(0, 20);
+            
+            document.getElementById('transferItemResults').innerHTML = results.map(s => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--gray-100);cursor:pointer;" onclick="addItemToTransfer('${s.id}')">
+                    <div>
+                        <div style="font-weight:500;">${s.name}</div>
+                        <div style="font-size:12px;color:var(--gray-500);">${s.sku || s.id} | 库存: ${s.stock || 0}</div>
+                    </div>
+                    <span style="color:var(--primary);">+</span>
+                </div>
+            `).join('') || '<p style="text-align:center;color:var(--gray-500);padding:20px;">未找到商品</p>';
+        }
+        
+        function addItemToTransfer(itemId) {
+            const item = services.find(s => s.id === itemId);
+            if (!item) return;
+            
+            const existing = window.transferItems || [];
+            if (existing.find(i => i.itemId === itemId)) {
+                showToast('warning', '已添加', '此商品已在列表中');
+                return;
+            }
+            
+            window.transferItems = [...existing, { 
+                itemId: item.id, 
+                name: item.name, 
+                sku: item.sku,
+                qty: 1,
+                sourceStock: item.stock || 0,
+                destStock: 0
+            }];
+            
+            closeModal();
+            renderTransferItemsList();
+        }
+        
+        function renderTransferItemsList() {
+            const list = document.getElementById('transferItemsList');
+            const items = window.transferItems || [];
+            
+            if (items.length === 0) {
+                list.innerHTML = '<p style="text-align:center;color:var(--gray-500);padding:20px;">点击上方按钮添加商品</p>';
+                return;
+            }
+            
+            list.innerHTML = items.map((item, idx) => `
+                <div style="display:flex;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--gray-100);">
+                    <div style="flex:1;">
+                        <div style="font-weight:500;">${item.name}</div>
+                        <div style="font-size:12px;color:var(--gray-500);">源库存: ${item.sourceStock}</div>
+                    </div>
+                    <input type="number" class="form-input" value="${item.qty}" min="1" max="${item.sourceStock}"
+                        onchange="updateTransferQty(${idx}, this.value)" style="width:60px;text-align:center;">
+                    <button class="btn btn-sm btn-danger" onclick="removeTransferItem(${idx})">🗑️</button>
+                </div>
+            `).join('');
+        }
+        
+        function updateTransferQty(idx, value) {
+            if (window.transferItems && window.transferItems[idx]) {
+                window.transferItems[idx].qty = Math.min(parseInt(value) || 1, window.transferItems[idx].sourceStock);
+                renderTransferItemsList();
+            }
+        }
+        
+        function removeTransferItem(idx) {
+            if (window.transferItems) {
+                window.transferItems.splice(idx, 1);
+                renderTransferItemsList();
+            }
+        }
+        
+        function createTransferOrder() {
+            const items = window.transferItems || [];
+            if (items.length === 0) {
+                showToast('error', '错误', '请添加至少一个商品');
+                return;
+            }
+            
+            const source = document.getElementById('transferSource').value;
+            const dest = document.getElementById('transferDest').value;
+            
+            if (!source || !dest) {
+                showToast('error', '错误', '请选择源门店和目标门店');
+                return;
+            }
+            
+            if (source === dest) {
+                showToast('error', '错误', '源门店和目标门店不能相同');
+                return;
+            }
+            
+            const transfer = {
+                id: 'TO' + Date.now(),
+                sourceStore: source,
+                destStore: dest,
+                date: document.getElementById('transferDate').value,
+                note: document.getElementById('transferNote').value,
+                items: items.filter(i => i.qty > 0),
+                status: 'draft',
+                createdAt: new Date().toISOString()
+            };
+            
+            transferOrders.unshift(transfer);
+            localStorage.setItem('vsevice_transfer_orders', JSON.stringify(transferOrders));
+            
+            window.transferItems = [];
+            closeModal();
+            showTransferOrdersList();
+            showToast('success', '已创建', '调拨单已创建');
+        }
+        
+        function saveTransferAsDraft() {
+            createTransferOrder();
+        }
+        
+        function showTransferOrdersList() {
+            showModal('调拨单', `
+                <div style="padding:0;">
+                    <div style="padding:16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);">
+                        <button class="btn btn-primary" onclick="closeModal();showAddTransferModal();">+ 新建调拨单</button>
+                    </div>
+                    <div style="max-height:500px;overflow-y:auto;">
+                        ${transferOrders.length === 0 ? `
+                            <div style="text-align:center;padding:40px;color:var(--gray-500);">
+                                <div style="font-size:48px;margin-bottom:16px;">🚚</div>
+                                <p>暂无调拨单</p>
+                            </div>
+                        ` : transferOrders.map(t => {
+                            const sourceStore = stores.find(s => s.id === t.sourceStore)?.name || t.sourceStore;
+                            const destStore = stores.find(s => s.id === t.destStore)?.name || t.destStore;
+                            return `
+                            <div class="transfer-card" onclick="showTransferDetail('${t.id}')">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <span style="font-weight:600;color:var(--primary);">${t.id}</span>
+                                    <span class="transfer-status ${t.status}">
+                                        ${t.status === 'draft' ? '📝 草稿' : t.status === 'transit' ? '🚚 运输中' : '✅ 已收货'}
+                                    </span>
+                                </div>
+                                <div style="font-size:13px;color:var(--gray-600);">
+                                    ${sourceStore} → ${destStore}
+                                </div>
+                                <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">
+                                    ${t.items.length} 件商品 | ${new Date(t.createdAt).toLocaleDateString('zh-CN')}
+                                </div>
+                            </div>
+                        `}).join('')}
+                    </div>
+                </div>
+            `);
+        }
+        
+        function showTransferDetail(id) {
+            const transfer = transferOrders.find(t => t.id === id);
+            if (!transfer) return;
+            
+            const sourceStore = stores.find(s => s.id === transfer.sourceStore)?.name || transfer.sourceStore;
+            const destStore = stores.find(s => s.id === transfer.destStore)?.name || transfer.destStore;
+            
+            showModal('调拨单详情 - ' + transfer.id, `
+                <div style="padding:0;">
+                    <div style="background:linear-gradient(135deg, #17a2b8 0%, #6610f2 100%);color:white;padding:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <div style="font-size:18px;font-weight:700;">${sourceStore}</div>
+                                <div style="font-size:24px;margin:8px 0;">→</div>
+                                <div style="font-size:18px;font-weight:700;">${destStore}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:14px;opacity:0.8;">${new Date(transfer.createdAt).toLocaleDateString('zh-CN')}</div>
+                                <div style="margin-top:8px;">
+                                    <span class="transfer-status ${transfer.status}" style="background:rgba(255,255,255,0.2);">
+                                        ${transfer.status === 'draft' ? '📝 草稿' : transfer.status === 'transit' ? '🚚 运输中' : '✅ 已收货'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="padding:16px;">
+                        <div style="font-weight:600;margin-bottom:12px;">商品明细</div>
+                        ${transfer.items.map(item => `
+                            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100);">
+                                <div>
+                                    <div style="font-weight:500;">${item.name}</div>
+                                    <div style="font-size:12px;color:var(--gray-500);">SKU: ${item.sku || '-'}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-weight:600;color:var(--primary);">× ${item.qty}</div>
+                                    <div style="font-size:12px;color:var(--gray-500);">源库存: ${item.sourceStock}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                        
+                        ${transfer.note ? `
+                        <div style="margin-top:16px;padding:12px;background:var(--gray-50);border-radius:8px;">
+                            <div style="font-weight:600;margin-bottom:4px;">备注</div>
+                            <div style="color:var(--gray-600);">${transfer.note}</div>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="display:flex;gap:8px;margin-top:16px;">
+                            ${transfer.status === 'draft' ? `
+                                <button class="btn btn-primary" onclick="approveTransfer('${id}')" style="flex:1;">🚚 批准发货</button>
+                            ` : transfer.status === 'transit' ? `
+                                <button class="btn btn-success" onclick="receiveTransfer('${id}')" style="flex:1;">📦 确认收货</button>
+                            ` : ''}
+                            <button class="btn btn-outline" onclick="exportTransferCSV('${id}')" style="flex:1;">📥 导出</button>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function approveTransfer(id) {
+            const transfer = transferOrders.find(t => t.id === id);
+            if (!transfer) return;
+            
+            transfer.status = 'transit';
+            transfer.shippedAt = new Date().toISOString();
+            localStorage.setItem('vsevice_transfer_orders', JSON.stringify(transferOrders));
+            
+            closeModal();
+            showTransferDetail(id);
+            showToast('success', '已批准', '调拨单已发货');
+        }
+        
+        function receiveTransfer(id) {
+            showModal('确认收货', `
+                <p style="margin-bottom:16px;">请确认以下商品已送达目标门店:</p>
+                <div style="max-height:300px;overflow-y:auto;">
+                    ${transferOrders.find(t => t.id === id)?.items.map(item => `
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+                            <span>${item.name}</span>
+                            <span style="font-weight:600;">× ${item.qty}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-success" onclick="confirmReceiveTransfer('${id}')">确认收货</button>
+                </div>
+            `);
+        }
+        
+        function confirmReceiveTransfer(id) {
+            const transfer = transferOrders.find(t => t.id === id);
+            if (!transfer) return;
+            
+            transfer.status = 'transferred';
+            transfer.receivedAt = new Date().toISOString();
+            localStorage.setItem('vsevice_transfer_orders', JSON.stringify(transferOrders));
+            
+            closeModal();
+            showTransferOrdersList();
+            showToast('success', '已完成', '调拨单已完成');
+        }
+        
+        function exportTransferCSV(id) {
+            const transfer = transferOrders.find(t => t.id === id);
+            if (!transfer) return;
+            
+            let csv = '商品名称,SKU,调拨数量,源库存,目标库存\n';
+            transfer.items.forEach(item => {
+                csv += `"${item.name}","${item.sku || ''}",${item.qty},${item.sourceStock},${item.destStock}\n`;
+            });
+            
+            downloadCSV(csv, `transfer_${transfer.id}.csv`);
+            showToast('success', '已导出', '调拨单CSV已导出');
         }
         
         // 拆解功能
@@ -7475,6 +8647,16 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 renderCustomerDisplays();
             } else if (tab === 'kitchen') {
                 renderKitchenPrinters();
+            } else if (tab === 'tax') {
+                renderTaxes();
+            } else if (tab === 'discounts') {
+                renderDiscounts();
+            } else if (tab === 'modifiers') {
+                renderModifiers();
+            } else if (tab === 'loyalty') {
+                loadLoyaltySettings();
+            } else if (tab === 'paymentTypes') {
+                renderPaymentTypes();
             }
         }
 
@@ -7978,6 +9160,468 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             }
         }
         
+        // 库存盘点
+        let inventoryCounts = JSON.parse(localStorage.getItem('vsevice_inventory_counts') || '[]');
+        
+        function showAddInventoryCountModal() {
+            showModal('新建盘点', `
+                <div style="padding:16px;">
+                    <div class="form-group">
+                        <label class="form-label">门店</label>
+                        <select class="form-select" id="countStore">
+                            <option value="store1">总店</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">盘点类型</label>
+                        <div style="display:flex;gap:12px;">
+                            <label style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;background:var(--gray-50);border-radius:8px;cursor:pointer;">
+                                <input type="radio" name="countType" value="full" checked style="width:18px;height:18px;">
+                                <div>
+                                    <div style="font-weight:600;">全面盘点</div>
+                                    <div style="font-size:11px;color:var(--gray-500);">包含所有商品</div>
+                                </div>
+                            </label>
+                            <label style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;background:var(--gray-50);border-radius:8px;cursor:pointer;">
+                                <input type="radio" name="countType" value="partial" style="width:18px;height:18px;">
+                                <div>
+                                    <div style="font-weight:600;">部分盘点</div>
+                                    <div style="font-size:11px;color:var(--gray-500);">手动选择商品</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-input" id="countNote" rows="2" placeholder="可选备注"></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="createInventoryCount()">创建盘点</button>
+                </div>
+            `);
+        }
+        
+        function createInventoryCount() {
+            const countType = document.querySelector('input[name="countType"]:checked').value;
+            const note = document.getElementById('countNote').value;
+            
+            const items = countType === 'full' 
+                ? services.filter(s => s.active).map(s => ({
+                    itemId: s.id,
+                    name: s.name,
+                    sku: s.sku,
+                    expected: s.stock || 0,
+                    counted: null
+                  }))
+                : [];
+            
+            const count = {
+                id: 'IC' + Date.now(),
+                store: document.getElementById('countStore').value,
+                type: countType,
+                note,
+                items,
+                status: countType === 'full' ? 'in_progress' : 'pending',
+                createdAt: new Date().toISOString(),
+                completedAt: null
+            };
+            
+            inventoryCounts.unshift(count);
+            localStorage.setItem('vsevice_inventory_counts', JSON.stringify(inventoryCounts));
+            
+            closeModal();
+            
+            if (countType === 'full') {
+                showCountStockModal(count.id);
+            } else {
+                showToast('success', '已创建', '盘点已创建，请在详情中添加商品');
+                showInventoryCountsList();
+            }
+        }
+        
+        function showCountStockModal(countId) {
+            const count = inventoryCounts.find(c => c.id === countId);
+            if (!count) return;
+            
+            showModal('盘点计数 - ' + count.id, `
+                <div style="padding:0;">
+                    <div style="padding:16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);">
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" class="form-input" id="countSearch" placeholder="搜索商品..." style="flex:1;" oninput="filterCountItems()">
+                        </div>
+                        <div style="font-size:12px;color:var(--gray-500);margin-top:8px;">
+                            已盘点: <span id="countedNum">${count.items.filter(i => i.counted !== null).length}</span> / ${count.items.length}
+                        </div>
+                    </div>
+                    <div style="max-height:400px;overflow-y:auto;" id="countItemsList">
+                        ${count.items.map((item, idx) => `
+                            <div class="count-item" style="padding:12px 16px;">
+                                <div>
+                                    <div style="font-weight:500;">${item.name}</div>
+                                    <div style="font-size:12px;color:var(--gray-500);">
+                                        预期: ${item.expected} | 
+                                        <input type="number" value="${item.counted ?? ''}" 
+                                            placeholder="盘点" 
+                                            style="width:60px;padding:4px;border:1px solid var(--gray-300);border-radius:4px;"
+                                            onchange="updateCountedQty('${countId}', ${idx}, this.value)">
+                                    </div>
+                                </div>
+                                ${item.counted !== null ? `
+                                    <div class="count-diff ${item.counted - item.expected >= 0 ? 'positive' : 'negative'}">
+                                        ${item.counted - item.expected >= 0 ? '+' : ''}${item.counted - item.expected}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="padding:16px;border-top:1px solid var(--gray-200);">
+                        <button class="btn btn-success" onclick="completeInventoryCount('${countId}')" style="width:100%;">完成盘点</button>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function updateCountedQty(countId, idx, value) {
+            const count = inventoryCounts.find(c => c.id === countId);
+            if (!count || !count.items[idx]) return;
+            
+            count.items[idx].counted = value === '' ? null : parseInt(value);
+            localStorage.setItem('vsevice_inventory_counts', JSON.stringify(inventoryCounts));
+            
+            document.getElementById('countedNum').textContent = count.items.filter(i => i.counted !== null).length;
+            
+            const item = count.items[idx];
+            const diff = item.counted !== null ? item.counted - item.expected : null;
+            const itemEl = event.target.closest('.count-item');
+            const diffEl = itemEl.querySelector('.count-diff');
+            
+            if (diff !== null) {
+                if (diffEl) {
+                    diffEl.textContent = (diff >= 0 ? '+' : '') + diff;
+                    diffEl.className = 'count-diff ' + (diff >= 0 ? 'positive' : 'negative');
+                } else {
+                    const div = document.createElement('div');
+                    div.className = 'count-diff ' + (diff >= 0 ? 'positive' : 'negative');
+                    div.textContent = (diff >= 0 ? '+' : '') + diff;
+                    itemEl.appendChild(div);
+                }
+            }
+        }
+        
+        function filterCountItems() {
+            const query = document.getElementById('countSearch').value.toLowerCase();
+        }
+        
+        function completeInventoryCount(countId) {
+            const count = inventoryCounts.find(c => c.id === countId);
+            if (!count) return;
+            
+            const uncounted = count.items.filter(i => i.counted === null).length;
+            if (uncounted > 0) {
+                if (!confirm(`还有 ${uncounted} 个商品未盘点，确定要完成吗？`)) return;
+            }
+            
+            count.status = 'completed';
+            count.completedAt = new Date().toISOString();
+            
+            count.items.forEach(item => {
+                if (item.counted !== null) {
+                    const service = services.find(s => s.id === item.itemId);
+                    if (service) {
+                        service.stock = item.counted;
+                    }
+                }
+            });
+            
+            saveData('services', services);
+            localStorage.setItem('vsevice_inventory_counts', JSON.stringify(inventoryCounts));
+            
+            closeModal();
+            showToast('success', '已完成', '盘点已完成，库存已更新');
+        }
+        
+        function showInventoryCountsList() {
+            showModal('库存盘点', `
+                <div style="padding:0;">
+                    <div style="padding:16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);">
+                        <button class="btn btn-primary" onclick="closeModal();showAddInventoryCountModal();">+ 新建盘点</button>
+                    </div>
+                    <div style="max-height:400px;overflow-y:auto;">
+                        ${inventoryCounts.length === 0 ? `
+                            <div style="text-align:center;padding:40px;color:var(--gray-500);">
+                                <div style="font-size:48px;margin-bottom:16px;">📋</div>
+                                <p>暂无盘点记录</p>
+                            </div>
+                        ` : inventoryCounts.map(c => `
+                            <div style="padding:16px;border-bottom:1px solid var(--gray-100);cursor:pointer;" onclick="showInventoryCountDetail('${c.id}')">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <span style="font-weight:600;color:var(--primary);">${c.id}</span>
+                                    <span class="status-badge ${c.status === 'completed' ? 'completed' : c.status === 'in_progress' ? 'pending' : 'draft'}">
+                                        ${c.status === 'completed' ? '已完成' : c.status === 'in_progress' ? '进行中' : '待开始'}
+                                    </span>
+                                </div>
+                                <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">
+                                    ${c.items.length} 件商品 | ${new Date(c.createdAt).toLocaleDateString('zh-CN')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `);
+        }
+        
+        function showInventoryCountDetail(countId) {
+            const count = inventoryCounts.find(c => c.id === countId);
+            if (!count) return;
+            
+            closeModal();
+            showModal('盘点详情 - ' + count.id, `
+                <div style="padding:16px;">
+                    <div style="padding:16px;background:${count.status === 'completed' ? 'rgba(40,167,69,0.1)' : 'var(--gray-50)'};border-radius:8px;margin-bottom:16px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                            <span style="font-weight:600;">${count.id}</span>
+                            <span class="status-badge ${count.status === 'completed' ? 'completed' : 'pending'}">
+                                ${count.status === 'completed' ? '已完成' : '进行中'}
+                            </span>
+                        </div>
+                        <div style="font-size:13px;color:var(--gray-600);">
+                            ${count.items.length} 件商品
+                        </div>
+                        ${count.note ? `<div style="font-size:12px;color:var(--gray-500);margin-top:4px;">备注: ${count.note}</div>` : ''}
+                    </div>
+                    
+                    <div style="font-weight:600;margin-bottom:8px;">盘点明细</div>
+                    <div style="max-height:300px;overflow-y:auto;">
+                        ${count.items.map(item => `
+                            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+                                <div>
+                                    <div>${item.name}</div>
+                                    <div style="font-size:11px;color:var(--gray-500);">预期: ${item.expected}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-weight:600;">${item.counted ?? '-'}</div>
+                                    ${item.counted !== null ? `
+                                        <div style="font-size:11px;color:${item.counted - item.expected >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                                            ${item.counted - item.expected >= 0 ? '+' : ''}${item.counted - item.expected}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    ${count.status !== 'completed' ? `
+                    <button class="btn btn-success" onclick="showCountStockModal('${countId}')" style="width:100%;margin-top:16px;">继续盘点</button>
+                    ` : `
+                    <button class="btn btn-outline" onclick="exportInventoryCountCSV('${countId}')" style="width:100%;margin-top:16px;">📥 导出CSV</button>
+                    `}
+                </div>
+            `);
+        }
+        
+        function exportInventoryCountCSV(countId) {
+            const count = inventoryCounts.find(c => c.id === countId);
+            if (!count) return;
+            
+            let csv = '商品名称,SKU,预期库存,盘点数量,差异\n';
+            count.items.forEach(item => {
+                csv += `"${item.name}","${item.sku || ''}",${item.expected},${item.counted ?? ''},${item.counted !== null ? item.counted - item.expected : ''}\n`;
+            });
+            
+            downloadCSV(csv, `inventory_count_${countId}.csv`);
+            showToast('success', '已导出', '盘点记录CSV已导出');
+        }
+        
+        // 标签打印预览
+        function showLabelPrintModal(itemIds) {
+            const items = itemIds.map(id => services.find(s => s.id === id)).filter(Boolean);
+            if (items.length === 0) return;
+            
+            showModal('标签打印', `
+                <div style="padding:16px;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">标签尺寸</label>
+                            <select class="form-select" id="labelSize">
+                                <option value="30x40">30x40mm</option>
+                                <option value="40x60">40x60mm</option>
+                                <option value="50x50">50x50mm</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">每行标签数</label>
+                            <select class="form-select" id="labelsPerRow">
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">打印名称</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="printLabelName" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">打印价格</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="printLabelPrice" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">打印条码</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="printLabelBarcode">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-top:16px;">
+                        <button class="btn btn-primary" onclick="generateLabelPreview()" style="width:100%;">生成预览</button>
+                    </div>
+                    
+                    <div id="labelPreviewContainer" style="margin-top:16px;display:none;">
+                        <div style="font-weight:600;margin-bottom:8px;">预览</div>
+                        <div id="labelPreview" class="label-preview"></div>
+                        <button class="btn btn-outline" onclick="printLabels()" style="width:100%;margin-top:12px;">🖨️ 打印标签</button>
+                    </div>
+                </div>
+            `);
+            
+            window.printLabelsItems = items;
+        }
+        
+        function generateLabelPreview() {
+            const container = document.getElementById('labelPreviewContainer');
+            const preview = document.getElementById('labelPreview');
+            const perRow = parseInt(document.getElementById('labelsPerRow').value) || 2;
+            const showName = document.getElementById('printLabelName').checked;
+            const showPrice = document.getElementById('printLabelPrice').checked;
+            const showBarcode = document.getElementById('printLabelBarcode').checked;
+            const items = window.printLabelsItems || [];
+            
+            preview.style.gridTemplateColumns = `repeat(${perRow}, 1fr)`;
+            
+            preview.innerHTML = items.map(item => `
+                <div class="label-item">
+                    ${showName ? `<div class="name">${item.name}</div>` : ''}
+                    ${showPrice ? `<div class="price">¥${item.price.toFixed(2)}</div>` : ''}
+                    ${showBarcode && item.barcode ? `<div class="barcode">${item.barcode}</div>` : ''}
+                </div>
+            `).join('');
+            
+            container.style.display = 'block';
+        }
+        
+        function printLabels() {
+            window.print();
+        }
+        
+        // Webhook 管理
+        let webhooks = JSON.parse(localStorage.getItem('vsevice_webhooks') || '[]');
+        
+        function showWebhooksModal() {
+            showModal('Webhooks', `
+                <div style="padding:0;">
+                    <div style="padding:16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);">
+                        <button class="btn btn-primary" onclick="showAddWebhookModal()">+ 添加 Webhook</button>
+                    </div>
+                    <div style="max-height:400px;overflow-y:auto;">
+                        ${webhooks.length === 0 ? `
+                            <div style="text-align:center;padding:40px;color:var(--gray-500);">
+                                <div style="font-size:48px;margin-bottom:16px;">🔗</div>
+                                <p>暂无 Webhook</p>
+                            </div>
+                        ` : webhooks.map(w => `
+                            <div style="padding:16px;border-bottom:1px solid var(--gray-100);">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <div>
+                                        <div style="font-weight:600;">${w.name}</div>
+                                        <div style="font-size:12px;color:var(--gray-500);font-family:monospace;">${w.url}</div>
+                                    </div>
+                                    <span class="status-badge ${w.status === 'active' ? 'active' : 'inactive'}">${w.status === 'active' ? '启用' : '禁用'}</span>
+                                </div>
+                                <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">
+                                    事件: ${(w.events || []).join(', ')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `);
+        }
+        
+        function showAddWebhookModal() {
+            closeModal();
+            showModal('添加 Webhook', `
+                <div class="form-group">
+                    <label class="form-label">名称 *</label>
+                    <input type="text" class="form-input" id="webhookName" placeholder="例如：库存同步">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">URL *</label>
+                    <input type="url" class="form-input" id="webhookUrl" placeholder="https://example.com/webhook">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">事件</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        ${['receipt.created', 'receipt.updated', 'inventory.changed', 'customer.created'].map(e => `
+                            <label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:var(--gray-50);border-radius:4px;cursor:pointer;font-size:12px;">
+                                <input type="checkbox" value="${e}" class="webhook-event"> ${e}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密钥 (可选)</label>
+                    <input type="text" class="form-input" id="webhookSecret" placeholder="用于签名验证">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveWebhook()">保存</button>
+                </div>
+            `);
+        }
+        
+        function saveWebhook() {
+            const name = document.getElementById('webhookName').value.trim();
+            const url = document.getElementById('webhookUrl').value.trim();
+            const secret = document.getElementById('webhookSecret').value.trim();
+            const events = Array.from(document.querySelectorAll('.webhook-event:checked')).map(c => c.value);
+            
+            if (!name || !url) {
+                showToast('error', '错误', '请填写名称和URL');
+                return;
+            }
+            
+            webhooks.push({
+                id: 'wh_' + Date.now(),
+                name,
+                url,
+                secret,
+                events,
+                status: 'active',
+                createdAt: new Date().toISOString()
+            });
+            
+            localStorage.setItem('vsevice_webhooks', JSON.stringify(webhooks));
+            closeModal();
+            showToast('success', '已保存', 'Webhook 已添加');
+        }
+        
         // 客户显示器
         function renderCustomerDisplays() {
             const container = document.getElementById('customerDisplaysList');
@@ -8167,6 +9811,708 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             }
         }
 
+        // 税费管理
+        let taxes = JSON.parse(localStorage.getItem('vsevice_taxes') || '[]');
+        if (taxes.length === 0) {
+            taxes = [
+                { id: 'tax1', name: '增值税', rate: 6, method: 'add', status: 'active' },
+                { id: 'tax2', name: '服务税', rate: 10, method: 'add', status: 'active' }
+            ];
+        }
+        
+        function renderTaxes() {
+            const tbody = document.getElementById('taxesTableBody');
+            if (!tbody) return;
+            
+            if (taxes.length === 0) {
+                tbody.innerHTML = '<div class="empty-state"><p>暂无税费</p></div>';
+                return;
+            }
+            
+            tbody.innerHTML = taxes.map(t => `
+                <div class="table-row" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+                    <span style="font-weight:500;">${t.name}</span>
+                    <span class="tax-rate">${t.rate}%</span>
+                    <span style="font-size:12px;color:var(--gray-500);">${t.method === 'add' ? '附加' : '包含'}</span>
+                    <span><span class="status-badge ${t.status === 'active' ? 'active' : 'inactive'}">${t.status === 'active' ? '启用' : '禁用'}</span></span>
+                    <span>
+                        <button class="btn btn-sm btn-outline" onclick="showEditTaxModal('${t.id}')">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteTax('${t.id}')">🗑️</button>
+                    </span>
+                </div>
+            `).join('');
+        }
+        
+        function showAddTaxModal() {
+            showModal('添加税费', `
+                <div class="form-group">
+                    <label class="form-label">名称 *</label>
+                    <input type="text" class="form-input" id="taxName" placeholder="例如：增值税">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">税率 (%)</label>
+                    <input type="number" class="form-input" id="taxRateInput" value="6" min="0" max="100" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">计算方式</label>
+                    <select class="form-select" id="taxMethodInput">
+                        <option value="add">附加到价格</option>
+                        <option value="included">包含在价格内</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">状态</label>
+                    <select class="form-select" id="taxStatusInput">
+                        <option value="active">启用</option>
+                        <option value="inactive">禁用</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveTax()">保存</button>
+                </div>
+            `);
+        }
+        
+        function showEditTaxModal(id) {
+            const tax = taxes.find(t => t.id === id);
+            if (!tax) return;
+            
+            showModal('编辑税费', `
+                <div class="form-group">
+                    <label class="form-label">名称 *</label>
+                    <input type="text" class="form-input" id="taxName" value="${tax.name}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">税率 (%)</label>
+                    <input type="number" class="form-input" id="taxRateInput" value="${tax.rate}" min="0" max="100" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">计算方式</label>
+                    <select class="form-select" id="taxMethodInput">
+                        <option value="add" ${tax.method === 'add' ? 'selected' : ''}>附加到价格</option>
+                        <option value="included" ${tax.method === 'included' ? 'selected' : ''}>包含在价格内</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">状态</label>
+                    <select class="form-select" id="taxStatusInput">
+                        <option value="active" ${tax.status === 'active' ? 'selected' : ''}>启用</option>
+                        <option value="inactive" ${tax.status === 'inactive' ? 'selected' : ''}>禁用</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveTax('${id}')">保存</button>
+                </div>
+            `);
+        }
+        
+        function saveTax(editId) {
+            const name = document.getElementById('taxName').value.trim();
+            const rate = parseFloat(document.getElementById('taxRateInput').value) || 0;
+            const method = document.getElementById('taxMethodInput').value;
+            const status = document.getElementById('taxStatusInput').value;
+            
+            if (!name) {
+                showToast('error', '错误', '请输入税费名称');
+                return;
+            }
+            
+            if (editId) {
+                const tax = taxes.find(t => t.id === editId);
+                if (tax) {
+                    tax.name = name;
+                    tax.rate = rate;
+                    tax.method = method;
+                    tax.status = status;
+                }
+            } else {
+                taxes.push({
+                    id: 'tax_' + Date.now(),
+                    name,
+                    rate,
+                    method,
+                    status
+                });
+            }
+            
+            localStorage.setItem('vsevice_taxes', JSON.stringify(taxes));
+            closeModal();
+            renderTaxes();
+            showToast('success', '已保存', editId ? '税费已更新' : '税费已添加');
+        }
+        
+        function deleteTax(id) {
+            taxes = taxes.filter(t => t.id !== id);
+            localStorage.setItem('vsevice_taxes', JSON.stringify(taxes));
+            renderTaxes();
+            showToast('success', '已删除', '税费已删除');
+        }
+        
+        // 折扣管理
+        let discounts = JSON.parse(localStorage.getItem('vsevice_discounts') || '[]');
+        if (discounts.length === 0) {
+            discounts = [
+                { id: 'disc1', name: '员工折扣', type: 'percentage', value: 20, restricted: true },
+                { id: 'disc2', name: '节日特惠', type: 'percentage', value: 10, restricted: false }
+            ];
+        }
+        
+        function renderDiscounts() {
+            const tbody = document.getElementById('discountsTableBody');
+            if (!tbody) return;
+            
+            if (discounts.length === 0) {
+                tbody.innerHTML = '<div class="empty-state"><p>暂无折扣</p></div>';
+                return;
+            }
+            
+            tbody.innerHTML = discounts.map(d => `
+                <div class="table-row" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr;">
+                    <span style="font-weight:500;">${d.name}</span>
+                    <span style="font-size:12px;">${d.type === 'percentage' ? '百分比' : '固定金额'}</span>
+                    <span class="discount-value">${d.type === 'percentage' ? d.value + '%' : '¥' + d.value}</span>
+                    <span><span class="status-badge ${d.restricted ? 'pending' : 'free'}">${d.restricted ? '是' : '否'}</span></span>
+                    <span>
+                        <button class="btn btn-sm btn-outline" onclick="showEditDiscountModal('${d.id}')">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteDiscount('${d.id}')">🗑️</button>
+                    </span>
+                </div>
+            `).join('');
+        }
+        
+        function showAddDiscountModal() {
+            showModal('添加折扣', `
+                <div class="form-group">
+                    <label class="form-label">名称 *</label>
+                    <input type="text" class="form-input" id="discountName" placeholder="例如：节日特惠">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">类型</label>
+                    <select class="form-select" id="discountType" onchange="updateDiscountValueInput()">
+                        <option value="percentage">百分比</option>
+                        <option value="amount">固定金额</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">值</label>
+                    <input type="number" class="form-input" id="discountValue" value="10" min="0">
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">受限访问</div>
+                        <div class="setting-desc">仅允许有权限的员工使用</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="discountRestricted">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveDiscount()">保存</button>
+                </div>
+            `);
+        }
+        
+        function updateDiscountValueInput() {
+            const type = document.getElementById('discountType').value;
+            const input = document.getElementById('discountValue');
+            input.max = type === 'percentage' ? 100 : 999999;
+            input.step = type === 'percentage' ? 0.1 : 1;
+        }
+        
+        function showEditDiscountModal(id) {
+            const disc = discounts.find(d => d.id === id);
+            if (!disc) return;
+            
+            showModal('编辑折扣', `
+                <div class="form-group">
+                    <label class="form-label">名称 *</label>
+                    <input type="text" class="form-input" id="discountName" value="${disc.name}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">类型</label>
+                    <select class="form-select" id="discountType" onchange="updateDiscountValueInput()">
+                        <option value="percentage" ${disc.type === 'percentage' ? 'selected' : ''}>百分比</option>
+                        <option value="amount" ${disc.type === 'amount' ? 'selected' : ''}>固定金额</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">值</label>
+                    <input type="number" class="form-input" id="discountValue" value="${disc.value}" min="0">
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">受限访问</div>
+                        <div class="setting-desc">仅允许有权限的员工使用</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="discountRestricted" ${disc.restricted ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveDiscount('${id}')">保存</button>
+                </div>
+            `);
+        }
+        
+        function saveDiscount(editId) {
+            const name = document.getElementById('discountName').value.trim();
+            const type = document.getElementById('discountType').value;
+            const value = parseFloat(document.getElementById('discountValue').value) || 0;
+            const restricted = document.getElementById('discountRestricted').checked;
+            
+            if (!name) {
+                showToast('error', '错误', '请输入折扣名称');
+                return;
+            }
+            
+            if (editId) {
+                const disc = discounts.find(d => d.id === editId);
+                if (disc) {
+                    disc.name = name;
+                    disc.type = type;
+                    disc.value = value;
+                    disc.restricted = restricted;
+                }
+            } else {
+                discounts.push({ id: 'disc_' + Date.now(), name, type, value, restricted });
+            }
+            
+            localStorage.setItem('vsevice_discounts', JSON.stringify(discounts));
+            closeModal();
+            renderDiscounts();
+            showToast('success', '已保存', editId ? '折扣已更新' : '折扣已添加');
+        }
+        
+        function deleteDiscount(id) {
+            discounts = discounts.filter(d => d.id !== id);
+            localStorage.setItem('vsevice_discounts', JSON.stringify(discounts));
+            renderDiscounts();
+            showToast('success', '已删除', '折扣已删除');
+        }
+        
+        // 修饰符管理
+        let modifiers = JSON.parse(localStorage.getItem('vsevice_modifiers') || '[]');
+        if (modifiers.length === 0) {
+            modifiers = [
+                { id: 'mod1', name: '饮品容量', options: [
+                    { name: '小杯', price: -5 },
+                    { name: '中杯', price: 0 },
+                    { name: '大杯', price: 5 }
+                ], required: true, multi: false, status: 'active' }
+            ];
+        }
+        
+        function renderModifiers() {
+            const container = document.getElementById('modifiersList');
+            if (!container) return;
+            
+            if (modifiers.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>暂无修饰符</p></div>';
+                return;
+            }
+            
+            container.innerHTML = modifiers.map(m => `
+                <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:16px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                        <div>
+                            <div style="font-weight:600;">${m.name}</div>
+                            <div style="font-size:12px;color:var(--gray-500);">${m.options.length} 个选项</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="status-badge ${m.status === 'active' ? 'active' : 'inactive'}">${m.status === 'active' ? '启用' : '禁用'}</span>
+                            <button class="btn btn-sm btn-outline" onclick="showEditModifierModal('${m.id}')">✏️</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteModifier('${m.id}')">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                        ${m.options.map(o => `
+                            <span style="padding:4px 10px;background:var(--gray-100);border-radius:4px;font-size:12px;">
+                                ${o.name} ${o.price !== 0 ? '(' + (o.price > 0 ? '+' : '') + '¥' + o.price + ')' : ''}
+                            </span>
+                        `).join('')}
+                    </div>
+                    <div style="font-size:11px;color:var(--gray-400);margin-top:8px;">
+                        ${m.required ? '必选' : '可选'} | ${m.multi ? '多选' : '单选'}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showAddModifierModal() {
+            window.currentModifierOptions = [];
+            showModal('添加修饰符', `
+                <div class="form-group">
+                    <label class="form-label">名称 *</label>
+                    <input type="text" class="form-input" id="modifierName" placeholder="例如：饮品容量">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">选项</label>
+                    <div id="modifierOptionsList"></div>
+                    <button class="btn btn-sm btn-outline" onclick="addModifierOption()" style="margin-top:8px;">+ 添加选项</button>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">必选</div>
+                        <div class="setting-desc">顾客必须选择一个选项</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="modifierRequired" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">多选</div>
+                        <div class="setting-desc">允许选择多个选项</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="modifierMulti">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveModifier()">保存</button>
+                </div>
+            `);
+            renderModifierOptions();
+        }
+        
+        function addModifierOption() {
+            window.currentModifierOptions = window.currentModifierOptions || [];
+            window.currentModifierOptions.push({ name: '', price: 0 });
+            renderModifierOptions();
+        }
+        
+        function renderModifierOptions() {
+            const list = document.getElementById('modifierOptionsList');
+            if (!list) return;
+            
+            list.innerHTML = (window.currentModifierOptions || []).map((opt, idx) => `
+                <div class="modifier-option">
+                    <input type="text" class="form-input" placeholder="选项名称" value="${opt.name}" 
+                        onchange="updateModifierOption(${idx}, 'name', this.value)">
+                    <input type="number" class="form-input" placeholder="价格调整" value="${opt.price}" 
+                        onchange="updateModifierOption(${idx}, 'price', this.value)">
+                    <button class="btn btn-sm btn-danger" onclick="removeModifierOption(${idx})">🗑️</button>
+                </div>
+            `).join('');
+        }
+        
+        function updateModifierOption(idx, field, value) {
+            if (window.currentModifierOptions && window.currentModifierOptions[idx]) {
+                window.currentModifierOptions[idx][field] = field === 'price' ? parseFloat(value) || 0 : value;
+            }
+        }
+        
+        function removeModifierOption(idx) {
+            if (window.currentModifierOptions) {
+                window.currentModifierOptions.splice(idx, 1);
+                renderModifierOptions();
+            }
+        }
+        
+        function showEditModifierModal(id) {
+            const mod = modifiers.find(m => m.id === id);
+            if (!mod) return;
+            
+            window.currentModifierOptions = [...mod.options];
+            showModal('编辑修饰符', `
+                <div class="form-group">
+                    <label class="form-label">名称 *</label>
+                    <input type="text" class="form-input" id="modifierName" value="${mod.name}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">选项</label>
+                    <div id="modifierOptionsList"></div>
+                    <button class="btn btn-sm btn-outline" onclick="addModifierOption()" style="margin-top:8px;">+ 添加选项</button>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">必选</div>
+                        <div class="setting-desc">顾客必须选择一个选项</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="modifierRequired" ${mod.required ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">多选</div>
+                        <div class="setting-desc">允许选择多个选项</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="modifierMulti" ${mod.multi ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="saveModifier('${id}')">保存</button>
+                </div>
+            `);
+            renderModifierOptions();
+        }
+        
+        function saveModifier(editId) {
+            const name = document.getElementById('modifierName').value.trim();
+            const required = document.getElementById('modifierRequired').checked;
+            const multi = document.getElementById('modifierMulti').checked;
+            const options = window.currentModifierOptions || [];
+            
+            const validOptions = options.filter(o => o.name.trim());
+            
+            if (!name) {
+                showToast('error', '错误', '请输入修饰符名称');
+                return;
+            }
+            
+            if (validOptions.length === 0) {
+                showToast('error', '错误', '请添加至少一个选项');
+                return;
+            }
+            
+            if (editId) {
+                const mod = modifiers.find(m => m.id === editId);
+                if (mod) {
+                    mod.name = name;
+                    mod.options = validOptions;
+                    mod.required = required;
+                    mod.multi = multi;
+                }
+            } else {
+                modifiers.push({
+                    id: 'mod_' + Date.now(),
+                    name,
+                    options: validOptions,
+                    required,
+                    multi,
+                    status: 'active'
+                });
+            }
+            
+            localStorage.setItem('vsevice_modifiers', JSON.stringify(modifiers));
+            window.currentModifierOptions = [];
+            closeModal();
+            renderModifiers();
+            showToast('success', '已保存', editId ? '修饰符已更新' : '修饰符已添加');
+        }
+        
+        function deleteModifier(id) {
+            modifiers = modifiers.filter(m => m.id !== id);
+            localStorage.setItem('vsevice_modifiers', JSON.stringify(modifiers));
+            renderModifiers();
+            showToast('success', '已删除', '修饰符已删除');
+        }
+        
+        // 会员积分设置
+        function loadLoyaltySettings() {
+            document.getElementById('earningRate').value = settings.earningRate || 1;
+            document.getElementById('redeemRate').value = settings.redeemRate || 100;
+        }
+        
+        function saveLoyaltySettings() {
+            settings.earningRate = parseInt(document.getElementById('earningRate').value) || 1;
+            settings.redeemRate = parseInt(document.getElementById('redeemRate').value) || 100;
+            saveData('settings', settings);
+            showToast('success', '已保存', '会员积分设置已更新');
+        }
+        
+        // 支付类型管理
+        let paymentTypes = JSON.parse(localStorage.getItem('vsevice_payment_types') || '[]');
+        if (paymentTypes.length === 0) {
+            paymentTypes = [
+                { id: 'cash', name: '现金', type: 'cash', collectTip: false, status: 'active' },
+                { id: 'card', name: '银行卡', type: 'card', collectTip: true, tipPercentages: [10, 15, 20], status: 'active' },
+                { id: 'wechat', name: '微信支付', type: 'card', collectTip: false, status: 'active' },
+                { id: 'alipay', name: '支付宝', type: 'card', collectTip: false, status: 'active' }
+            ];
+        }
+        
+        function renderPaymentTypes() {
+            const container = document.getElementById('paymentTypesList');
+            if (!container) return;
+            
+            if (paymentTypes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>暂无支付类型</p></div>';
+                return;
+            }
+            
+            container.innerHTML = paymentTypes.map(p => `
+                <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:16px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-weight:600;">${p.name}</div>
+                            <div style="font-size:12px;color:var(--gray-500);">
+                                类型: ${p.type === 'cash' ? '现金' : '刷卡'} | 
+                                小费: ${p.collectTip ? '支持' : '不支持'}
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="status-badge ${p.status === 'active' ? 'active' : 'inactive'}">${p.status === 'active' ? '启用' : '禁用'}</span>
+                            <button class="btn btn-sm btn-outline" onclick="showEditPaymentTypeModal('${p.id}')">✏️</button>
+                            ${['cash', 'card', 'wechat', 'alipay'].includes(p.id) ? '' : `
+                            <button class="btn btn-sm btn-danger" onclick="deletePaymentType('${p.id}')">🗑️</button>
+                            `}
+                        </div>
+                    </div>
+                    ${p.collectTip && p.tipPercentages ? `
+                    <div style="margin-top:8px;font-size:12px;color:var(--gray-500);">
+                        小费比例: ${p.tipPercentages.join('%, ')}%
+                    </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+        
+        function showAddPaymentTypeModal() {
+            showModal('添加支付类型', `
+                <div class="form-group">
+                    <label class="form-label">名称 *</label>
+                    <input type="text" class="form-input" id="ptName" placeholder="例如：会员卡">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">类型</label>
+                    <select class="form-select" id="ptType" onchange="updatePaymentTypeTipSection()">
+                        <option value="cash">现金</option>
+                        <option value="card">刷卡</option>
+                    </select>
+                </div>
+                <div id="ptTipSection" style="display:none;">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">收取小费</div>
+                            <div class="setting-desc">允许使用此支付方式时添加小费</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="ptCollectTip" onchange="toggleTipSection()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div id="ptTipPercentages" style="display:none;margin-top:12px;">
+                        <div class="form-group">
+                            <label class="form-label">小费比例 (用逗号分隔)</label>
+                            <input type="text" class="form-input" id="ptPercentages" value="10,15,20" placeholder="10,15,20">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="savePaymentType()">保存</button>
+                </div>
+            `);
+        }
+        
+        function updatePaymentTypeTipSection() {
+            const type = document.getElementById('ptType').value;
+            document.getElementById('ptTipSection').style.display = type === 'card' ? 'block' : 'none';
+        }
+        
+        function toggleTipSection() {
+            const checked = document.getElementById('ptCollectTip')?.checked;
+            document.getElementById('ptTipPercentages').style.display = checked ? 'block' : 'none';
+        }
+        
+        function showEditPaymentTypeModal(id) {
+            const pt = paymentTypes.find(p => p.id === id);
+            if (!pt) return;
+            
+            showModal('编辑支付类型', `
+                <div class="form-group">
+                    <label class="form-label">名称 *</label>
+                    <input type="text" class="form-input" id="ptName" value="${pt.name}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">类型</label>
+                    <select class="form-select" id="ptType" onchange="updatePaymentTypeTipSection()">
+                        <option value="cash" ${pt.type === 'cash' ? 'selected' : ''}>现金</option>
+                        <option value="card" ${pt.type === 'card' ? 'selected' : ''}>刷卡</option>
+                    </select>
+                </div>
+                <div id="ptTipSection" style="display:${pt.type === 'card' ? 'block' : 'none'};">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">收取小费</div>
+                            <div class="setting-desc">允许使用此支付方式时添加小费</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="ptCollectTip" ${pt.collectTip ? 'checked' : ''} onchange="toggleTipSection()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div id="ptTipPercentages" style="display:${pt.collectTip ? 'block' : 'none'};margin-top:12px;">
+                        <div class="form-group">
+                            <label class="form-label">小费比例 (用逗号分隔)</label>
+                            <input type="text" class="form-input" id="ptPercentages" value="${(pt.tipPercentages || []).join(',')}" placeholder="10,15,20">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">状态</label>
+                    <select class="form-select" id="ptStatus">
+                        <option value="active" ${pt.status === 'active' ? 'selected' : ''}>启用</option>
+                        <option value="inactive" ${pt.status === 'inactive' ? 'selected' : ''}>禁用</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="savePaymentType('${id}')">保存</button>
+                </div>
+            `);
+        }
+        
+        function savePaymentType(editId) {
+            const name = document.getElementById('ptName').value.trim();
+            const type = document.getElementById('ptType').value;
+            const collectTip = document.getElementById('ptCollectTip')?.checked || false;
+            const percentages = (document.getElementById('ptPercentages')?.value || '10,15,20').split(',').map(p => parseInt(p.trim())).filter(p => !isNaN(p));
+            const status = document.getElementById('ptStatus')?.value || 'active';
+            
+            if (!name) {
+                showToast('error', '错误', '请输入支付类型名称');
+                return;
+            }
+            
+            if (editId) {
+                const pt = paymentTypes.find(p => p.id === editId);
+                if (pt) {
+                    pt.name = name;
+                    pt.type = type;
+                    pt.collectTip = collectTip;
+                    pt.tipPercentages = percentages;
+                    pt.status = status;
+                }
+            } else {
+                paymentTypes.push({
+                    id: 'pt_' + Date.now(),
+                    name,
+                    type,
+                    collectTip,
+                    tipPercentages: percentages,
+                    status
+                });
+            }
+            
+            localStorage.setItem('vsevice_payment_types', JSON.stringify(paymentTypes));
+            closeModal();
+            renderPaymentTypes();
+            showToast('success', '已保存', editId ? '支付类型已更新' : '支付类型已添加');
+        }
+        
+        function deletePaymentType(id) {
+            paymentTypes = paymentTypes.filter(p => p.id !== id);
+            localStorage.setItem('vsevice_payment_types', JSON.stringify(paymentTypes));
+            renderPaymentTypes();
+            showToast('success', '已删除', '支付类型已删除');
+        }
+        
         // 打印机型号切换
         function updatePrinterModels() {
             const type = document.getElementById('printerType').value;
@@ -8327,7 +10673,247 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             });
             downloadCSV(csv, 'inventory_export.csv');
         }
-
+        
+        // 导入进度
+        function showImportProgressModal(total, type) {
+            showModal('正在导入...', `
+                <div class="import-progress">
+                    <div style="text-align:center;margin-bottom:16px;">
+                        <div style="font-size:48px;margin-bottom:8px;">📥</div>
+                        <div style="font-size:18px;font-weight:600;" id="importStatusText">准备导入...</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="importProgressBar" style="width:0%;"></div>
+                    </div>
+                    <div style="text-align:center;color:var(--gray-500);font-size:13px;">
+                        <span id="importCurrentRow">0</span> / <span id="importTotalRows">${total}</span> 行
+                    </div>
+                    <div id="importActions" style="margin-top:24px;display:flex;justify-content:center;">
+                        <button class="btn btn-outline" onclick="cancelImport()">取消</button>
+                    </div>
+                </div>
+            `, { showClose: false });
+            
+            simulateImport(total, type);
+        }
+        
+        function simulateImport(total, type) {
+            let current = 0;
+            const interval = setInterval(() => {
+                current += Math.floor(Math.random() * 5) + 1;
+                if (current >= total) {
+                    current = total;
+                    clearInterval(interval);
+                    document.getElementById('importProgressBar').style.width = '100%';
+                    document.getElementById('importCurrentRow').textContent = total;
+                    document.getElementById('importStatusText').textContent = '导入完成！';
+                    document.getElementById('importActions').innerHTML = `
+                        <button class="btn btn-primary" onclick="closeModal();showToast('success', '导入成功', '${total} 条数据已导入')">完成</button>
+                    `;
+                } else {
+                    document.getElementById('importProgressBar').style.width = (current / total * 100) + '%';
+                    document.getElementById('importCurrentRow').textContent = current;
+                }
+            }, 100);
+        }
+        
+        function cancelImport() {
+            showToast('info', '已取消', '导入已取消');
+            closeModal();
+        }
+        
+        // 收据取消
+        function showCancelReceiptModal(orderNo) {
+            const order = orders.find(o => o.orderNo === orderNo);
+            if (!order) return;
+            
+            if (order.status === 'refunded') {
+                showToast('error', '无法取消', '已退款的收据不能取消');
+                return;
+            }
+            
+            showModal('取消收据？', `
+                <div style="text-align:center;padding:20px;">
+                    <div style="font-size:64px;margin-bottom:16px;">⚠️</div>
+                    <p style="margin-bottom:12px;font-size:16px;font-weight:600;">确定要取消此收据吗？</p>
+                    <p style="color:var(--gray-500);font-size:13px;margin-bottom:16px;">
+                        收据取消后将不会包含在报表中，商品将退回库存。<br>
+                        此操作无法撤销。
+                    </p>
+                    <div style="padding:12px;background:#f8f9fa;border-radius:8px;text-align:left;margin-bottom:16px;">
+                        <div style="display:flex;justify-content:space-between;padding:4px 0;">
+                            <span>收据号</span>
+                            <span style="font-weight:600;">${order.orderNo}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:4px 0;">
+                            <span>金额</span>
+                            <span style="font-weight:600;color:var(--primary);">¥${order.total.toFixed(2)}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:4px 0;">
+                            <span>商品</span>
+                            <span>${order.items?.length || 0} 件</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-danger" onclick="confirmCancelReceipt('${orderNo}')">确认取消</button>
+                </div>
+            `);
+        }
+        
+        function confirmCancelReceipt(orderNo) {
+            const order = orders.find(o => o.orderNo === orderNo);
+            if (!order) return;
+            
+            order.status = 'cancelled';
+            order.cancelledAt = new Date().toISOString();
+            order.cancelledBy = '管理员';
+            
+            order.items?.forEach(item => {
+                const service = services.find(s => s.name === item.name);
+                if (service) {
+                    service.stock = (service.stock || 0) + item.qty;
+                }
+            });
+            
+            saveData('orders', orders);
+            saveData('services', services);
+            
+            closeModal();
+            showToast('success', '已取消', '收据已取消');
+            renderInvoices();
+        }
+        
+        // 班次开/关
+        function showOpenShiftModal() {
+            showModal('开班', `
+                <div style="padding:20px;text-align:center;">
+                    <div style="font-size:64px;margin-bottom:16px;">⏰</div>
+                    <div style="font-size:18px;font-weight:600;margin-bottom:8px;">开始新班次</div>
+                    <p style="color:var(--gray-500);margin-bottom:24px;">请输入开班现金金额</p>
+                    
+                    <div class="form-group" style="max-width:200px;margin:0 auto 16px;">
+                        <label class="form-label">开班现金</label>
+                        <input type="number" class="form-input" id="openShiftCash" value="0" min="0" step="0.01" style="text-align:center;font-size:18px;">
+                    </div>
+                    
+                    <div style="display:flex;gap:12px;justify-content:center;">
+                        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                        <button class="btn btn-primary btn-lg" onclick="confirmOpenShift()">开班</button>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function confirmOpenShift() {
+            const cash = parseFloat(document.getElementById('openShiftCash').value) || 0;
+            const shift = {
+                id: 'SH' + Date.now(),
+                shiftNo: 'S' + String(shifts.length + 1).padStart(3, '0'),
+                employeeName: '当前员工',
+                startTime: new Date().toISOString(),
+                startCash: cash,
+                endCash: null,
+                status: 'open',
+                payIns: [],
+                createdAt: new Date().toISOString()
+            };
+            
+            shifts.push(shift);
+            saveData('shifts', shifts);
+            
+            closeModal();
+            updateShiftStats();
+            showToast('success', '开班成功', `班次 ${shift.shiftNo} 已开始`);
+        }
+        
+        function showCloseShiftModal() {
+            const openShift = shifts.find(s => s.status === 'open');
+            if (!openShift) {
+                showToast('info', '提示', '当前没有进行中的班次');
+                return;
+            }
+            
+            const shiftOrders = orders.filter(o => new Date(o.createdAt) >= new Date(openShift.startTime));
+            const cashSales = shiftOrders.filter(o => o.payment === 'cash').reduce((sum, o) => sum + o.total, 0);
+            const expectedCash = openShift.startCash + cashSales + (openShift.payIns || []).reduce((s, p) => s + (p.type === 'in' ? p.amount : -p.amount), 0);
+            
+            showModal('关班', `
+                <div style="padding:20px;">
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <div style="font-size:48px;margin-bottom:8px;">🔒</div>
+                        <div style="font-size:18px;font-weight:600;">关闭班次 ${openShift.shiftNo}</div>
+                    </div>
+                    
+                    <div style="padding:16px;background:#f8f9fa;border-radius:8px;margin-bottom:16px;">
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-200);">
+                            <span>开班现金</span>
+                            <span style="font-weight:600;">¥${openShift.startCash.toFixed(2)}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-200);">
+                            <span>现金销售</span>
+                            <span style="font-weight:600;color:var(--success);">+¥${cashSales.toFixed(2)}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-200);">
+                            <span>投钱/取钱</span>
+                            <span style="font-weight:600;">¥${((openShift.payIns || []).reduce((s, p) => s + (p.type === 'in' ? p.amount : -p.amount), 0)).toFixed(2)}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:600;">
+                            <span>预计现金</span>
+                            <span style="color:var(--primary);">¥${expectedCash.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">实际现金 *</label>
+                        <input type="number" class="form-input" id="closeShiftCash" value="${expectedCash.toFixed(2)}" min="0" step="0.01" style="text-align:center;font-size:18px;" oninput="updateShiftDifference(${expectedCash})">
+                    </div>
+                    
+                    <div id="shiftDifference" style="text-align:center;padding:12px;border-radius:8px;background:rgba(40,167,69,0.1);margin-bottom:16px;">
+                        <span style="color:var(--success);">差额: ¥0.00</span>
+                    </div>
+                    
+                    <div style="display:flex;gap:12px;">
+                        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                        <button class="btn btn-primary btn-lg" onclick="confirmCloseShift('${openShift.id}')" style="flex:1;">确认关班</button>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function updateShiftDifference(expected) {
+            const actual = parseFloat(document.getElementById('closeShiftCash').value) || 0;
+            const diff = actual - expected;
+            const diffEl = document.getElementById('shiftDifference');
+            if (diff === 0) {
+                diffEl.innerHTML = '<span style="color:var(--success);">差额: ¥0.00 ✓</span>';
+                diffEl.style.background = 'rgba(40,167,69,0.1)';
+            } else if (diff > 0) {
+                diffEl.innerHTML = `<span style="color:var(--success);">多出: ¥${diff.toFixed(2)}</span>`;
+                diffEl.style.background = 'rgba(40,167,69,0.1)';
+            } else {
+                diffEl.innerHTML = `<span style="color:var(--danger);">短缺: ¥${Math.abs(diff).toFixed(2)}</span>`;
+                diffEl.style.background = 'rgba(220,53,69,0.1)';
+            }
+        }
+        
+        function confirmCloseShift(shiftId) {
+            const shift = shifts.find(s => s.id === shiftId);
+            if (!shift) return;
+            
+            const actualCash = parseFloat(document.getElementById('closeShiftCash').value) || 0;
+            shift.endTime = new Date().toISOString();
+            shift.endCash = actualCash;
+            shift.status = 'closed';
+            
+            saveData('shifts', shifts);
+            
+            closeModal();
+            updateShiftStats();
+            showToast('success', '关班成功', `班次 ${shift.shiftNo} 已结束`);
+        }
+        
         function downloadCSV(content, filename) {
             const blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8' });
             const url = URL.createObjectURL(blob);
