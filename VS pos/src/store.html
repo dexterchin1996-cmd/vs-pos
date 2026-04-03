@@ -417,7 +417,8 @@
             storage: {
                 services: 'vsevice_services',
                 members: 'vsevice_members',
-                orders: 'vsevice_orders'
+                orders: 'vsevice_orders',
+                currentMember: 'vsevice_current_member'
             }
         };
 
@@ -447,7 +448,7 @@
         }
 
         function checkLogin() {
-            const savedPhone = localStorage.getItem('vsevice_current_member');
+            const savedPhone = localStorage.getItem(CONFIG.storage.currentMember);
             if (savedPhone) {
                 currentMember = members.find(m => m.phone === savedPhone);
                 updateUserUI();
@@ -477,7 +478,7 @@
         }
 
         function logout() {
-            localStorage.removeItem('vsevice_current_member');
+            localStorage.removeItem(CONFIG.storage.currentMember);
             currentMember = null;
             updateUserUI();
             alert('已退出登录');
@@ -780,7 +781,7 @@
             const member = members.find(m => m.phone === phone);
             if (member) {
                 currentMember = member;
-                localStorage.setItem('vsevice_current_member', phone);
+                localStorage.setItem(CONFIG.storage.currentMember, phone);
                 closeModalDirect('loginModal');
                 updateUserUI();
                 renderServices();
@@ -811,7 +812,7 @@
             members.push(member);
             saveData('members', members);
             currentMember = member;
-            localStorage.setItem('vsevice_current_member', phone);
+            localStorage.setItem(CONFIG.storage.currentMember, phone);
 
             closeModalDirect('registerModal');
             updateUserUI();

@@ -2772,7 +2772,22 @@
                 kitchenPrinters: 'vsevice_kitchen_printers',
                 suppliers: 'vsevice_suppliers',
                 customerDisplays: 'vsevice_customer_displays',
-                printerGroups: 'vsevice_printer_groups'
+                printerGroups: 'vsevice_printer_groups',
+                rolePermissions: 'vsevice_role_permissions',
+                purchaseOrders: 'vsevice_purchase_orders',
+                productions: 'vsevice_productions',
+                stockAdjustments: 'vsevice_stock_adjustments',
+                transferOrders: 'vsevice_transfer_orders',
+                disassembles: 'vsevice_disassembles',
+                inventoryCounts: 'vsevice_inventory_counts',
+                webhooks: 'vsevice_webhooks',
+                taxes: 'vsevice_taxes',
+                discounts: 'vsevice_discounts',
+                modifiers: 'vsevice_modifiers',
+                paymentTypes: 'vsevice_payment_types',
+                apiToken: 'vsevice_api_token',
+                apiTokens: 'vsevice_api_tokens',
+                currentMember: 'vsevice_current_member'
             },
             categoryNames: { massage: '按摩', spa: 'SPA', beauty: '美容', health: '养生', other: '其他', package: '套票', product: '产品' },
             levelNames: { bronze: '铜卡', silver: '银卡', gold: '金卡', diamond: '钻卡' },
@@ -6207,12 +6222,12 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             const idx = rolePermissions[role].indexOf(permId);
             if (checked && idx === -1) rolePermissions[role].push(permId);
             if (!checked && idx > -1) rolePermissions[role].splice(idx, 1);
-            localStorage.setItem('vsevice_role_permissions', JSON.stringify(rolePermissions));
+            localStorage.setItem(CONFIG.storage.rolePermissions, JSON.stringify(rolePermissions));
             showToast('success', '已保存', '权限已更新');
         }
 
         // 采购订单
-        let purchaseOrders = JSON.parse(localStorage.getItem('vsevice_purchase_orders') || '[]');
+        let purchaseOrders = JSON.parse(localStorage.getItem(CONFIG.storage.purchaseOrders) || '[]');
 
         function showPurchaseOrderModal() {
             const suppliers = [...new Set(services.map(s => s.supplier).filter(Boolean))];
@@ -6339,7 +6354,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             };
             
             purchaseOrders.unshift(order);
-            localStorage.setItem('vsevice_purchase_orders', JSON.stringify(purchaseOrders));
+            localStorage.setItem(CONFIG.storage.purchaseOrders, JSON.stringify(purchaseOrders));
             closeModal();
             showPurchaseOrdersList();
             showToast('success', '已创建', `采购订单 ${order.id} 已创建`);
@@ -6368,7 +6383,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
         }
 
         // 生产
-        let productions = JSON.parse(localStorage.getItem('vsevice_productions') || '[]');
+        let productions = JSON.parse(localStorage.getItem(CONFIG.storage.productions) || '[]');
 
         function showProductionModal() {
             const compositeItems = services.filter(s => s.isComposite);
@@ -6426,7 +6441,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             saveData('services', services);
             
             productions.unshift(production);
-            localStorage.setItem('vsevice_productions', JSON.stringify(productions));
+            localStorage.setItem(CONFIG.storage.productions, JSON.stringify(productions));
             closeModal();
             showToast('success', '已完成', `生产 ${item.name} x${qty}`);
         }
@@ -6458,7 +6473,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
         }
         
         // 库存调整
-        let stockAdjustments = JSON.parse(localStorage.getItem('vsevice_stock_adjustments') || '[]');
+        let stockAdjustments = JSON.parse(localStorage.getItem(CONFIG.storage.stockAdjustments) || '[]');
         
         function showAddStockAdjustmentModal() {
             showModal('新建库存调整', `
@@ -6663,7 +6678,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             
             saveData('services', services);
             stockAdjustments.unshift(adjustment);
-            localStorage.setItem('vsevice_stock_adjustments', JSON.stringify(stockAdjustments));
+            localStorage.setItem(CONFIG.storage.stockAdjustments, JSON.stringify(stockAdjustments));
             
             window.adjustmentItems = [];
             closeModal();
@@ -6692,7 +6707,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             };
             
             stockAdjustments.unshift(adjustment);
-            localStorage.setItem('vsevice_stock_adjustments', JSON.stringify(stockAdjustments));
+            localStorage.setItem(CONFIG.storage.stockAdjustments, JSON.stringify(stockAdjustments));
             
             window.adjustmentItems = [];
             closeModal();
@@ -6798,7 +6813,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             
             saveData('services', services);
             adj.status = 'completed';
-            localStorage.setItem('vsevice_stock_adjustments', JSON.stringify(stockAdjustments));
+            localStorage.setItem(CONFIG.storage.stockAdjustments, JSON.stringify(stockAdjustments));
             
             closeModal();
             showStockAdjustmentHistory();
@@ -6807,7 +6822,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
         
         function deleteDraftAdjustment(id) {
             stockAdjustments = stockAdjustments.filter(a => a.id !== id);
-            localStorage.setItem('vsevice_stock_adjustments', JSON.stringify(stockAdjustments));
+            localStorage.setItem(CONFIG.storage.stockAdjustments, JSON.stringify(stockAdjustments));
             closeModal();
             showStockAdjustmentHistory();
             showToast('success', '已删除', '草稿已删除');
@@ -6837,7 +6852,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
         };
         
         // 调拨单
-        let transferOrders = JSON.parse(localStorage.getItem('vsevice_transfer_orders') || '[]');
+        let transferOrders = JSON.parse(localStorage.getItem(CONFIG.storage.transferOrders) || '[]');
         let stores = [
             { id: 'store1', name: '总店' },
             { id: 'store2', name: '分店A' },
@@ -7020,7 +7035,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             };
             
             transferOrders.unshift(transfer);
-            localStorage.setItem('vsevice_transfer_orders', JSON.stringify(transferOrders));
+            localStorage.setItem(CONFIG.storage.transferOrders, JSON.stringify(transferOrders));
             
             window.transferItems = [];
             closeModal();
@@ -7136,7 +7151,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             
             transfer.status = 'transit';
             transfer.shippedAt = new Date().toISOString();
-            localStorage.setItem('vsevice_transfer_orders', JSON.stringify(transferOrders));
+            localStorage.setItem(CONFIG.storage.transferOrders, JSON.stringify(transferOrders));
             
             closeModal();
             showTransferDetail(id);
@@ -7167,7 +7182,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             
             transfer.status = 'transferred';
             transfer.receivedAt = new Date().toISOString();
-            localStorage.setItem('vsevice_transfer_orders', JSON.stringify(transferOrders));
+            localStorage.setItem(CONFIG.storage.transferOrders, JSON.stringify(transferOrders));
             
             closeModal();
             showTransferOrdersList();
@@ -7188,7 +7203,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
         }
         
         // 拆解功能
-        let disassembles = JSON.parse(localStorage.getItem('vsevice_disassembles') || '[]');
+        let disassembles = JSON.parse(localStorage.getItem(CONFIG.storage.disassembles) || '[]');
         
         function showDisassembleModal(productionId) {
             const compositeItems = services.filter(s => s.isComposite && (s.stock || 0) > 0);
@@ -7344,7 +7359,7 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             
             saveData('services', services);
             disassembles.unshift(disassemble);
-            localStorage.setItem('vsevice_disassembles', JSON.stringify(disassembles));
+            localStorage.setItem(CONFIG.storage.disassembles, JSON.stringify(disassembles));
             
             closeModal();
             showDisassemblesList();
@@ -9181,7 +9196,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
         }
         
         // 库存盘点
-        let inventoryCounts = JSON.parse(localStorage.getItem('vsevice_inventory_counts') || '[]');
+        let inventoryCounts = JSON.parse(localStorage.getItem(CONFIG.storage.inventoryCounts) || '[]');
         
         function showAddInventoryCountModal() {
             showModal('新建盘点', `
@@ -9250,7 +9265,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             };
             
             inventoryCounts.unshift(count);
-            localStorage.setItem('vsevice_inventory_counts', JSON.stringify(inventoryCounts));
+            localStorage.setItem(CONFIG.storage.inventoryCounts, JSON.stringify(inventoryCounts));
             
             closeModal();
             
@@ -9309,7 +9324,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             if (!count || !count.items[idx]) return;
             
             count.items[idx].counted = value === '' ? null : parseInt(value);
-            localStorage.setItem('vsevice_inventory_counts', JSON.stringify(inventoryCounts));
+            localStorage.setItem(CONFIG.storage.inventoryCounts, JSON.stringify(inventoryCounts));
             
             document.getElementById('countedNum').textContent = count.items.filter(i => i.counted !== null).length;
             
@@ -9357,7 +9372,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             });
             
             saveData('services', services);
-            localStorage.setItem('vsevice_inventory_counts', JSON.stringify(inventoryCounts));
+            localStorage.setItem(CONFIG.storage.inventoryCounts, JSON.stringify(inventoryCounts));
             
             closeModal();
             showToast('success', '已完成', '盘点已完成，库存已更新');
@@ -9551,7 +9566,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
         }
         
         // Webhook 管理
-        let webhooks = JSON.parse(localStorage.getItem('vsevice_webhooks') || '[]');
+        let webhooks = JSON.parse(localStorage.getItem(CONFIG.storage.webhooks) || '[]');
         
         function showWebhooksModal() {
             showModal('Webhooks', `
@@ -9637,7 +9652,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 createdAt: new Date().toISOString()
             });
             
-            localStorage.setItem('vsevice_webhooks', JSON.stringify(webhooks));
+            localStorage.setItem(CONFIG.storage.webhooks, JSON.stringify(webhooks));
             closeModal();
             showToast('success', '已保存', 'Webhook 已添加');
         }
@@ -9832,7 +9847,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
         }
 
         // 税费管理
-        let taxes = JSON.parse(localStorage.getItem('vsevice_taxes') || '[]');
+        let taxes = JSON.parse(localStorage.getItem(CONFIG.storage.taxes) || '[]');
         if (taxes.length === 0) {
             taxes = [
                 { id: 'tax1', name: '增值税', rate: 6, method: 'add', status: 'active' },
@@ -9957,7 +9972,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 });
             }
             
-            localStorage.setItem('vsevice_taxes', JSON.stringify(taxes));
+            localStorage.setItem(CONFIG.storage.taxes, JSON.stringify(taxes));
             closeModal();
             renderTaxes();
             showToast('success', '已保存', editId ? '税费已更新' : '税费已添加');
@@ -9965,13 +9980,13 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
         
         function deleteTax(id) {
             taxes = taxes.filter(t => t.id !== id);
-            localStorage.setItem('vsevice_taxes', JSON.stringify(taxes));
+            localStorage.setItem(CONFIG.storage.taxes, JSON.stringify(taxes));
             renderTaxes();
             showToast('success', '已删除', '税费已删除');
         }
         
         // 折扣管理
-        let discounts = JSON.parse(localStorage.getItem('vsevice_discounts') || '[]');
+        let discounts = JSON.parse(localStorage.getItem(CONFIG.storage.discounts) || '[]');
         if (discounts.length === 0) {
             discounts = [
                 { id: 'disc1', name: '员工折扣', type: 'percentage', value: 20, restricted: true },
@@ -10103,7 +10118,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 discounts.push({ id: 'disc_' + Date.now(), name, type, value, restricted });
             }
             
-            localStorage.setItem('vsevice_discounts', JSON.stringify(discounts));
+            localStorage.setItem(CONFIG.storage.discounts, JSON.stringify(discounts));
             closeModal();
             renderDiscounts();
             showToast('success', '已保存', editId ? '折扣已更新' : '折扣已添加');
@@ -10111,13 +10126,13 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
         
         function deleteDiscount(id) {
             discounts = discounts.filter(d => d.id !== id);
-            localStorage.setItem('vsevice_discounts', JSON.stringify(discounts));
+            localStorage.setItem(CONFIG.storage.discounts, JSON.stringify(discounts));
             renderDiscounts();
             showToast('success', '已删除', '折扣已删除');
         }
         
         // 修饰符管理
-        let modifiers = JSON.parse(localStorage.getItem('vsevice_modifiers') || '[]');
+        let modifiers = JSON.parse(localStorage.getItem(CONFIG.storage.modifiers) || '[]');
         if (modifiers.length === 0) {
             modifiers = [
                 { id: 'mod1', name: '饮品容量', options: [
@@ -10318,7 +10333,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 });
             }
             
-            localStorage.setItem('vsevice_modifiers', JSON.stringify(modifiers));
+            localStorage.setItem(CONFIG.storage.modifiers, JSON.stringify(modifiers));
             window.currentModifierOptions = [];
             closeModal();
             renderModifiers();
@@ -10327,7 +10342,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
         
         function deleteModifier(id) {
             modifiers = modifiers.filter(m => m.id !== id);
-            localStorage.setItem('vsevice_modifiers', JSON.stringify(modifiers));
+            localStorage.setItem(CONFIG.storage.modifiers, JSON.stringify(modifiers));
             renderModifiers();
             showToast('success', '已删除', '修饰符已删除');
         }
@@ -10346,7 +10361,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
         }
         
         // 支付类型管理
-        let paymentTypes = JSON.parse(localStorage.getItem('vsevice_payment_types') || '[]');
+        let paymentTypes = JSON.parse(localStorage.getItem(CONFIG.storage.paymentTypes) || '[]');
         if (paymentTypes.length === 0) {
             paymentTypes = [
                 { id: 'cash', name: '现金', type: 'cash', collectTip: false, status: 'active' },
@@ -10520,7 +10535,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
                 });
             }
             
-            localStorage.setItem('vsevice_payment_types', JSON.stringify(paymentTypes));
+            localStorage.setItem(CONFIG.storage.paymentTypes, JSON.stringify(paymentTypes));
             closeModal();
             renderPaymentTypes();
             showToast('success', '已保存', editId ? '支付类型已更新' : '支付类型已添加');
@@ -10528,7 +10543,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
         
         function deletePaymentType(id) {
             paymentTypes = paymentTypes.filter(p => p.id !== id);
-            localStorage.setItem('vsevice_payment_types', JSON.stringify(paymentTypes));
+            localStorage.setItem(CONFIG.storage.paymentTypes, JSON.stringify(paymentTypes));
             renderPaymentTypes();
             showToast('success', '已删除', '支付类型已删除');
         }
@@ -10598,7 +10613,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             document.getElementById('apiTokenValue').textContent = token;
             document.getElementById('apiTokenDisplay').style.display = 'block';
             showToast('success', '已生成', '请立即保存令牌');
-            localStorage.setItem('vsevice_api_token', token);
+            localStorage.setItem(CONFIG.storage.apiToken, token);
         }
 
         // 网络状态检测
@@ -10628,7 +10643,7 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
 
         // API 文档函数
         function showApiTokenList() {
-            const tokens = JSON.parse(localStorage.getItem('vsevice_api_tokens') || '[]');
+            const tokens = JSON.parse(localStorage.getItem(CONFIG.storage.apiTokens) || '[]');
             if (tokens.length === 0) {
                 showToast('info', '提示', '暂无保存的令牌，请先生成新令牌');
                 return;

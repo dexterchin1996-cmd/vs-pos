@@ -2,6 +2,15 @@
  * VS Pos - 演示数据生成器
  */
 
+const DEMO_CONFIG = {
+    storage: {
+        services: 'vsevice_services',
+        members: 'vsevice_members',
+        employees: 'vsevice_employees',
+        orders: 'vsevice_orders'
+    }
+};
+
 const DemoDataGenerator = {
     // 生成随机日期
     randomDate(start, end) {
@@ -230,10 +239,10 @@ const DemoDataGenerator = {
         try {
             const data = JSON.parse(jsonString);
             
-            if (data.services) localStorage.setItem('vsevice_services', JSON.stringify(data.services));
-            if (data.members) localStorage.setItem('vsevice_members', JSON.stringify(data.members));
-            if (data.employees) localStorage.setItem('vsevice_employees', JSON.stringify(data.employees));
-            if (data.orders) localStorage.setItem('vsevice_orders', JSON.stringify(data.orders));
+            if (data.services) localStorage.setItem(DEMO_CONFIG.storage.services, JSON.stringify(data.services));
+            if (data.members) localStorage.setItem(DEMO_CONFIG.storage.members, JSON.stringify(data.members));
+            if (data.employees) localStorage.setItem(DEMO_CONFIG.storage.employees, JSON.stringify(data.employees));
+            if (data.orders) localStorage.setItem(DEMO_CONFIG.storage.orders, JSON.stringify(data.orders));
             
             console.log('数据导入成功');
             return true;
