@@ -480,13 +480,25 @@
         
         /* 集成卡片 */
         .integration-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; }
-        .integration-config { background: var(--gray-50); padding: 12px; border-radius: 8px; margin-top: 8px; }
         
         /* 小按钮 */
         .btn-sm { padding: 6px 12px; font-size: 12px; }
         
         /* 离线信息 */
         .offline-info ul li { margin-bottom: 4px; }
+        
+        /* API 文档样式 */
+        .api-endpoint-list { display: flex; flex-direction: column; gap: 8px; }
+        .api-endpoint { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--gray-50); border-radius: 8px; }
+        .api-method { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; min-width: 50px; text-align: center; }
+        .api-method.get { background: #d4edda; color: #155724; }
+        .api-method.post { background: #cce5ff; color: #004085; }
+        .api-method.put { background: #fff3cd; color: #856404; }
+        .api-method.delete { background: #f8d7da; color: #721c24; }
+        .api-path { font-family: monospace; font-size: 13px; color: var(--dark); font-weight: 500; }
+        .api-desc { margin-left: auto; font-size: 12px; color: var(--gray-500); }
+        .code-block pre { margin: 0; white-space: pre-wrap; }
+        .import-options { background: var(--gray-50); padding: 12px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -1295,6 +1307,7 @@
                         <div class="settings-tab" onclick="switchSettingsTab('kitchen', this)">🍳 厨房打印</div>
                         <div class="settings-tab" onclick="switchSettingsTab('integrations', this)">🔗 集成</div>
                         <div class="settings-tab" onclick="switchSettingsTab('offline', this)">📴 离线模式</div>
+                        <div class="settings-tab" onclick="switchSettingsTab('apiDocs', this)">📡 API</div>
                         <div class="settings-tab" onclick="switchSettingsTab('importExport', this)">📁 导入导出</div>
                     </div>
                     
@@ -2000,7 +2013,139 @@
                         </div>
                     </div>
                     
+                    <!-- API 文档 -->
+                    <div id="settings-apiDocs" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">API 访问令牌</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">
+                                使用 API 令牌可以通过 HTTPS 访问系统数据，支持 RESTful 请求。
+                            </p>
+                            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+                                <button class="btn btn-primary" onclick="generateApiToken()">🔑 生成新令牌</button>
+                                <button class="btn btn-outline" onclick="showApiTokenList()">📋 查看令牌列表</button>
+                            </div>
+                            <div id="apiTokenDisplay" style="display:none;margin-top:12px;">
+                                <label style="font-weight:500;margin-bottom:8px;display:block;">您的 API 令牌:</label>
+                                <div style="background:#f8f9fa;padding:12px;border-radius:8px;font-family:monospace;font-size:13px;word-break:break-all;margin-bottom:8px;" id="apiTokenValue"></div>
+                                <div style="font-size:11px;color:#dc3545;margin-bottom:12px;">⚠️ 此令牌只显示一次，请立即保存！</div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <div class="settings-section-title">API 端点文档</div>
+                            <div class="api-endpoint-list">
+                                <div class="api-endpoint">
+                                    <div class="api-method get">GET</div>
+                                    <div class="api-path">/v1/customers</div>
+                                    <div class="api-desc">获取所有客户列表</div>
+                                </div>
+                                <div class="api-endpoint">
+                                    <div class="api-method get">GET</div>
+                                    <div class="api-path">/v1/inventory</div>
+                                    <div class="api-desc">获取库存信息（推荐）</div>
+                                </div>
+                                <div class="api-endpoint">
+                                    <div class="api-method get">GET</div>
+                                    <div class="api-path">/v1/receipts</div>
+                                    <div class="api-desc">获取销售记录</div>
+                                </div>
+                                <div class="api-endpoint">
+                                    <div class="api-method get">GET</div>
+                                    <div class="api-path">/v1/stores</div>
+                                    <div class="api-desc">获取门店列表</div>
+                                </div>
+                                <div class="api-endpoint">
+                                    <div class="api-method post">POST</div>
+                                    <div class="api-path">/webhooks</div>
+                                    <div class="api-desc">创建 Webhook</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <div class="settings-section-title">使用示例</div>
+                            <div class="code-block">
+                                <div style="font-size:11px;color:#6c757d;margin-bottom:8px;">获取客户列表 (JavaScript):</div>
+                                <pre style="background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto;">fetch('/api/v1/customers', {
+  headers: {
+    'Authorization': 'Bearer YOUR_API_TOKEN',
+    'Content-Type': 'application/json'
+  }
+})
+.then(res => res.json())
+.then(data => console.log(data));</pre>
+                            </div>
+                            <div class="code-block" style="margin-top:12px;">
+                                <div style="font-size:11px;color:#6c757d;margin-bottom:8px;">创建 Webhook (Node.js):</div>
+                                <pre style="background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto;">fetch('/api/webhooks', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    event: 'receipt.created',
+    url: 'https://your-server.com/webhook'
+  })
+});</pre>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <div class="settings-section-title">限制说明</div>
+                            <ul style="font-size:13px;padding-left:20px;color:#6c757d;">
+                                <li style="margin-bottom:8px;">每个账户最多创建 20 个访问令牌</li>
+                                <li style="margin-bottom:8px;">令牌拥有账户全部资源的读写权限</li>
+                                <li style="margin-bottom:8px;">支付集成不支持第三方支付直接集成</li>
+                                <li>可设置 IP 地址限制（高级设置）</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
                     <!-- 导入导出 -->
+                    <div id="settings-importExport" class="settings-content" style="display:none;">
+                        <div class="settings-section">
+                            <div class="settings-section-title">商品 CSV 模板下载</div>
+                            <p style="font-size:13px;color:#6c757d;margin-bottom:16px;">
+                                下载标准 CSV 模板，支持普通商品、变体商品和组合商品。
+                            </p>
+                            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                <button class="btn btn-outline" onclick="downloadItemTemplate('standard')">📋 标准商品模板</button>
+                                <button class="btn btn-outline" onclick="downloadItemTemplate('variant')">🔄 变体商品模板</button>
+                                <button class="btn btn-outline" onclick="downloadItemTemplate('composite')">📦 组合商品模板</button>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <div class="settings-section-title">导入数据</div>
+                            <div class="csv-upload-area" onclick="document.getElementById('csvFileInput').click()">
+                                <div style="font-size:32px;margin-bottom:8px;">📂</div>
+                                <div>点击选择CSV文件</div>
+                                <div style="font-size:11px;color:#6c757d;margin-top:4px;">支持: 商品、会员、员工数据</div>
+                            </div>
+                            <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCSVUpload(event)">
+                            <div class="form-group" style="margin-top:16px;">
+                                <label>导入类型</label>
+                                <select id="importType" class="form-input">
+                                    <option value="services">商品/服务</option>
+                                    <option value="members">会员</option>
+                                    <option value="employees">员工</option>
+                                </select>
+                            </div>
+                            <div class="import-options" style="margin-top:12px;">
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                    <input type="checkbox" id="importUpdateExisting" checked>
+                                    <span style="font-size:13px;">更新已存在的记录</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <div class="settings-section-title">导出数据</div>
+                            <div class="form-row" style="flex-wrap:wrap;gap:8px;">
+                                <button class="btn btn-outline" onclick="exportCSV('services')">📥 商品CSV</button>
+                                <button class="btn btn-outline" onclick="exportCSV('members')">📥 会员CSV</button>
+                                <button class="btn btn-outline" onclick="exportCSV('employees')">📥 员工CSV</button>
+                                <button class="btn btn-outline" onclick="exportCSV('invoices')">📥 账单CSV</button>
+                                <button class="btn btn-outline" onclick="exportCSV('inventory')">📥 库存CSV</button>
                     <div id="settings-importExport" class="settings-content" style="display:none;">
                         <div class="settings-section">
                             <div class="settings-section-title">导入数据</div>
@@ -4526,6 +4671,83 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
         // 初始化网络监听
         window.addEventListener('online', () => checkNetworkStatus());
         window.addEventListener('offline', () => checkNetworkStatus());
+
+        // API 文档函数
+        function showApiTokenList() {
+            const tokens = JSON.parse(localStorage.getItem('vsevice_api_tokens') || '[]');
+            if (tokens.length === 0) {
+                showToast('info', '提示', '暂无保存的令牌，请先生成新令牌');
+                return;
+            }
+            showModal('API 令牌列表', `
+                <div style="max-height:400px;overflow-y:auto;">
+                    ${tokens.map((t, i) => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #eee;">
+                            <div>
+                                <div style="font-weight:500;">${t.name}</div>
+                                <div style="font-size:11px;color:#6c757d;">创建于: ${new Date(t.created).toLocaleDateString()}</div>
+                            </div>
+                            <button class="btn btn-sm btn-outline" onclick="copyApiToken('${t.token}')">📋 复制</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `);
+        }
+
+        function copyApiToken(token) {
+            navigator.clipboard.writeText(token);
+            showToast('success', '已复制', '令牌已复制到剪贴板');
+        }
+
+        // CSV 模板下载
+        function downloadItemTemplate(type) {
+            let csv = '';
+            if (type === 'standard') {
+                csv = 'Handle,SKU,Name,Category,Price,Cost,Barcode,Track stock,In stock,Low stock,Available for sale\n';
+                csv += ',SKU001,泰式按摩,massage,298,80,6901234560001,Y,100,10,Y\n';
+                csv += ',SKU002,精油推背,spa,398,120,6901234560002,Y,100,10,Y';
+            } else if (type === 'variant') {
+                csv = 'Handle,SKU,Name,Category,Option 1 name,Option 1 value,Price,Cost,Barcode,Available for sale\n';
+                csv += 'handle_massage_60,mass_60_1,泰式按摩60分钟,massage,时长,60分钟,298,80,6901234560001,Y\n';
+                csv += 'handle_massage_60,mass_60_2,泰式按摩60分钟,massage,时长,90分钟,398,120,6901234560002,Y';
+            } else if (type === 'composite') {
+                csv = 'Handle,SKU,Name,Category,Price,SKU of included item,Quantity of included item,Available for sale\n';
+                csv += ',pkg001,SPA套餐,spa,698,,,Y\n';
+                csv += ',pkg001_item1,精油推背,spa,,SPA-001,1,Y\n';
+                csv += ',pkg001_item2,面部护理,beauty,,BEA-001,1,Y';
+            }
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `商品模板_${type}_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            showToast('success', '已下载', `${type} 模板已下载`);
+        }
+
+        // 增强的 CSV 导出
+        function exportInventoryCSV() {
+            const headers = ['SKU', 'Name', 'Category', 'Price', 'Cost', 'Barcode', 'In stock', 'Low stock', 'Track stock'];
+            let csv = headers.join(',') + '\n';
+            services.forEach(s => {
+                csv += [
+                    s.sku || '', s.name || '', CONFIG.categoryNames[s.category] || '',
+                    s.price || 0, s.cost || 0, s.barcode || '',
+                    s.stock || 0, s.lowStockAlert || 0, s.trackStock ? 'Y' : 'N'
+                ].join(',') + '\n';
+            });
+            downloadCSV(csv, 'inventory_export.csv');
+        }
+
+        function downloadCSV(content, filename) {
+            const blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
 
         function saveSettings() {
             settings.payments.cash = document.getElementById('payCash').checked;
