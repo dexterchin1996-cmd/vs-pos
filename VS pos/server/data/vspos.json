@@ -1,0 +1,245 @@
+{
+  "users": [
+    {
+      "id": "U001",
+      "username": "admin",
+      "password": "$2a$10$herkGmzthT29LxV3MgqJ0O7GiMPk6lQja1phiTZbrG8xjkUHPAY0.",
+      "name": "系统管理员",
+      "role": "admin",
+      "status": "active"
+    }
+  ],
+  "products": [
+    {
+      "id": "P001",
+      "name": "中式按摩",
+      "category": "按摩服务",
+      "price": 168,
+      "stock": 999,
+      "unit": "次",
+      "status": "active"
+    },
+    {
+      "id": "P002",
+      "name": "泰式按摩",
+      "category": "按摩服务",
+      "price": 198,
+      "stock": 999,
+      "unit": "次",
+      "status": "active"
+    },
+    {
+      "id": "P003",
+      "name": "精油SPA",
+      "category": "SPA服务",
+      "price": 268,
+      "stock": 999,
+      "unit": "次",
+      "status": "active"
+    },
+    {
+      "id": "P004",
+      "name": "面部护理",
+      "category": "美容服务",
+      "price": 188,
+      "stock": 999,
+      "unit": "次",
+      "status": "active"
+    },
+    {
+      "id": "P005",
+      "name": "足部按摩",
+      "category": "按摩服务",
+      "price": 128,
+      "stock": 999,
+      "unit": "次",
+      "status": "active"
+    },
+    {
+      "id": "P006",
+      "name": "全身推拿",
+      "category": "按摩服务",
+      "price": 298,
+      "stock": 999,
+      "unit": "次",
+      "status": "active"
+    },
+    {
+      "id": "P007",
+      "name": "艾灸理疗",
+      "category": "理疗服务",
+      "price": 158,
+      "stock": 999,
+      "unit": "次",
+      "status": "active"
+    },
+    {
+      "id": "P008",
+      "name": "拔罐刮痧",
+      "category": "理疗服务",
+      "price": 98,
+      "stock": 999,
+      "unit": "次",
+      "status": "active"
+    }
+  ],
+  "categories": [
+    {
+      "id": "C001",
+      "name": "按摩服务",
+      "icon": "massage",
+      "sort": 1
+    },
+    {
+      "id": "C002",
+      "name": "SPA服务",
+      "icon": "spa",
+      "sort": 2
+    },
+    {
+      "id": "C003",
+      "name": "美容服务",
+      "icon": "beauty",
+      "sort": 3
+    },
+    {
+      "id": "C004",
+      "name": "理疗服务",
+      "icon": "therapy",
+      "sort": 4
+    }
+  ],
+  "members": [
+    {
+      "id": "M001",
+      "name": "张三",
+      "phone": "13800138001",
+      "balance": 1688,
+      "points": 1688,
+      "level": "gold",
+      "join_date": "2024-01-15"
+    },
+    {
+      "id": "M002",
+      "name": "李四",
+      "phone": "13800138002",
+      "balance": 888,
+      "points": 888,
+      "level": "silver",
+      "join_date": "2024-02-20"
+    },
+    {
+      "id": "M003",
+      "name": "王五",
+      "phone": "13800138003",
+      "balance": 0,
+      "points": 200,
+      "level": "bronze",
+      "join_date": "2024-03-10"
+    }
+  ],
+  "orders": [],
+  "employees": [
+    {
+      "id": "E001",
+      "emp_no": "EMP001",
+      "name": "张技师",
+      "phone": "13800001111",
+      "role": "technician",
+      "skills": "[\"按摩\",\"SPA\"]",
+      "hire_date": "2023-01-15",
+      "salary": 5000,
+      "status": "available"
+    },
+    {
+      "id": "E002",
+      "emp_no": "EMP002",
+      "name": "李技师",
+      "phone": "13800002222",
+      "role": "technician",
+      "skills": "[\"足疗\",\"按摩\"]",
+      "hire_date": "2023-03-20",
+      "salary": 4500,
+      "status": "available"
+    },
+    {
+      "id": "E003",
+      "emp_no": "EMP003",
+      "name": "王美容师",
+      "phone": "13800003333",
+      "role": "beautician",
+      "skills": "[\"美容\",\"面部\"]",
+      "hire_date": "2022-11-01",
+      "salary": 5500,
+      "status": "busy"
+    },
+    {
+      "id": "E004",
+      "emp_no": "EMP004",
+      "name": "刘经理",
+      "phone": "13800004444",
+      "role": "manager",
+      "skills": "[\"管理\"]",
+      "hire_date": "2022-01-01",
+      "salary": 8000,
+      "status": "available"
+    }
+  ],
+  "tickets": [],
+  "commissions": [],
+  "shifts": [],
+  "settings": {},
+  "technicians": [
+    {
+      "id": "T001",
+      "name": "技师A",
+      "skills": "[\"中式按摩\",\"泰式按摩\"]",
+      "status": "available",
+      "phone": "13900139001"
+    },
+    {
+      "id": "T002",
+      "name": "技师B",
+      "skills": "[\"精油SPA\",\"面部护理\"]",
+      "status": "available",
+      "phone": "13900139002"
+    },
+    {
+      "id": "T003",
+      "name": "技师C",
+      "skills": "[\"足部按摩\",\"全身推拿\"]",
+      "status": "busy",
+      "phone": "13900139003"
+    }
+  ],
+  "services": [
+    {
+      "id": "S001",
+      "name": "中式按摩",
+      "duration": 60,
+      "price": 168,
+      "description": "传统中式按摩手法"
+    },
+    {
+      "id": "S002",
+      "name": "泰式按摩",
+      "duration": 60,
+      "price": 198,
+      "description": "泰式传统按摩"
+    },
+    {
+      "id": "S003",
+      "name": "精油SPA",
+      "duration": 90,
+      "price": 268,
+      "description": "精油+按摩组合"
+    },
+    {
+      "id": "S004",
+      "name": "面部护理",
+      "duration": 45,
+      "price": 188,
+      "description": "专业面部护理"
+    }
+  ]
+}
