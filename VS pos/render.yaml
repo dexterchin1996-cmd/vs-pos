@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: vs-pos
+    env: node
+    rootDir: VS pos/server
+    buildCommand: npm install
+    startCommand: node unified-server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
