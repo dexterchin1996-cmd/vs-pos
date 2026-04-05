@@ -347,7 +347,15 @@
 
                 showSuccess('登录成功，正在跳转...');
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    // Route based on role
+                    const role = data.user.role;
+                    if (role === 'admin' || role === 'manager') {
+                        window.location.href = 'manager.html';
+                    } else if (role === 'technician') {
+                        window.location.href = 'staff.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
                 }, 1000);
 
             } catch (err) {

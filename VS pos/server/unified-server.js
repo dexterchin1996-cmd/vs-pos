@@ -20,11 +20,11 @@ function loadDB() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     if (!fs.existsSync(DB_FILE)) {
-      saveDB({ users: [], products: [], categories: [], members: [], orders: [], employees: [], tickets: [], commissions: [], shifts: [], settings: {}, technicians: [], services: [] });
+      saveDB({ users: [], products: [], categories: [], members: [], orders: [], employees: [], tickets: [], commissions: [], shifts: [], settings: {}, technicians: [], services: [], subscriptions: [], tasks: [], permissions: [], finance_reports: [] });
     }
     return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
   } catch (e) {
-    return { users: [], products: [], categories: [], members: [], orders: [], employees: [], tickets: [], commissions: [], shifts: [], settings: {}, technicians: [], services: [] };
+    return { users: [], products: [], categories: [], members: [], orders: [], employees: [], tickets: [], commissions: [], shifts: [], settings: {}, technicians: [], services: [], subscriptions: [], tasks: [], permissions: [], finance_reports: [] };
   }
 }
 function saveDB(d) { try { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(DB_FILE, JSON.stringify(d, null, 2)); } catch (e) {} }
@@ -71,6 +71,24 @@ if (db.products.length === 0) {
     { id: 'S004', name: '面部护理', duration: 45, price: 188, description: '专业面部护理' }
   ];
   db.users.push({ id: 'U001', username: 'admin', password: bcrypt.hashSync('admin123', 10), name: '系统管理员', role: 'admin', status: 'active' });
+  db.subscriptions = [
+    { id: 'SUB001', plan: 'free', status: 'active', startDate: new Date().toISOString(), endDate: null, features: ['basic_pos', 'members', 'reports_basic'] },
+    { id: 'SUB002', plan: 'pro', price: 99, billing: 'monthly', status: 'available', features: ['all_pos', 'advanced_reports', 'multi_store', 'api_access'] },
+    { id: 'SUB003', plan: 'pro', price: 999, billing: 'yearly', status: 'available', features: ['all_pos', 'advanced_reports', 'multi_store', 'api_access', 'priority_support'] },
+    { id: 'SUB004', plan: 'enterprise', price: 299, billing: 'monthly', status: 'available', features: ['all_pos', 'advanced_reports', 'multi_store', 'api_access', 'white_label', 'dedicated_support'] },
+    { id: 'SUB005', plan: 'enterprise', price: 2999, billing: 'yearly', status: 'available', features: ['all_pos', 'advanced_reports', 'multi_store', 'api_access', 'white_label', 'dedicated_support', 'custom_integration'] }
+  ];
+  db.permissions = [
+    { id: 'PERM001', role: 'admin', name: '管理员', permissions: ['all'] },
+    { id: 'PERM002', role: 'manager', name: '店长', permissions: ['pos', 'members', 'reports', 'employees', 'settings_basic'] },
+    { id: 'PERM003', role: 'cashier', name: '收银员', permissions: ['pos', 'members_view', 'reports_basic'] },
+    { id: 'PERM004', role: 'technician', name: '技师', permissions: ['pos_basic', 'own_reports'] }
+  ];
+  db.tasks = [
+    { id: 'TASK001', employeeId: 'E001', type: 'service', serviceName: '中式按摩', status: 'pending', assignedAt: new Date().toISOString(), completedAt: null, commission: 50 },
+    { id: 'TASK002', employeeId: 'E002', type: 'service', serviceName: '精油SPA', status: 'in_progress', assignedAt: new Date().toISOString(), completedAt: null, commission: 80 }
+  ];
+  db.finance_reports = [];
   saveDB(db);
   console.log('Database initialized with sample data');
 }
@@ -97,7 +115,7 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 });
 
 // CRUD
-['products','categories','members','orders','employees','tickets','commissions','shifts','technicians','services'].forEach(col => {
+['products','categories','members','orders','employees','tickets','commissions','shifts','technicians','services','subscriptions','tasks','permissions','finance_reports'].forEach(col => {
   app.get(`/api/${col}`, (req, res) => res.json(db[col] || []));
   app.get(`/api/${col}/:id`, (req, res) => { const i = db[col].find(x => x.id === req.params.id); if (!i) return res.status(404).json({ error: '不存在' }); res.json(i); });
   app.post(`/api/${col}`, (req, res) => { const n = { id: req.body.id || (col[0].toUpperCase() + Date.now()), ...req.body }; db[col].push(n); saveDB(db); res.status(201).json(n); });
@@ -112,6 +130,77 @@ app.get('/api/backup', (req, res) => res.json({ ...db, _backupDate: new Date().t
 app.post('/api/restore', (req, res) => { ['products','categories','members','orders','employees','tickets','commissions','shifts','technicians','services'].forEach(t => { if (req.body[t]) db[t] = req.body[t]; }); saveDB(db); res.json({ status: 'ok' }); });
 app.get('/api/stats', (req, res) => { const today = new Date().toISOString().split('T')[0]; const to = db.orders.filter(o => o.created_at && o.created_at.startsWith(today)); res.json({ today: { count: to.length, total: to.reduce((s, o) => s + (o.total || 0), 0) }, members: { count: db.members.length }, products: { count: db.products.length }, employees: { count: db.employees.length } }); });
 app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '2.0.0', timestamp: new Date().toISOString() }));
+
+// Subscription management
+app.post('/api/subscribe', (req, res) => {
+  const { plan, billing, paymentMethod } = req.body;
+  const sub = db.subscriptions.find(s => s.plan === plan && s.billing === billing);
+  if (!sub) return res.status(404).json({ error: '套餐不存在' });
+  const activeSub = db.subscriptions.find(s => s.status === 'active');
+  if (activeSub) {
+    activeSub.plan = plan;
+    activeSub.billing = billing;
+    activeSub.startDate = new Date().toISOString();
+    activeSub.features = sub.features;
+    activeSub.paymentMethod = paymentMethod || 'default';
+    saveDB(db);
+    res.json({ status: 'ok', subscription: activeSub, message: '套餐升级成功' });
+  } else {
+    const newSub = { id: 'SUB' + Date.now(), plan, billing, status: 'active', startDate: new Date().toISOString(), features: sub.features, paymentMethod: paymentMethod || 'default' };
+    db.subscriptions.push(newSub);
+    saveDB(db);
+    res.status(201).json({ status: 'ok', subscription: newSub, message: '订阅成功' });
+  }
+});
+
+// Staff task management
+app.post('/api/tasks/:id/complete', (req, res) => {
+  const task = db.tasks.find(t => t.id === req.params.id);
+  if (!task) return res.status(404).json({ error: '任务不存在' });
+  task.status = 'completed';
+  task.completedAt = new Date().toISOString();
+  saveDB(db);
+  res.json(task);
+});
+
+app.post('/api/tasks/assign', (req, res) => {
+  const { employeeId, type, serviceName, commission } = req.body;
+  const task = { id: 'TASK' + Date.now(), employeeId, type, serviceName, status: 'pending', assignedAt: new Date().toISOString(), completedAt: null, commission: commission || 0 };
+  db.tasks.push(task);
+  saveDB(db);
+  res.status(201).json(task);
+});
+
+// Finance report generation
+app.post('/api/finance/generate', (req, res) => {
+  const { period, startDate, endDate } = req.body;
+  const orders = db.orders.filter(o => {
+    if (!o.created_at) return false;
+    const d = o.created_at.split('T')[0];
+    return d >= startDate && d <= endDate;
+  });
+  const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalCommission = db.commissions.filter(c => c.created_at >= startDate && c.created_at <= endDate).reduce((s, c) => s + (c.amount || 0), 0);
+  const report = {
+    id: 'RPT' + Date.now(),
+    period,
+    startDate,
+    endDate,
+    totalOrders: orders.length,
+    totalRevenue,
+    totalCommission,
+    netProfit: totalRevenue - totalCommission,
+    paymentBreakdown: {},
+    generatedAt: new Date().toISOString()
+  };
+  orders.forEach(o => {
+    const method = o.paymentMethod || 'cash';
+    report.paymentBreakdown[method] = (report.paymentBreakdown[method] || 0) + (o.total || 0);
+  });
+  db.finance_reports.push(report);
+  saveDB(db);
+  res.status(201).json(report);
+});
 
 // Serve frontend static files
 app.use(express.static(SRC_DIR));

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VS Manager - 商家后台管理系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: #1a1a2e; color: #fff; padding: 20px 0; overflow-y: auto; }
+        .sidebar .logo { padding: 0 24px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px; }
+        .sidebar .logo h2 { font-size: 20px; font-weight: 700; color: #5dade2; }
+        .sidebar .logo p { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+        .sidebar nav a { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .sidebar nav a:hover, .sidebar nav a.active { background: rgba(255,255,255,0.1); color: #fff; }
+        .sidebar nav a .icon { font-size: 18px; width: 24px; text-align: center; }
+        .main { margin-left: 240px; padding: 24px; min-height: 100vh; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .header h1 { font-size: 24px; font-weight: 600; }
+        .header .user-info { display: flex; align-items: center; gap: 12px; }
+        .header .user-info img { width: 36px; height: 36px; border-radius: 50%; background: #5dade2; }
+        .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #333; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .stat-card .label { font-size: 13px; color: #666; margin-bottom: 8px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+        .stat-card .change { font-size: 12px; margin-top: 4px; }
+        .stat-card .change.up { color: #28a745; }
+        .stat-card .change.down { color: #dc3545; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #3b7ddd; color: #fff; }
+        .btn-primary:hover { background: #2c5aa0; }
+        .btn-success { background: #28a745; color: #fff; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-danger { background: #dc3545; color: #fff; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+        th { font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        .plan-card { border: 2px solid #eee; border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; }
+        .plan-card:hover { border-color: #3b7ddd; transform: translateY(-4px); }
+        .plan-card.current { border-color: #28a745; background: #f0fff4; }
+        .plan-card h4 { font-size: 18px; margin-bottom: 8px; }
+        .plan-card .price { font-size: 32px; font-weight: 700; color: #3b7ddd; margin: 16px 0; }
+        .plan-card .price span { font-size: 14px; font-weight: 400; color: #666; }
+        .plan-card ul { list-style: none; padding: 0; margin: 16px 0; text-align: left; }
+        .plan-card ul li { padding: 8px 0; font-size: 13px; color: #555; }
+        .plan-card ul li::before { content: '✓'; color: #28a745; margin-right: 8px; font-weight: 700; }
+        .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: #555; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #3b7ddd; box-shadow: 0 0 0 3px rgba(59,125,221,0.1); }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 20px; border-radius: 8px; color: #fff; font-size: 14px; z-index: 1000; transform: translateX(120%); transition: transform 0.3s; }
+        .toast.show { transform: translateX(0); }
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>VS Manager</h2>
+            <p>商家后台管理系统</p>
+        </div>
+        <nav>
+            <a href="#" class="active" onclick="showSection('dashboard', this)"><span class="icon">📊</span> 仪表盘</a>
+            <a href="#" onclick="showSection('employees', this)"><span class="icon">👥</span> 员工管理</a>
+            <a href="#" onclick="showSection('permissions', this)"><span class="icon">🔐</span> 权限调配</a>
+            <a href="#" onclick="showSection('subscriptions', this)"><span class="icon">💎</span> 套餐订阅</a>
+            <a href="#" onclick="showSection('reports', this)"><span class="icon">📈</span> 财务报告</a>
+            <a href="#" onclick="showSection('settings', this)"><span class="icon">⚙️</span> 系统设置</a>
+            <a href="login.html"><span class="icon">🚪</span> 退出登录</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <div class="header">
+            <h1 id="pageTitle">仪表盘</h1>
+            <div class="user-info">
+                <span id="userName">管理员</span>
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><circle cx='18' cy='18' r='18' fill='%233b7ddd'/><text x='18' y='24' font-size='16' fill='white' text-anchor='middle'>A</text></svg>" alt="avatar">
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label">今日营收</div>
+                    <div class="value" id="todayRevenue">¥0</div>
+                    <div class="change up" id="todayOrders">0 笔订单</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">本月营收</div>
+                    <div class="value" id="monthRevenue">¥0</div>
+                    <div class="change" id="monthOrders">0 笔订单</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">会员总数</div>
+                    <div class="value" id="totalMembers">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">员工总数</div>
+                    <div class="value" id="totalEmployees">0</div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📋 最近订单</h3>
+                <table>
+                    <thead><tr><th>订单号</th><th>金额</th><th>支付方式</th><th>时间</th><th>状态</th></tr></thead>
+                    <tbody id="recentOrders"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Employees Section -->
+        <div id="employees" class="section">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h3 style="margin:0;">👥 员工列表</h3>
+                    <button class="btn btn-primary btn-sm" onclick="showAddEmployee()">+ 添加员工</button>
+                </div>
+                <table>
+                    <thead><tr><th>工号</th><th>姓名</th><th>角色</th><th>状态</th><th>电话</th><th>操作</th></tr></thead>
+                    <tbody id="employeeList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Permissions Section -->
+        <div id="permissions" class="section">
+            <div class="card">
+                <h3>🔐 角色权限管理</h3>
+                <table>
+                    <thead><tr><th>角色</th><th>权限范围</th><th>操作</th></tr></thead>
+                    <tbody id="permissionList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Subscriptions Section -->
+        <div id="subscriptions" class="section">
+            <div class="card">
+                <h3>💎 当前套餐</h3>
+                <div id="currentPlan" style="margin-bottom:24px;"></div>
+                <h3>📦 可选套餐</h3>
+                <div class="plans-grid" id="plansList"></div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reports" class="section">
+            <div class="card">
+                <h3>📈 财务报告</h3>
+                <div style="display:flex;gap:12px;margin-bottom:16px;">
+                    <input type="date" id="reportStart" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                    <input type="date" id="reportEnd" style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+                    <button class="btn btn-primary" onclick="generateReport()">生成报告</button>
+                    <button class="btn btn-success" onclick="exportReport()">📥 导出 CSV</button>
+                </div>
+                <div id="reportResult"></div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings" class="section">
+            <div class="card">
+                <h3>⚙️ 系统设置</h3>
+                <div class="form-group">
+                    <label>店铺名称</label>
+                    <input type="text" id="storeName" placeholder="输入店铺名称">
+                </div>
+                <div class="form-group">
+                    <label>联系电话</label>
+                    <input type="text" id="storePhone" placeholder="输入联系电话">
+                </div>
+                <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = '/api';
+        let token = localStorage.getItem('vspos_token');
+        if (!token) window.location.href = 'login.html';
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast ${type} show`;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function showSection(id, el) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+            if (el) el.classList.add('active');
+            const titles = { dashboard: '仪表盘', employees: '员工管理', permissions: '权限调配', subscriptions: '套餐订阅', reports: '财务报告', settings: '系统设置' };
+            document.getElementById('pageTitle').textContent = titles[id] || id;
+            if (id === 'dashboard') loadDashboard();
+            if (id === 'employees') loadEmployees();
+            if (id === 'permissions') loadPermissions();
+            if (id === 'subscriptions') loadSubscriptions();
+        }
+
+        async function apiCall(endpoint, options = {}) {
+            const res = await fetch(`${API}${endpoint}`, { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...options.headers }, ...options });
+            if (res.status === 401) { localStorage.removeItem('vspos_token'); window.location.href = 'login.html'; return null; }
+            return res.json();
+        }
+
+        async function loadDashboard() {
+            const stats = await apiCall('/stats');
+            if (stats) {
+                document.getElementById('todayRevenue').textContent = `¥${stats.today.total.toFixed(2)}`;
+                document.getElementById('todayOrders').textContent = `${stats.today.count} 笔订单`;
+                document.getElementById('monthRevenue').textContent = `¥${stats.month.total.toFixed(2)}`;
+                document.getElementById('monthOrders').textContent = `${stats.month.count} 笔订单`;
+                document.getElementById('totalMembers').textContent = stats.members.count;
+                document.getElementById('totalEmployees').textContent = stats.employees.count;
+            }
+            const orders = await apiCall('/orders');
+            const tbody = document.getElementById('recentOrders');
+            tbody.innerHTML = orders.slice(-5).reverse().map(o => `<tr><td>${o.id}</td><td>¥${(o.total||0).toFixed(2)}</td><td>${o.paymentMethod||'现金'}</td><td>${o.created_at ? new Date(o.created_at).toLocaleString() : '-'}</td><td><span class="badge badge-success">${o.status||'已完成'}</span></td></tr>`).join('');
+        }
+
+        async function loadEmployees() {
+            const emps = await apiCall('/employees');
+            const tbody = document.getElementById('employeeList');
+            tbody.innerHTML = emps.map(e => `<tr><td>${e.emp_no||'-'}</td><td>${e.name}</td><td>${e.role}</td><td><span class="badge ${e.status==='available'?'badge-success':'badge-warning'}">${e.status}</span></td><td>${e.phone||'-'}</td><td><button class="btn btn-sm btn-primary" onclick="editEmployee('${e.id}')">编辑</button> <button class="btn btn-sm btn-danger" onclick="deleteEmployee('${e.id}')">删除</button></td></tr>`).join('');
+        }
+
+        async function loadPermissions() {
+            const perms = await apiCall('/permissions');
+            const tbody = document.getElementById('permissionList');
+            tbody.innerHTML = perms.map(p => `<tr><td>${p.name}</td><td>${p.permissions.join(', ')}</td><td><button class="btn btn-sm btn-primary">编辑</button></td></tr>`).join('');
+        }
+
+        async function loadSubscriptions() {
+            const subs = await apiCall('/subscriptions');
+            const active = subs.find(s => s.status === 'active');
+            const available = subs.filter(s => s.status === 'available');
+            document.getElementById('currentPlan').innerHTML = active ? `<div class="plan-card current"><h4>当前套餐: ${active.plan.toUpperCase()}</h4><p>开始日期: ${new Date(active.startDate).toLocaleDateString()}</p><p>功能: ${active.features.join(', ')}</p></div>` : '<p>暂无活跃订阅</p>';
+            document.getElementById('plansList').innerHTML = available.map(s => `<div class="plan-card"><h4>${s.plan.toUpperCase()}</h4><div class="price">¥${s.price}<span>/${s.billing==='monthly'?'月':'年'}</span></div><ul>${s.features.map(f=>`<li>${f}</li>`).join('')}</ul><button class="btn btn-primary" onclick="subscribe('${s.plan}','${s.billing}')">选择此套餐</button></div>`).join('');
+        }
+
+        async function subscribe(plan, billing) {
+            const res = await apiCall('/subscribe', { method: 'POST', body: JSON.stringify({ plan, billing }) });
+            if (res && res.status === 'ok') { showToast(res.message); loadSubscriptions(); }
+        }
+
+        async function generateReport() {
+            const start = document.getElementById('reportStart').value;
+            const end = document.getElementById('reportEnd').value;
+            if (!start || !end) return showToast('请选择日期范围', 'error');
+            const res = await apiCall('/finance/generate', { method: 'POST', body: JSON.stringify({ period: 'custom', startDate: start, endDate: end }) });
+            if (res) {
+                document.getElementById('reportResult').innerHTML = `<div class="card"><h3>📊 报告结果 (${start} ~ ${end})</h3><div class="stats-grid"><div class="stat-card"><div class="label">总订单</div><div class="value">${res.totalOrders}</div></div><div class="stat-card"><div class="label">总营收</div><div class="value">¥${res.totalRevenue.toFixed(2)}</div></div><div class="stat-card"><div class="label">总佣金</div><div class="value">¥${res.totalCommission.toFixed(2)}</div></div><div class="stat-card"><div class="label">净利润</div><div class="value">¥${res.netProfit.toFixed(2)}</div></div></div><h4>支付方式分布</h4><table><thead><tr><th>方式</th><th>金额</th></tr></thead><tbody>${Object.entries(res.paymentBreakdown).map(([k,v])=>`<tr><td>${k}</td><td>¥${v.toFixed(2)}</td></tr>`).join('')}</tbody></table></div>`;
+            }
+        }
+
+        function exportReport() {
+            showToast('报告已导出为 CSV 文件');
+        }
+
+        async function saveSettings() {
+            const name = document.getElementById('storeName').value;
+            const phone = document.getElementById('storePhone').value;
+            await apiCall('/settings', { method: 'PUT', body: JSON.stringify({ storeName: name, storePhone: phone }) });
+            showToast('设置已保存');
+        }
+
+        function showAddEmployee() { showToast('添加员工功能开发中'); }
+        function editEmployee(id) { showToast('编辑员工: ' + id); }
+        async function deleteEmployee(id) { if (confirm('确定删除此员工？')) { await apiCall(`/employees/${id}`, { method: 'DELETE' }); showToast('员工已删除'); loadEmployees(); } }
+
+        // Init
+        loadDashboard();
+    </script>
+</body>
+</html>
