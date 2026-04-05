@@ -1,0 +1,16 @@
+{
+  "name": "vs-pos-firebase-functions",
+  "description": "VS POS Cloud API - Firebase Functions",
+  "main": "index.js",
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.6.0"
+  }
+}
