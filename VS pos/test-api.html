@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VS POS Test</title>
+    <script src="api.js"></script>
+</head>
+<body>
+    <h1>VS POS Test Page</h1>
+    <button id="testBtn">Test API Connection</button>
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing API connection...';
+            
+            try {
+                const health = await api.health();
+                resultDiv.innerHTML = `<p style="color:green;">✅ API Health Check: ${JSON.stringify(health)}</p>`;
+                
+                const products = await api.products.getAll();
+                resultDiv.innerHTML += `<p style="color:green;">✅ Products: ${products.length} items found</p>`;
+                
+                const members = await api.members.getAll();
+                resultDiv.innerHTML += `<p style="color:green;">✅ Members: ${members.length} items found</p>`;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color:red;">❌ Error: ${error.message}</p>`;
+                console.error('Test failed:', error);
+            }
+        });
+    </script>
+</body>
+</html>

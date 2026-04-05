@@ -6,16 +6,18 @@
     <meta name="theme-color" content="#1a1a2e">
     <title>VS Staff - 员工端</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="vs-api.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: #f5f6fa; color: #1a1a2e; max-width: 480px; margin: 0 auto; min-height: 100vh; }
         .header { background: #1a1a2e; color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
         .header h1 { font-size: 18px; }
-        .status-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; }
-        .status-available { background: #28a745; }
+        .header p { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+        .status-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+        .status-available { background: #28a745; color: #fff; }
         .status-busy { background: #ffc107; color: #333; }
-        .status-off { background: #dc3545; }
-        .tabs { display: flex; background: #fff; border-bottom: 1px solid #eee; }
+        .status-off { background: #dc3545; color: #fff; }
+        .tabs { display: flex; background: #fff; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 10; }
         .tab { flex: 1; padding: 14px; text-align: center; font-size: 13px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
         .tab.active { color: #3b7ddd; border-bottom-color: #3b7ddd; }
         .content { padding: 16px; }
@@ -29,28 +31,43 @@
         .task-card .commission { font-size: 14px; color: #28a745; font-weight: 600; }
         .task-card .btn { padding: 8px 16px; border: none; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; }
         .btn-accept { background: #3b7ddd; color: #fff; }
+        .btn-accept:hover { background: #2c5aa0; }
         .btn-complete { background: #28a745; color: #fff; }
+        .btn-complete:hover { background: #218838; }
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .badge-pending { background: #fff3cd; color: #856404; }
         .badge-progress { background: #d1ecf1; color: #0c5460; }
         .badge-completed { background: #d4edda; color: #155724; }
         .stat-row { display: flex; justify-content: space-between; background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .stat-item { text-align: center; }
+        .stat-item { text-align: center; flex: 1; }
         .stat-item .label { font-size: 11px; color: #999; margin-bottom: 4px; }
         .stat-item .value { font-size: 20px; font-weight: 700; color: #1a1a2e; }
         .empty-state { text-align: center; padding: 40px 20px; color: #999; }
         .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); padding: 12px 24px; background: #1a1a2e; color: #fff; border-radius: 8px; font-size: 13px; z-index: 1000; transition: transform 0.3s; }
-        .toast.show { transform: translateX(-50%) translateY(0); }
+        .notification-bar { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; display: none; align-items: center; gap: 8px; }
+        .notification-bar.show { display: flex; }
+        .notification-bar .notif-icon { font-size: 18px; }
+        .notification-bar .notif-close { margin-left: auto; cursor: pointer; font-size: 16px; color: #856404; }
+        .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+        .filter-bar select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; flex: 1; }
+        .chart-container { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .chart-container h4 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+        .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 100px; }
+        .bar { flex: 1; background: #3b7ddd; border-radius: 4px 4px 0 0; position: relative; min-height: 4px; }
+        .bar .bar-label { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #999; white-space: nowrap; }
+        .bar .bar-value { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 600; }
+        .commission-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .commission-item:last-child { border-bottom: none; }
+        .loading { text-align: center; padding: 40px; color: #666; }
     </style>
 </head>
 <body>
     <div class="header">
         <div>
             <h1>VS Staff</h1>
-            <p style="font-size:12px;opacity:0.7;" id="empName">加载中...</p>
+            <p id="empName">加载中...</p>
         </div>
-        <span class="status-badge status-available" id="statusBadge" onclick="toggleStatus()">空闲中</span>
+        <button class="status-badge status-available" id="statusBadge" onclick="toggleStatus()">空闲中</button>
     </div>
 
     <div class="tabs">
@@ -60,49 +77,65 @@
     </div>
 
     <div class="content">
-        <!-- Tasks Section -->
+        <div class="notification-bar" id="notifBar">
+            <span class="notif-icon">🔔</span>
+            <span id="notifText"></span>
+            <span class="notif-close" onclick="this.parentElement.classList.remove('show')">&times;</span>
+        </div>
+
+        <!-- Tasks -->
         <div id="tasks" class="section active">
+            <div class="filter-bar">
+                <select id="taskFilter" onchange="renderTasks()">
+                    <option value="all">全部工单</option>
+                    <option value="pending">待接单</option>
+                    <option value="in_progress">进行中</option>
+                    <option value="completed">已完成</option>
+                </select>
+            </div>
             <div id="taskList"></div>
         </div>
 
-        <!-- Commission Section -->
+        <!-- Commission -->
         <div id="commission" class="section">
             <div class="stat-row">
                 <div class="stat-item"><div class="label">今日佣金</div><div class="value" id="todayComm">¥0</div></div>
                 <div class="stat-item"><div class="label">本周佣金</div><div class="value" id="weekComm">¥0</div></div>
                 <div class="stat-item"><div class="label">本月佣金</div><div class="value" id="monthComm">¥0</div></div>
             </div>
+            <div class="chart-container">
+                <h4>📈 近7天佣金趋势</h4>
+                <div class="bar-chart" id="commChart"></div>
+            </div>
             <div id="commissionList"></div>
         </div>
 
-        <!-- Report Section -->
+        <!-- Report -->
         <div id="report" class="section">
             <div class="stat-row">
                 <div class="stat-item"><div class="label">总接单</div><div class="value" id="totalTasks">0</div></div>
                 <div class="stat-item"><div class="label">完成率</div><div class="value" id="completeRate">0%</div></div>
                 <div class="stat-item"><div class="label">总收入</div><div class="value" id="totalIncome">¥0</div></div>
             </div>
-            <div class="task-card">
-                <h4 style="margin-bottom:12px;">📈 工作状态分布</h4>
+            <div class="chart-container">
+                <h4>📊 工作状态分布</h4>
                 <div id="statusChart"></div>
+            </div>
+            <div class="chart-container">
+                <h4>📋 服务类型分布</h4>
+                <div id="serviceChart"></div>
             </div>
         </div>
     </div>
 
-    <div class="toast" id="toast"></div>
-
     <script>
-        const API = '/api';
-        let token = localStorage.getItem('vspos_token');
-        if (!token) window.location.href = 'login.html';
-        let currentStatus = 'available';
+        VS_API.auth.requireAuth();
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2500);
-        }
+        let currentStatus = 'available';
+        let allTasks = [];
+        let allCommissions = [];
+        let currentUser = VS_API.getUser();
+        let pollInterval;
 
         function showTab(id) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -111,9 +144,11 @@
             document.getElementById(id).classList.add('active');
         }
 
-        async function apiCall(endpoint, options = {}) {
-            const res = await fetch(`${API}${endpoint}`, { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...options.headers }, ...options });
-            return res.json();
+        function showNotification(text) {
+            const bar = document.getElementById('notifBar');
+            document.getElementById('notifText').textContent = text;
+            bar.classList.add('show');
+            setTimeout(() => bar.classList.remove('show'), 5000);
         }
 
         async function toggleStatus() {
@@ -125,68 +160,171 @@
             const badge = document.getElementById('statusBadge');
             badge.textContent = labels[currentStatus];
             badge.className = `status-badge ${classes[currentStatus]}`;
-            showToast(`状态已切换为: ${labels[currentStatus]}`);
+            try {
+                if (currentUser && currentUser.id) {
+                    const emps = await VS_API.employees.getAll();
+                    const emp = emps.find(e => e.id === currentUser.id || e.emp_no === currentUser.emp_no);
+                    if (emp) {
+                        await VS_API.employees.update(emp.id, { status: currentStatus });
+                    }
+                }
+                VS_API.showToast(`状态已切换为: ${labels[currentStatus]}`, 'success');
+            } catch (e) {
+                VS_API.showToast('状态同步失败', 'error');
+            }
         }
 
         async function loadTasks() {
-            const tasks = await apiCall('/tasks');
+            try {
+                allTasks = await VS_API.tasks.getAll(true);
+                renderTasks();
+                const pending = allTasks.filter(t => t.status === 'pending');
+                if (pending.length > 0) {
+                    showNotification(`您有 ${pending.length} 个待接工单`);
+                }
+            } catch (e) { console.error('Load tasks error:', e); }
+        }
+
+        function renderTasks() {
+            const filter = document.getElementById('taskFilter')?.value || 'all';
+            let filtered = allTasks;
+            if (filter !== 'all') filtered = filtered.filter(t => t.status === filter);
             const container = document.getElementById('taskList');
-            if (!tasks || tasks.length === 0) {
+            if (filtered.length === 0) {
                 container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>暂无工单</p></div>';
                 return;
             }
-            container.innerHTML = tasks.map(t => {
-                const statusBadge = t.status === 'pending' ? '<span class="badge badge-pending">待接单</span>' : t.status === 'in_progress' ? '<span class="badge badge-progress">进行中</span>' : '<span class="badge badge-completed">已完成</span>';
-                const actionBtn = t.status === 'pending' ? `<button class="btn btn-accept" onclick="acceptTask('${t.id}')">接单</button>` : t.status === 'in_progress' ? `<button class="btn btn-complete" onclick="completeTask('${t.id}')">完成</button>` : '';
-                return `<div class="task-card"><div class="task-header"><span class="service-name">${t.serviceName}</span>${statusBadge}</div><div class="task-time">分配时间: ${t.assignedAt ? new Date(t.assignedAt).toLocaleString() : '-'}</div><div class="task-info"><span class="commission">佣金: ¥${t.commission}</span>${actionBtn}</div></div>`;
+            container.innerHTML = filtered.map(t => {
+                const statusBadge = t.status === 'pending' ? '<span class="badge badge-pending">待接单</span>' :
+                    t.status === 'in_progress' ? '<span class="badge badge-progress">进行中</span>' :
+                    '<span class="badge badge-completed">已完成</span>';
+                const actionBtn = t.status === 'pending' ?
+                    `<button class="btn btn-accept" onclick="acceptTask('${t.id}')">接单</button>` :
+                    t.status === 'in_progress' ?
+                    `<button class="btn btn-complete" onclick="completeTask('${t.id}')">完成</button>` : '';
+                return `<div class="task-card">
+                    <div class="task-header"><span class="service-name">${t.serviceName || '服务'}</span>${statusBadge}</div>
+                    <div class="task-time">分配时间: ${t.assignedAt ? new Date(t.assignedAt).toLocaleString() : '-'}</div>
+                    <div class="task-info"><span class="commission">佣金: ¥${(t.commission || 0).toFixed(2)}</span>${actionBtn}</div>
+                </div>`;
             }).join('');
         }
 
         async function acceptTask(id) {
-            await apiCall(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'in_progress' }) });
-            showToast('已接单');
-            loadTasks();
+            try {
+                await VS_API.tasks.update(id, { status: 'in_progress' });
+                VS_API.showToast('已接单', 'success');
+                loadTasks();
+            } catch (e) { console.error('Accept task error:', e); }
         }
 
         async function completeTask(id) {
-            await apiCall(`/tasks/${id}/complete`, { method: 'POST' });
-            showToast('任务已完成');
-            loadTasks();
+            try {
+                const task = allTasks.find(t => t.id === id);
+                await VS_API.completeTask(id);
+                if (task && task.commission > 0) {
+                    await VS_API.commissions.create({
+                        employeeId: task.employeeId,
+                        taskId: id,
+                        amount: task.commission,
+                        serviceName: task.serviceName,
+                        created_at: new Date().toISOString()
+                    });
+                }
+                VS_API.showToast('任务已完成，佣金已记录', 'success');
+                loadTasks();
+                loadCommission();
+            } catch (e) { console.error('Complete task error:', e); }
         }
 
         async function loadCommission() {
-            const commissions = await apiCall('/commissions');
-            const today = new Date().toISOString().split('T')[0];
-            const todayTotal = commissions.filter(c => c.created_at && c.created_at.startsWith(today)).reduce((s, c) => s + (c.amount || 0), 0);
-            document.getElementById('todayComm').textContent = `¥${todayTotal.toFixed(2)}`;
-            document.getElementById('weekComm').textContent = '¥0';
-            document.getElementById('monthComm').textContent = '¥0';
+            try {
+                allCommissions = await VS_API.commissions.getAll(true);
+                const today = new Date().toISOString().split('T')[0];
+                const now = new Date();
+                const weekStart = new Date(now); weekStart.setDate(weekStart.getDate() - 7);
+                const monthStart = new Date(now); monthStart.setMonth(monthStart.getMonth() - 1);
+                const todayTotal = allCommissions.filter(c => c.created_at && c.created_at.startsWith(today)).reduce((s, c) => s + (c.amount || 0), 0);
+                const weekTotal = allCommissions.filter(c => c.created_at && new Date(c.created_at) >= weekStart).reduce((s, c) => s + (c.amount || 0), 0);
+                const monthTotal = allCommissions.filter(c => c.created_at && new Date(c.created_at) >= monthStart).reduce((s, c) => s + (c.amount || 0), 0);
+                document.getElementById('todayComm').textContent = `¥${todayTotal.toFixed(2)}`;
+                document.getElementById('weekComm').textContent = `¥${weekTotal.toFixed(2)}`;
+                document.getElementById('monthComm').textContent = `¥${monthTotal.toFixed(2)}`;
+                renderCommissionList();
+                renderCommChart();
+            } catch (e) { console.error('Load commission error:', e); }
+        }
+
+        function renderCommissionList() {
             const container = document.getElementById('commissionList');
-            if (commissions.length === 0) {
+            if (allCommissions.length === 0) {
                 container.innerHTML = '<div class="empty-state"><div class="icon">💰</div><p>暂无佣金记录</p></div>';
-            } else {
-                container.innerHTML = commissions.map(c => `<div class="task-card"><div class="task-header"><span>佣金</span><span class="badge badge-completed">已结算</span></div><div class="task-info"><span class="commission">¥${c.amount}</span><span style="font-size:11px;color:#999;">${c.created_at ? new Date(c.created_at).toLocaleDateString() : '-'}</span></div></div>`).join('');
+                return;
             }
+            container.innerHTML = allCommissions.slice().reverse().map(c =>
+                `<div class="commission-item"><div><div style="font-weight:500;">${c.serviceName || '佣金'}</div><div style="font-size:11px;color:#999;">${c.created_at ? new Date(c.created_at).toLocaleDateString() : '-'}</div></div><div style="font-weight:600;color:#28a745;">¥${(c.amount || 0).toFixed(2)}</div></div>`
+            ).join('');
+        }
+
+        function renderCommChart() {
+            const container = document.getElementById('commChart');
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                const key = d.toISOString().split('T')[0];
+                const dayTotal = allCommissions.filter(c => c.created_at && c.created_at.startsWith(key)).reduce((s, c) => s + (c.amount || 0), 0);
+                days.push({ label: `${d.getMonth()+1}/${d.getDate()}`, value: dayTotal });
+            }
+            const maxVal = Math.max(...days.map(d => d.value), 1);
+            container.innerHTML = days.map(d => `<div class="bar" style="height:${Math.max((d.value / maxVal) * 100, 4)}%"><span class="bar-value">¥${d.value.toFixed(0)}</span><span class="bar-label">${d.label}</span></div>`).join('');
         }
 
         async function loadReport() {
-            const tasks = await apiCall('/tasks');
-            const total = tasks.length;
-            const completed = tasks.filter(t => t.status === 'completed').length;
-            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-            const totalComm = tasks.reduce((s, t) => s + (t.commission || 0), 0);
-            document.getElementById('totalTasks').textContent = total;
-            document.getElementById('completeRate').textContent = `${rate}%`;
-            document.getElementById('totalIncome').textContent = `¥${totalComm}`;
-            const pending = tasks.filter(t => t.status === 'pending').length;
-            const inProgress = tasks.filter(t => t.status === 'in_progress').length;
-            document.getElementById('statusChart').innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;"><span class="badge badge-pending">待接单: ${pending}</span><span class="badge badge-progress">进行中: ${inProgress}</span><span class="badge badge-completed">已完成: ${completed}</span></div>`;
+            try {
+                const tasks = await VS_API.tasks.getAll();
+                const total = tasks.length;
+                const completed = tasks.filter(t => t.status === 'completed').length;
+                const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+                const totalComm = tasks.reduce((s, t) => s + (t.commission || 0), 0);
+                document.getElementById('totalTasks').textContent = total;
+                document.getElementById('completeRate').textContent = `${rate}%`;
+                document.getElementById('totalIncome').textContent = `¥${totalComm.toFixed(2)}`;
+                const pending = tasks.filter(t => t.status === 'pending').length;
+                const inProgress = tasks.filter(t => t.status === 'in_progress').length;
+                document.getElementById('statusChart').innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <span class="badge badge-pending">待接单: ${pending}</span>
+                    <span class="badge badge-progress">进行中: ${inProgress}</span>
+                    <span class="badge badge-completed">已完成: ${completed}</span>
+                </div>`;
+                const serviceCounts = {};
+                tasks.forEach(t => { const s = t.serviceName || '未知'; serviceCounts[s] = (serviceCounts[s] || 0) + 1; });
+                const maxSvc = Math.max(...Object.values(serviceCounts), 1);
+                document.getElementById('serviceChart').innerHTML = Object.entries(serviceCounts).map(([name, count]) =>
+                    `<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>${name}</span><span>${count}次</span></div><div style="height:8px;background:#eee;border-radius:4px;overflow:hidden;"><div style="height:100%;width:${(count/maxSvc)*100}%;background:#3b7ddd;border-radius:4px;"></div></div></div>`
+                ).join('') || '<div style="color:#999;font-size:13px;">暂无数据</div>';
+            } catch (e) { console.error('Load report error:', e); }
         }
 
-        // Init
-        loadTasks();
-        loadCommission();
-        loadReport();
+        function initUserInfo() {
+            if (currentUser) {
+                document.getElementById('empName').textContent = `${currentUser.name || currentUser.username} (${currentUser.role || '员工'})`;
+            }
+        }
+
+        function startPolling() {
+            pollInterval = setInterval(() => {
+                loadTasks();
+                loadCommission();
+            }, 15000);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initUserInfo();
+            loadTasks();
+            loadCommission();
+            loadReport();
+            startPolling();
+        });
     </script>
 </body>
 </html>

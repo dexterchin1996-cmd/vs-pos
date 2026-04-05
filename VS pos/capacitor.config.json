@@ -1,0 +1,37 @@
+{
+  "appId": "com.vspos.app",
+  "appName": "VS POS",
+  "webDir": "src",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 1000,
+      "backgroundColor": "#3b7ddd",
+      "androidSplashResourceName": "splash",
+      "androidSplashScreen": "#3b7ddd",
+      "androidSplashScreenDelay": 3000,
+      "showSpinner": false,
+      "androidSpinnerStyle": "large",
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#ffffff"
+    }
+  },
+  "ios": {
+    "bundleId": "com.vspos.app",
+    "buildOptions": {
+      "swiftVersion": "5.0"
+    }
+  },
+  "android": {
+    "bundleId": "com.vspos.app",
+    "buildOptions": {
+      "minSdkVersion": 22,
+      "targetSdkVersion": 33
+    }
+  }
+}

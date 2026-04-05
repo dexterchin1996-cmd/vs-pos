@@ -2,9 +2,16 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VS pos - 专业服务行业管理系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#3b7ddd">
+    <meta name="description" content="VS POS - 专业服务行业管理系统">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <title>VS POS - 专业服务行业管理系统</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="api.js"></script>
+    <script src="vs-api.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -2767,8 +2774,8 @@
         }
 
         // 初始化
-        function init() {
-            loadData();
+        async function init() {
+            await loadData();
             initSampleData();
             initNav();
             renderItemsGrid();
@@ -2777,32 +2784,68 @@
             loadSettingsValues();
         }
 
-        function loadData() {
-            services = JSON.parse(localStorage.getItem(CONFIG.storage.services) || '[]');
-            orders = JSON.parse(localStorage.getItem(CONFIG.storage.orders) || '[]');
-            tickets = JSON.parse(localStorage.getItem(CONFIG.storage.tickets) || '[]');
-            invoices = JSON.parse(localStorage.getItem(CONFIG.storage.invoices) || '[]');
-            members = JSON.parse(localStorage.getItem(CONFIG.storage.members) || '[]');
-            employees = JSON.parse(localStorage.getItem(CONFIG.storage.employees) || '[]');
-            commissions = JSON.parse(localStorage.getItem(CONFIG.storage.commissions) || '[]');
+        async function loadData() {
+            services = await api.services.getAll();
+            orders = await api.orders.getAll();
+            members = await api.members.getAll();
+            employees = await api.employees.getAll();
+            tickets = await api.tickets.getAll();
+            invoices = await api.invoices.getAll();
+            commissions = await api.commissions.getAll();
+            shifts = await api.shifts.getAll();
+            suppliers = await api.suppliers.getAll();
+            customerDisplays = await api.members.getAll();
+            printerGroups = await api.categories.getAll();
             suspendedOrders = JSON.parse(localStorage.getItem(CONFIG.storage.suspended) || '[]');
-            shifts = JSON.parse(localStorage.getItem(CONFIG.storage.shifts) || '[]');
-            suppliers = JSON.parse(localStorage.getItem(CONFIG.storage.suppliers) || '[]');
-            customerDisplays = JSON.parse(localStorage.getItem(CONFIG.storage.customerDisplays) || '[]');
-            printerGroups = JSON.parse(localStorage.getItem(CONFIG.storage.printerGroups) || '[]');
-            
+
             const savedDining = JSON.parse(localStorage.getItem(CONFIG.storage.diningOptions) || '[]');
             if (savedDining.length > 0) diningOptions = savedDining;
-            
+
             const savedKitchen = JSON.parse(localStorage.getItem(CONFIG.storage.kitchenPrinters) || '[]');
             if (savedKitchen.length > 0) kitchenPrinters = savedKitchen;
-            
-            const savedSettings = JSON.parse(localStorage.getItem(CONFIG.storage.settings) || '{}');
-            if (Object.keys(savedSettings).length > 0) settings = { ...settings, ...savedSettings };
+
+            const storeSettings = await api.store.get();
+            if (Object.keys(storeSettings).length > 0) settings = { ...settings, ...storeSettings };
         }
 
-        function saveData(key, data) {
-            localStorage.setItem(CONFIG.storage[key], JSON.stringify(data));
+        async function saveData(key, data) {
+            const storageKey = CONFIG.storage[key];
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            const entityMap = {
+                services: api.services,
+                orders: api.orders,
+                members: api.members,
+                employees: api.employees,
+                tickets: api.tickets,
+                invoices: api.invoices,
+                commissions: api.commissions,
+                shifts: api.shifts,
+                suppliers: api.suppliers,
+                categories: api.categories,
+                customerDisplays: null,
+                printerGroups: null
+            };
+            const apiResource = entityMap[key];
+            if (apiResource && await api.isAvailable()) {
+                try {
+                    const existing = await apiResource.getAll();
+                    const existingIds = new Set(existing.map(i => i.id));
+                    for (const item of data) {
+                        if (!existingIds.has(item.id)) {
+                            await apiResource.create(item);
+                        } else {
+                            await apiResource.update(item.id, item);
+                        }
+                    }
+                    for (const existingItem of existing) {
+                        if (!data.find(d => d.id === existingItem.id)) {
+                            await apiResource.delete(existingItem.id);
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`Failed to sync ${key} to API:`, e);
+                }
+            }
         }
 
         function initSampleData() {
@@ -3901,15 +3944,18 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             }
         }
 
-        function createOrder(subtotal, discount, tax, total, method, cashReceived) {
+        async function createOrder(subtotal, discount, tax, total, method, cashReceived) {
             const orderNo = 'V' + Date.now().toString().slice(-8);
             currentOrderNo = orderNo;
+            const assignedEmp = employees.find(e => e.status === 'available') || employees.find(e => e.status === 'free') || null;
             const order = {
                 id: getNextId(orders),
                 orderNo,
                 customerType: currentCustomerType,
                 customerName: currentMember ? currentMember.name : (currentCustomerType === 'vip' ? 'VIP客户' : '散客'),
                 memberId: currentMember?.id || null,
+                employeeId: assignedEmp?.id || null,
+                employeeName: assignedEmp?.name || '未分配',
                 items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty })),
                 subtotal: subtotal || cart.reduce((sum, item) => sum + item.price * item.qty, 0),
                 discount: discount || 0,
@@ -3917,16 +3963,17 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
                 tip: currentTip,
                 total,
                 pointsEarned: Math.floor(total * settings.earningRate),
+                paymentMethod: method,
                 payment: method,
                 cashReceived: cashReceived || total,
                 change: cashReceived ? cashReceived - total : 0,
                 status: 'completed',
+                created_at: new Date().toISOString(),
                 createdAt: new Date().toISOString()
             };
-            
             orders.unshift(order);
             saveData('orders', orders);
-            
+            try { await VS_API.orders.create(order); } catch(e) { console.warn('Order sync failed:', e); }
             if (currentMember) {
                 if (order.pointsEarned > 0) {
                     addPointsHistory(currentMember.id, 'earn', order.pointsEarned, `消费获得 (订单: ${orderNo})`);
@@ -3938,10 +3985,17 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
                 const idx = members.findIndex(m => m.id === currentMember.id);
                 if (idx !== -1) members[idx] = currentMember;
                 saveData('members', members);
+                try { await VS_API.members.update(currentMember.id, currentMember); } catch(e) {}
             }
-            
             generateCommissions(order);
             createInvoice(order);
+            if (assignedEmp) {
+                cart.forEach(item => {
+                    const commRate = (item.commission || settings.commissionRate) / 100;
+                    const comm = item.price * item.qty * commRate;
+                    VS_API.assignTask({ employeeId: assignedEmp.id, type: 'service', serviceName: item.name, commission: comm }).catch(() => {});
+                });
+            }
         }
 
         function finishCheckout() {
@@ -3971,19 +4025,21 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
             const rate = settings.commissionRate / 100;
             const maxId = commissions.length ? Math.max(...commissions.map(c => c.id)) : 0;
             order.items.forEach((item, idx) => {
-                const availableEmp = employees.find(e => e.status === 'free') || employees[0];
+                const assignedEmp = employees.find(e => e.id === order.employeeId) || employees.find(e => e.status === 'available') || employees.find(e => e.status === 'free') || employees[0];
                 const commission = (item.price * item.qty) * rate;
-                commissions.push({
+                const commEntry = {
                     id: maxId + idx + 1,
                     orderNo: order.orderNo,
-                    employeeId: availableEmp?.id || 0,
-                    employeeName: availableEmp?.name || '未分配',
+                    employeeId: assignedEmp?.id || 0,
+                    employeeName: assignedEmp?.name || '未分配',
                     serviceName: item.name,
                     amount: item.price,
                     commission,
                     status: 'pending',
                     createdAt: order.createdAt
-                });
+                };
+                commissions.push(commEntry);
+                VS_API.commissions.create(commEntry).catch(() => {});
             });
             saveData('commissions', commissions);
         }
@@ -5273,160 +5329,6 @@ Name,Phone,Email,Address,Notes,Default purchase cost,Status
                     <button class="btn btn-outline" onclick="closeModal()">取消</button>
                     <button class="btn btn-danger" onclick="deleteItem('${item.id}')">删除</button>
                     <button class="btn btn-primary" onclick="saveEditItem('${item.id}')">保存</button>
-                </div>
-            `);
-        }
-        
-        function addNewItem() {
-            const name = document.getElementById('newItemName').value.trim();
-            const sku = document.getElementById('newItemSku').value.trim();
-            const barcode = document.getElementById('newItemBarcode').value.trim();
-            const category = document.getElementById('newItemCategory').value;
-            const price = parseFloat(document.getElementById('newItemPrice').value);
-            const cost = parseFloat(document.getElementById('newItemCost').value) || 0;
-            const duration = parseInt(document.getElementById('newItemDuration').value) || 60;
-            const stock = parseInt(document.getElementById('newItemStock').value) || 999;
-            const lowStockAlert = parseInt(document.getElementById('newItemLowStock').value) || 10;
-            const commission = parseFloat(document.getElementById('newItemCommission').value) || 60;
-            const supplier = document.getElementById('newItemSupplier').value.trim();
-            const tagsStr = document.getElementById('newItemTags').value.trim();
-            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()) : [];
-            
-            if (!name || !price) { alert('请填写名称和价格'); return; }
-            
-            const id = 'S' + Date.now();
-            services.push({ id, sku, barcode, name, category, price, cost, duration, stock, lowStockAlert, supplier, tags, commission, active: true, image: '' });
-            saveData('services', services);
-            closeModal();
-            renderItemsTable();
-            renderItemsGrid();
-            alert('商品添加成功');
-        }
-        
-        function showEditItemModal(id) {
-            const item = services.find(s => s.id === id);
-            if (!item) return;
-            
-            const variants = item.variants || [];
-            const components = item.components || [];
-            
-            showModal('编辑商品 - ' + item.name, `
-                <div style="max-height:70vh;overflow-y:auto;padding-right:4px;">
-                    <div class="form-row">
-                        <div class="form-group" style="flex:2;">
-                            <label class="form-label">商品名称 *</label>
-                            <input type="text" class="form-input" id="editItemName" value="${item.name}" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">SKU编码</label>
-                            <input type="text" class="form-input" id="editItemSku" value="${item.sku || ''}">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">条码</label>
-                            <input type="text" class="form-input" id="editItemBarcode" value="${item.barcode || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">分类</label>
-                            <select class="form-select" id="editItemCategory">
-                                <option value="massage" ${item.category === 'massage' ? 'selected' : ''}>按摩</option>
-                                <option value="spa" ${item.category === 'spa' ? 'selected' : ''}>SPA</option>
-                                <option value="beauty" ${item.category === 'beauty' ? 'selected' : ''}>美容</option>
-                                <option value="health" ${item.category === 'health' ? 'selected' : ''}>养生</option>
-                                <option value="package" ${item.category === 'package' ? 'selected' : ''}>套票</option>
-                                <option value="product" ${item.category === 'product' ? 'selected' : ''}>产品</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">售价 (¥) *</label>
-                            <input type="number" class="form-input" id="editItemPrice" value="${item.price}" step="0.01" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">成本价 (¥)</label>
-                            <input type="number" class="form-input" id="editItemCost" value="${item.cost || 0}" step="0.01">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">时长 (分钟)</label>
-                            <input type="number" class="form-input" id="editItemDuration" value="${item.duration}">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">库存</label>
-                            <input type="number" class="form-input" id="editItemStock" value="${item.stock}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">预警值</label>
-                            <input type="number" class="form-input" id="editItemLowStock" value="${item.lowStockAlert}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">佣金 (%)</label>
-                            <input type="number" class="form-input" id="editItemCommission" value="${item.commission || 60}">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">供应商</label>
-                            <input type="text" class="form-input" id="editItemSupplier" value="${item.supplier || ''}" list="supplierList">
-                            <datalist id="supplierList">
-                                ${suppliers.map(s => `<option value="${s.name}">`).join('')}
-                            </datalist>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">状态</label>
-                            <select class="form-select" id="editItemActive">
-                                <option value="true" ${item.active ? 'selected' : ''}>在售</option>
-                                <option value="false" ${!item.active ? 'selected' : ''}>已下架</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top:16px;padding-top:16px;border-top:2px solid var(--gray-200);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                            <div style="font-weight:600;">🎛️ 变体</div>
-                            <button class="btn btn-sm btn-outline" onclick="showVariantsEditor('${id}')">编辑变体</button>
-                        </div>
-                        ${variants.length > 0 ? `
-                            <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">${variants.length} 个变体</div>
-                            <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                                ${variants.map(v => `
-                                    <span style="padding:4px 8px;background:var(--gray-100);border-radius:4px;font-size:12px;">
-                                        ${v.options?.join(' / ') || '默认'}
-                                    </span>
-                                `).join('')}
-                            </div>
-                        ` : '<div style="font-size:12px;color:var(--gray-400);">暂无变体</div>'}
-                    </div>
-                    
-                    <div style="margin-top:16px;padding-top:16px;border-top:2px solid var(--gray-200);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                            <div style="font-weight:600;">📦 组合商品</div>
-                            <button class="btn btn-sm btn-outline" onclick="showCompositeEditor('${id}')">编辑组件</button>
-                        </div>
-                        ${components.length > 0 ? `
-                            <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">${components.length} 个组件</div>
-                            <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                                ${components.map(c => {
-                                    const comp = services.find(s => s.id === c.itemId);
-                                    return `<span style="padding:4px 8px;background:var(--gray-100);border-radius:4px;font-size:12px;">${comp?.name || c.name} x${c.qty}</span>`;
-                                }).join('')}
-                            </div>
-                            <div style="margin-top:8px;font-size:12px;">
-                                预计成本: <strong style="color:var(--primary);">¥${components.reduce((s, c) => {
-                                    const comp = services.find(sv => sv.id === c.itemId);
-                                    return s + (comp?.cost || 0) * c.qty;
-                                }, 0).toFixed(2)}</strong>
-                            </div>
-                        ` : '<div style="font-size:12px;color:var(--gray-400);">非组合商品</div>'}
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
-                    <button class="btn btn-primary" onclick="updateItem('${id}')">保存</button>
                 </div>
             `);
         }
@@ -7784,15 +7686,6 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             }
         }
 
-        function deleteMember(id) {
-            if (confirm('确定删除该会员？')) {
-                members = members.filter(m => m.id !== id);
-                saveData('members', members);
-                renderMembersTable();
-                updateMemberStats();
-            }
-        }
-
         // 员工管理
         function renderEmployeesTable() {
             const table = document.getElementById('employeesTable');
@@ -8035,37 +7928,6 @@ VIP002,李四,13800138001,lisi@email.com,1985-05-15,上海,silver,
             renderEmployeesTable();
             updateEmployeeStats();
             alert('员工信息已更新');
-        }
-
-        function deleteEmployee(id) {
-            if (confirm('确定删除该员工？')) {
-                employees = employees.filter(e => e.id !== id);
-                saveData('employees', employees);
-                renderEmployeesTable();
-                updateEmployeeStats();
-            }
-        }
-            const name = document.getElementById('newEmpName').value.trim();
-            const phone = document.getElementById('newEmpPhone').value.trim();
-            const skills = document.getElementById('newEmpSkills').value.split(',').map(s => s.trim()).filter(s => s);
-            
-            if (!name) { alert('请填写姓名'); return; }
-            
-            employees.push({ id: getNextId(employees), name, phone, skills, status: 'free', monthlyCommission: 0 });
-            saveData('employees', employees);
-            closeModal();
-            renderEmployeesTable();
-            updateEmployeeStats();
-        }
-
-        function toggleEmployeeStatus(id) {
-            const emp = employees.find(e => e.id === id);
-            if (emp) {
-                emp.status = emp.status === 'free' ? 'busy' : 'free';
-                saveData('employees', employees);
-                renderEmployeesTable();
-                updateEmployeeStats();
-            }
         }
 
         function deleteEmployee(id) {
@@ -11427,6 +11289,27 @@ SPA-001,6901234560002,精油推背,spa,398,120,90,999,10,60,芳疗馆
         function todayStr() {
             return new Date().toISOString().split('T')[0];
         }
+
+        // Check authentication
+        (function checkAuth() {
+            const token = localStorage.getItem('vspos_token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            // Verify token with backend
+            fetch('http://localhost:3001/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).then(res => {
+                if (!res.ok) {
+                    localStorage.removeItem('vspos_token');
+                    localStorage.removeItem('vspos_user');
+                    window.location.href = 'login.html';
+                }
+            }).catch(() => {
+                // If backend is not available, allow access (offline mode)
+            });
+        })();
 
         // 启动
         init();

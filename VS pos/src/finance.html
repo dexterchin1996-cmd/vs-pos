@@ -6,13 +6,14 @@
     <meta name="theme-color" content="#1a1a2e">
     <title>VS Finance - 财务报表</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="vs-api.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: #f5f6fa; color: #1a1a2e; max-width: 480px; margin: 0 auto; min-height: 100vh; }
         .header { background: #1a1a2e; color: #fff; padding: 20px; }
         .header h1 { font-size: 18px; }
         .header p { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-        .period-tabs { display: flex; background: #fff; border-bottom: 1px solid #eee; }
+        .period-tabs { display: flex; background: #fff; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 10; }
         .period-tab { flex: 1; padding: 14px; text-align: center; font-size: 13px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 2px solid transparent; }
         .period-tab.active { color: #3b7ddd; border-bottom-color: #3b7ddd; }
         .content { padding: 16px; }
@@ -20,6 +21,8 @@
         .stat-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .stat-card .label { font-size: 11px; color: #999; margin-bottom: 6px; }
         .stat-card .value { font-size: 22px; font-weight: 700; }
+        .stat-card .value.positive { color: #28a745; }
+        .stat-card .value.negative { color: #dc3545; }
         .stat-card .sub { font-size: 11px; color: #28a745; margin-top: 4px; }
         .chart-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .chart-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
@@ -27,17 +30,27 @@
         .bar { flex: 1; background: #3b7ddd; border-radius: 4px 4px 0 0; position: relative; min-height: 4px; transition: height 0.3s; }
         .bar .bar-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #999; white-space: nowrap; }
         .bar .bar-value { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 600; color: #333; white-space: nowrap; }
+        .pie-chart { display: flex; align-items: center; gap: 16px; padding: 8px 0; }
+        .pie-legend { flex: 1; }
+        .pie-legend-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
+        .pie-color { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+        .pie-legend-item .amount { margin-left: auto; font-weight: 600; }
+        .pie-legend-item .pct { font-size: 11px; color: #999; margin-left: 4px; }
         .payment-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
         .payment-row:last-child { border-bottom: none; }
         .payment-row .name { font-size: 14px; }
         .payment-row .amount { font-size: 14px; font-weight: 600; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; width: 100%; margin-top: 12px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-primary { background: #3b7ddd; color: #fff; }
         .btn-success { background: #28a745; color: #fff; }
         .empty-state { text-align: center; padding: 40px 20px; color: #999; }
         .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); padding: 12px 24px; background: #1a1a2e; color: #fff; border-radius: 8px; font-size: 13px; z-index: 1000; transition: transform 0.3s; }
-        .toast.show { transform: translateX(-50%) translateY(0); }
+        .compare-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+        .compare-item { background: #fff; border-radius: 8px; padding: 12px; text-align: center; }
+        .compare-item .period { font-size: 10px; color: #999; margin-bottom: 4px; }
+        .compare-item .amount { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+        .date-range { display: flex; gap: 8px; margin-bottom: 12px; }
+        .date-range input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -62,13 +75,13 @@
             </div>
             <div class="stat-card">
                 <div class="label">净利润</div>
-                <div class="value" id="netProfit">¥0</div>
+                <div class="value positive" id="netProfit">¥0</div>
                 <div class="sub" id="profitMargin">利润率 0%</div>
             </div>
             <div class="stat-card">
-                <div class="label">总支出</div>
-                <div class="value" id="totalExpense">¥0</div>
-                <div class="sub">佣金 + 成本</div>
+                <div class="label">总佣金支出</div>
+                <div class="value negative" id="totalCommission">¥0</div>
+                <div class="sub">员工提成</div>
             </div>
             <div class="stat-card">
                 <div class="label">客单价</div>
@@ -77,8 +90,15 @@
             </div>
         </div>
 
+        <div class="compare-grid" id="compareGrid">
+            <div class="compare-item"><div class="period">今日</div><div class="amount" id="cmpToday">¥0</div></div>
+            <div class="compare-item"><div class="period">本周</div><div class="amount" id="cmpWeek">¥0</div></div>
+            <div class="compare-item"><div class="period">本月</div><div class="amount" id="cmpMonth">¥0</div></div>
+            <div class="compare-item"><div class="period">全部</div><div class="amount" id="cmpAll">¥0</div></div>
+        </div>
+
         <div class="chart-card">
-            <h3>📊 每日营收趋势</h3>
+            <h3>📊 每日营收趋势 (近7天)</h3>
             <div class="bar-chart" id="revenueChart"></div>
         </div>
 
@@ -87,35 +107,27 @@
             <div id="paymentBreakdown"></div>
         </div>
 
+        <div class="chart-card">
+            <h3>📋 佣金明细</h3>
+            <div id="commissionSummary"></div>
+        </div>
+
         <button class="btn btn-primary" onclick="downloadReport()">📥 下载财务报告</button>
         <button class="btn btn-success" onclick="exportCSV()">📤 导出 CSV 数据</button>
     </div>
 
-    <div class="toast" id="toast"></div>
-
     <script>
-        const API = '/api';
-        let token = localStorage.getItem('vspos_token');
-        if (!token) window.location.href = 'login.html';
-        let currentPeriod = 'today';
+        VS_API.auth.requireAuth();
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2500);
-        }
+        let currentPeriod = 'today';
+        let allOrders = [];
+        let allCommissions = [];
 
         function loadPeriod(period) {
             currentPeriod = period;
             document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
             loadData();
-        }
-
-        async function apiCall(endpoint, options = {}) {
-            const res = await fetch(`${API}${endpoint}`, { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...options.headers }, ...options });
-            return res.json();
         }
 
         function getDateRange(period) {
@@ -129,52 +141,109 @@
         }
 
         async function loadData() {
-            const orders = await apiCall('/orders');
-            const commissions = await apiCall('/commissions');
-            const { start, end } = getDateRange(currentPeriod);
-            const filtered = orders.filter(o => {
-                if (!o.created_at) return false;
-                const d = o.created_at.split('T')[0];
-                return d >= start && d <= end;
-            });
-            const totalRev = filtered.reduce((s, o) => s + (o.total || 0), 0);
-            const totalComm = commissions.reduce((s, c) => s + (c.amount || 0), 0);
-            const net = totalRev - totalComm;
-            const avg = filtered.length > 0 ? totalRev / filtered.length : 0;
-            const margin = totalRev > 0 ? Math.round((net / totalRev) * 100) : 0;
-            document.getElementById('totalRevenue').textContent = `¥${totalRev.toFixed(2)}`;
-            document.getElementById('orderCount').textContent = `${filtered.length} 笔订单`;
-            document.getElementById('netProfit').textContent = `¥${net.toFixed(2)}`;
-            document.getElementById('profitMargin').textContent = `利润率 ${margin}%`;
-            document.getElementById('totalExpense').textContent = `¥${totalComm.toFixed(2)}`;
-            document.getElementById('avgOrder').textContent = `¥${avg.toFixed(2)}`;
+            try {
+                allOrders = await VS_API.orders.getAll(true);
+                allCommissions = await VS_API.commissions.getAll(true);
+                const { start, end } = getDateRange(currentPeriod);
+                const filtered = allOrders.filter(o => {
+                    if (!o.created_at) return false;
+                    const d = o.created_at.split('T')[0];
+                    return d >= start && d <= end;
+                });
+                const totalRev = filtered.reduce((s, o) => s + (o.total || 0), 0);
+                const filteredCommissions = allCommissions.filter(c => {
+                    if (!c.created_at) return false;
+                    const d = c.created_at.split('T')[0];
+                    return d >= start && d <= end;
+                });
+                const totalComm = filteredCommissions.reduce((s, c) => s + (c.amount || 0), 0);
+                const net = totalRev - totalComm;
+                const avg = filtered.length > 0 ? totalRev / filtered.length : 0;
+                const margin = totalRev > 0 ? Math.round((net / totalRev) * 100) : 0;
+                document.getElementById('totalRevenue').textContent = `¥${totalRev.toFixed(2)}`;
+                document.getElementById('orderCount').textContent = `${filtered.length} 笔订单`;
+                document.getElementById('netProfit').textContent = `¥${net.toFixed(2)}`;
+                document.getElementById('netProfit').className = `value ${net >= 0 ? 'positive' : 'negative'}`;
+                document.getElementById('profitMargin').textContent = `利润率 ${margin}%`;
+                document.getElementById('totalCommission').textContent = `¥${totalComm.toFixed(2)}`;
+                document.getElementById('avgOrder').textContent = `¥${avg.toFixed(2)}`;
+                renderPaymentBreakdown(filtered, totalRev);
+                renderRevenueChart();
+                renderCommissionSummary(filteredCommissions);
+                renderCompareGrid();
+            } catch (e) { console.error('Load finance data error:', e); }
+        }
 
-            // Payment breakdown
+        function renderPaymentBreakdown(orders, totalRev) {
             const breakdown = {};
-            filtered.forEach(o => { const m = o.paymentMethod || '现金'; breakdown[m] = (breakdown[m] || 0) + (o.total || 0); });
-            document.getElementById('paymentBreakdown').innerHTML = Object.entries(breakdown).map(([k, v]) => `<div class="payment-row"><span class="name">${k}</span><span class="amount">¥${v.toFixed(2)}</span></div>`).join('') || '<div class="empty-state"><p>暂无数据</p></div>';
+            orders.forEach(o => { const m = o.paymentMethod || '现金'; breakdown[m] = (breakdown[m] || 0) + (o.total || 0); });
+            const colors = ['#3b7ddd', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#e83e8c', '#20c997', '#fd7e14'];
+            const entries = Object.entries(breakdown).sort((a, b) => b[1] - a[1]);
+            const container = document.getElementById('paymentBreakdown');
+            if (entries.length === 0) { container.innerHTML = '<div class="empty-state"><p>暂无数据</p></div>'; return; }
+            container.innerHTML = entries.map(([k, v], i) => {
+                const pct = totalRev > 0 ? ((v / totalRev) * 100).toFixed(1) : 0;
+                return `<div class="pie-legend-item"><span class="pie-color" style="background:${colors[i % colors.length]}"></span><span>${k}</span><span class="amount">¥${v.toFixed(2)}</span><span class="pct">${pct}%</span></div>`;
+            }).join('');
+        }
 
-            // Revenue chart (last 7 days)
+        function renderRevenueChart() {
+            const container = document.getElementById('revenueChart');
             const days = [];
             for (let i = 6; i >= 0; i--) {
                 const d = new Date(); d.setDate(d.getDate() - i);
                 const key = d.toISOString().split('T')[0];
-                const dayTotal = orders.filter(o => o.created_at && o.created_at.startsWith(key)).reduce((s, o) => s + (o.total || 0), 0);
-                days.push({ label: `${d.getMonth() + 1}/${d.getDate()}`, value: dayTotal });
+                const dayTotal = allOrders.filter(o => o.created_at && o.created_at.startsWith(key)).reduce((s, o) => s + (o.total || 0), 0);
+                days.push({ label: `${d.getMonth()+1}/${d.getDate()}`, value: dayTotal });
             }
             const maxVal = Math.max(...days.map(d => d.value), 1);
-            document.getElementById('revenueChart').innerHTML = days.map(d => `<div class="bar" style="height:${Math.max((d.value / maxVal) * 100, 4)}%"><span class="bar-value">¥${d.value.toFixed(0)}</span><span class="bar-label">${d.label}</span></div>`).join('');
+            container.innerHTML = days.map(d => `<div class="bar" style="height:${Math.max((d.value / maxVal) * 100, 4)}%"><span class="bar-value">¥${d.value.toFixed(0)}</span><span class="bar-label">${d.label}</span></div>`).join('');
+        }
+
+        function renderCommissionSummary(commissions) {
+            const container = document.getElementById('commissionSummary');
+            if (!commissions || commissions.length === 0) { container.innerHTML = '<div style="color:#999;font-size:13px;padding:8px 0;">暂无佣金记录</div>'; return; }
+            const byService = {};
+            commissions.forEach(c => { const s = c.serviceName || '其他'; byService[s] = (byService[s] || 0) + (c.amount || 0); });
+            container.innerHTML = Object.entries(byService).sort((a, b) => b[1] - a[1]).map(([name, amount]) =>
+                `<div class="payment-row"><span class="name">${name}</span><span class="amount" style="color:#dc3545;">-¥${amount.toFixed(2)}</span></div>`
+            ).join('') + `<div class="payment-row" style="border-top:2px solid #eee;font-weight:700;"><span>佣金合计</span><span style="color:#dc3545;">-¥${commissions.reduce((s, c) => s + (c.amount || 0), 0).toFixed(2)}</span></div>`;
+        }
+
+        function renderCompareGrid() {
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const weekStart = new Date(now); weekStart.setDate(weekStart.getDate() - 7);
+            const monthStart = new Date(now); monthStart.setMonth(monthStart.getMonth() - 1);
+            const calcTotal = (start) => allOrders.filter(o => o.created_at && new Date(o.created_at) >= start).reduce((s, o) => s + (o.total || 0), 0);
+            document.getElementById('cmpToday').textContent = `¥${calcTotal(new Date(todayStr)).toFixed(0)}`;
+            document.getElementById('cmpWeek').textContent = `¥${calcTotal(weekStart).toFixed(0)}`;
+            document.getElementById('cmpMonth').textContent = `¥${calcTotal(monthStart).toFixed(0)}`;
+            document.getElementById('cmpAll').textContent = `¥${allOrders.reduce((s, o) => s + (o.total || 0), 0).toFixed(0)}`;
         }
 
         function downloadReport() {
-            showToast('财务报告已生成并开始下载');
+            const rev = document.getElementById('totalRevenue').textContent;
+            const profit = document.getElementById('netProfit').textContent;
+            const comm = document.getElementById('totalCommission').textContent;
+            const avg = document.getElementById('avgOrder').textContent;
+            const report = `VS POS 财务报告\n期间: ${currentPeriod}\n生成时间: ${new Date().toLocaleString()}\n\n总营收: ${rev}\n净利润: ${profit}\n佣金支出: ${comm}\n客单价: ${avg}\n订单数: ${document.getElementById('orderCount').textContent}`;
+            const blob = new Blob([report], { type: 'text/plain;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `finance_report_${currentPeriod}_${new Date().toISOString().split('T')[0]}.txt`; a.click();
+            URL.revokeObjectURL(url);
+            VS_API.showToast('财务报告已下载', 'success');
         }
 
         function exportCSV() {
-            showToast('CSV 数据已导出');
+            if (!allOrders.length) { VS_API.showToast('暂无订单数据', 'warning'); return; }
+            const { start, end } = getDateRange(currentPeriod);
+            const filtered = allOrders.filter(o => { if (!o.created_at) return false; const d = o.created_at.split('T')[0]; return d >= start && d <= end; });
+            const data = filtered.map(o => ({ id: o.id, total: o.total, paymentMethod: o.paymentMethod, status: o.status, employeeName: o.employeeName, created_at: o.created_at }));
+            VS_API.exportCSV(data, `finance_data_${currentPeriod}.csv`);
         }
 
-        loadData();
+        window.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
 </html>
