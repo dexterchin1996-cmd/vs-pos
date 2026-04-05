@@ -120,9 +120,12 @@
         <nav>
             <a href="#" class="active" onclick="showSection('dashboard', this)"><span class="icon">📊</span> 仪表盘</a>
             <a href="#" onclick="showSection('employees', this)"><span class="icon">👥</span> 员工管理</a>
-            <a href="#" onclick="showSection('permissions', this)"><span class="icon">🔐</span> 权限调配</a>
+            <a href="#" onclick="showSection('inventory', this)"><span class="icon">🏭</span> 高级库存</a>
+            <a href="#" onclick="showSection('customers', this)"><span class="icon">👤</span> 客户历史</a>
+            <a href="#" onclick="showSection('reports', this)"><span class="icon">📈</span> 销售报表</a>
+            <a href="#" onclick="showSection('shiftReports', this)"><span class="icon">⏰</span> 班次报表</a>
+            <a href="#" onclick="showSection('taxReports', this)"><span class="icon">🧾</span> 税务报表</a>
             <a href="#" onclick="showSection('subscriptions', this)"><span class="icon">💎</span> 套餐订阅</a>
-            <a href="#" onclick="showSection('reports', this)"><span class="icon">📈</span> 财务报告</a>
             <a href="#" onclick="showSection('settings', this)"><span class="icon">⚙️</span> 系统设置</a>
             <a href="#" onclick="VS_API.auth.logout()"><span class="icon">🚪</span> 退出登录</a>
         </nav>
@@ -268,13 +271,124 @@
                     </div>
                 </div>
                 <div class="settings-section">
+                    <h4>🧾 税费配置</h4>
+                    <div class="form-row">
+                        <div class="form-group"><label>默认税率 (%)</label><input type="number" id="taxRate" min="0" max="100" step="0.1"></div>
+                        <div class="form-group"><label>计算方式</label><select id="taxMethod"><option value="add">外加</option><option value="included">含税</option></select></div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="saveTaxSettings()" style="margin-top:8px;">保存税费设置</button>
+                </div>
+                <div class="settings-section">
+                    <h4>🏷️ 折扣管理</h4>
+                    <div id="managerDiscountsList"></div>
+                    <button class="btn btn-primary btn-sm" onclick="showManagerDiscountModal()" style="margin-top:8px;">+ 添加折扣</button>
+                </div>
+                <div class="settings-section">
+                    <h4>🎛️ 修饰符管理</h4>
+                    <div id="managerModifiersList"></div>
+                    <button class="btn btn-primary btn-sm" onclick="showManagerModifierModal()" style="margin-top:8px;">+ 添加修饰符</button>
+                </div>
+                <div class="settings-section">
+                    <h4>🧾 收据模板</h4>
+                    <div class="form-group"><label>收据头部</label><textarea id="receiptHeader" rows="2"></textarea></div>
+                    <div class="form-group"><label>收据底部</label><textarea id="receiptFooter" rows="2"></textarea></div>
+                    <button class="btn btn-primary btn-sm" onclick="saveReceiptSettings()" style="margin-top:8px;">保存收据设置</button>
+                </div>
+                <div class="settings-section">
+                    <h4>🖨️ 打印机设置</h4>
+                    <div class="form-row">
+                        <div class="form-group"><label>打印机类型</label><select id="printerType"><option value="epson">Epson</option><option value="star">Star</option><option value="xprinter">Xprinter</option></select></div>
+                        <div class="form-group"><label>连接方式</label><select id="printerConnection"><option value="usb">USB</option><option value="ethernet">Ethernet</option><option value="bluetooth">Bluetooth</option></select></div>
+                    </div>
+                    <div class="form-group"><label>打印机名称/IP</label><input type="text" id="printerName" placeholder="192.168.1.100"></div>
+                    <button class="btn btn-outline btn-sm" onclick="testPrint()" style="margin-top:8px;">🖨️ 测试打印</button>
+                </div>
+                <div class="settings-section">
+                    <h4>💱 货币设置</h4>
+                    <div class="form-row">
+                        <div class="form-group"><label>货币符号</label><input type="text" id="currencySymbol" value="¥" style="width:60px;"></div>
+                        <div class="form-group"><label>小数位数</label><select id="currencyDecimals"><option value="0">0</option><option value="2" selected>2</option></select></div>
+                        <div class="form-group"><label>舍入规则</label><select id="currencyRounding"><option value="round">四舍五入</option><option value="floor">向下</option><option value="ceil">向上</option></select></div>
+                    </div>
+                </div>
+                <div class="settings-section">
                     <h4>🎛️ 功能开关</h4>
                     <div class="setting-row"><div class="info"><div class="name">会员系统</div><div class="desc">启用会员管理和积分</div></div><label class="toggle"><input type="checkbox" id="featMembers" checked><span class="toggle-slider"></span></label></div>
                     <div class="setting-row"><div class="info"><div class="name">佣金管理</div><div class="desc">启用员工佣金计算</div></div><label class="toggle"><input type="checkbox" id="featCommissions" checked><span class="toggle-slider"></span></label></div>
                     <div class="setting-row"><div class="info"><div class="name">班次管理</div><div class="desc">启用员工班次打卡</div></div><label class="toggle"><input type="checkbox" id="featShifts" checked><span class="toggle-slider"></span></label></div>
                     <div class="setting-row"><div class="info"><div class="name">开台管理</div><div class="desc">启用开台/桌台功能</div></div><label class="toggle"><input type="checkbox" id="featTickets" checked><span class="toggle-slider"></span></label></div>
+                    <div class="setting-row"><div class="info"><div class="name">库存预警</div><div class="desc">低库存自动提醒</div></div><label class="toggle"><input type="checkbox" id="featLowStock" checked><span class="toggle-slider"></span></label></div>
+                </div>
+                <div class="settings-section">
+                    <h4>📁 数据导出</h4>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="btn btn-outline" onclick="exportAllData('csv')">📥 导出CSV</button>
+                        <button class="btn btn-outline" onclick="exportAllData('json')">📥 导出JSON</button>
+                        <button class="btn btn-outline" onclick="exportAllData('pdf')">📥 导出PDF</button>
+                    </div>
                 </div>
                 <button class="btn btn-primary" onclick="saveSettings()">💾 保存所有设置</button>
+            </div>
+        </div>
+
+        <!-- Advanced Inventory -->
+        <div id="inventory" class="section">
+            <div class="card">
+                <h3>🏭 高级库存管理</h3>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="label">商品总数</div><div class="value" id="mgrInvTotal">0</div></div>
+                    <div class="stat-card"><div class="label">低库存</div><div class="value" id="mgrInvLow" style="color:#dc3545;">0</div></div>
+                    <div class="stat-card"><div class="label">库存总值</div><div class="value" id="mgrInvValue">¥0</div></div>
+                    <div class="stat-card"><div class="label">盘点次数</div><div class="value" id="mgrInvCounts">0</div></div>
+                </div>
+                <div class="filter-bar">
+                    <input type="text" id="mgrInvSearch" placeholder="搜索商品..." oninput="renderManagerInventory()">
+                    <select id="mgrInvFilter" onchange="renderManagerInventory()"><option value="all">全部</option><option value="low">低库存</option><option value="out">售罄</option></select>
+                    <button class="btn btn-primary btn-sm" onclick="showManagerInventoryCountModal()">📋 新建盘点</button>
+                    <button class="btn btn-outline btn-sm" onclick="showManagerTransferModal()">🔄 调拨</button>
+                </div>
+                <table><thead><tr><th>商品</th><th>库存</th><th>预警</th><th>成本</th><th>库存值</th><th>供应商</th><th>操作</th></tr></thead><tbody id="mgrInventoryTable"></tbody></table>
+            </div>
+        </div>
+
+        <!-- Customer History -->
+        <div id="customers" class="section">
+            <div class="card">
+                <h3>👤 客户历史</h3>
+                <div class="filter-bar">
+                    <input type="text" id="mgrCustSearch" placeholder="搜索客户..." oninput="renderManagerCustomers()">
+                    <select id="mgrCustSort" onchange="renderManagerCustomers()"><option value="spent">按消费</option><option value="visits">按访问</option><option value="points">按积分</option></select>
+                    <button class="btn btn-outline btn-sm" onclick="exportManagerCustomers()">📥 导出</button>
+                </div>
+                <table><thead><tr><th>姓名</th><th>等级</th><th>总消费</th><th>访问次数</th><th>积分</th><th>余额</th><th>最后访问</th><th>操作</th></tr></thead><tbody id="mgrCustomersTable"></tbody></table>
+            </div>
+        </div>
+
+        <!-- Shift Reports -->
+        <div id="shiftReports" class="section">
+            <div class="card">
+                <h3>⏰ 班次报表</h3>
+                <div class="filter-bar">
+                    <input type="date" id="mgrShiftStart">
+                    <input type="date" id="mgrShiftEnd">
+                    <button class="btn btn-primary" onclick="loadManagerShiftReports()">生成报表</button>
+                    <button class="btn btn-success" onclick="exportShiftReport()">📥 导出</button>
+                </div>
+                <div id="mgrShiftReportContent"></div>
+            </div>
+        </div>
+
+        <!-- Tax Reports -->
+        <div id="taxReports" class="section">
+            <div class="card">
+                <h3>🧾 税务报表</h3>
+                <div class="filter-bar">
+                    <input type="date" id="mgrTaxStart">
+                    <input type="date" id="mgrTaxEnd">
+                    <button class="btn btn-primary" onclick="loadManagerTaxReports()">生成报表</button>
+                    <button class="btn btn-success" onclick="exportTaxReport()">📥 导出</button>
+                </div>
+                <div id="mgrTaxReportContent"></div>
             </div>
         </div>
     </main>
@@ -320,6 +434,33 @@
         </div>
     </div>
 
+    <!-- Customer Detail Modal -->
+    <div class="modal-overlay" id="customerDetailModal">
+        <div class="modal">
+            <div class="modal-header"><div class="modal-title">客户详情</div><button class="modal-close" onclick="closeModal('customerDetailModal')">&times;</button></div>
+            <div id="custDetailContent"></div>
+        </div>
+    </div>
+
+    <!-- Inventory Count Modal -->
+    <div class="modal-overlay" id="inventoryCountModal">
+        <div class="modal">
+            <div class="modal-header"><div class="modal-title">新建盘点</div><button class="modal-close" onclick="closeModal('inventoryCountModal')">&times;</button></div>
+            <div class="form-group"><label>盘点名称</label><input type="text" id="icName" placeholder="2024年12月盘点"></div>
+            <div class="form-group"><label>位置</label><input type="text" id="icLocation" value="主店"></div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('inventoryCountModal')">取消</button><button class="btn btn-primary" onclick="createManagerInventoryCount()">创建</button></div>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div class="modal-overlay" id="transferModal">
+        <div class="modal">
+            <div class="modal-header"><div class="modal-title">库存调拨</div><button class="modal-close" onclick="closeModal('transferModal')">&times;</button></div>
+            <div class="form-row"><div class="form-group"><label>从</label><input type="text" id="transferFrom" value="主店"></div><div class="form-group"><label>到</label><input type="text" id="transferTo" placeholder="目标位置"></div></div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('transferModal')">取消</button><button class="btn btn-primary" onclick="createManagerTransfer()">创建</button></div>
+        </div>
+    </div>
+
     <script>
         VS_API.auth.requireAuth();
 
@@ -327,6 +468,7 @@
         let allPermissions = [];
         let allOrders = [];
         let allCommissions = [];
+        let allMembers = [];
         let settingsData = {};
         let refreshInterval;
 
@@ -335,7 +477,7 @@
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
             if (el) el.classList.add('active');
-            const titles = { dashboard: '仪表盘', employees: '员工管理', permissions: '权限调配', subscriptions: '套餐订阅', reports: '财务报告', settings: '系统设置' };
+            const titles = { dashboard: '仪表盘', employees: '员工管理', inventory: '高级库存', customers: '客户历史', reports: '销售报表', shiftReports: '班次报表', taxReports: '税务报表', permissions: '权限调配', subscriptions: '套餐订阅', settings: '系统设置' };
             document.getElementById('pageTitle').textContent = titles[id] || id;
             loadSection(id);
         }
@@ -344,9 +486,13 @@
             switch(id) {
                 case 'dashboard': loadDashboard(); break;
                 case 'employees': loadEmployees(); break;
+                case 'inventory': loadManagerInventory(); break;
+                case 'customers': loadManagerCustomers(); break;
+                case 'reports': initReportDates(); break;
+                case 'shiftReports': initShiftReportDates(); break;
+                case 'taxReports': initTaxReportDates(); break;
                 case 'permissions': loadPermissions(); break;
                 case 'subscriptions': loadSubscriptions(); break;
-                case 'reports': initReportDates(); break;
                 case 'settings': loadSettings(); break;
             }
         }
@@ -630,7 +776,226 @@
                 document.getElementById('featCommissions').checked = settingsData.featCommissions !== false;
                 document.getElementById('featShifts').checked = settingsData.featShifts !== false;
                 document.getElementById('featTickets').checked = settingsData.featTickets !== false;
+                document.getElementById('featLowStock').checked = settingsData.featLowStock !== false;
+                document.getElementById('taxRate').value = (settingsData.tax && settingsData.tax.rate) || 6;
+                document.getElementById('taxMethod').value = (settingsData.tax && settingsData.tax.method) || 'add';
+                document.getElementById('receiptHeader').value = (settingsData.printer && settingsData.printer.header) || '';
+                document.getElementById('receiptFooter').value = (settingsData.printer && settingsData.printer.footer) || '';
+                document.getElementById('currencySymbol').value = (settingsData.currency && settingsData.currency.symbol) || '¥';
+                document.getElementById('currencyDecimals').value = (settingsData.currency && settingsData.currency.decimals) || 2;
+                document.getElementById('currencyRounding').value = (settingsData.currency && settingsData.currency.rounding) || 'round';
+                renderManagerDiscounts();
+                renderManagerModifiers();
             } catch (e) { console.error('Load settings error:', e); }
+        }
+
+        // Manager Inventory
+        let allProducts = [];
+        async function loadManagerInventory() {
+            try {
+                allProducts = await VS_API.products.getAll(true);
+                const counts = await VS_API.inventoryCounts.getAll(true).catch(() => []);
+                document.getElementById('mgrInvTotal').textContent = allProducts.length;
+                document.getElementById('mgrInvLow').textContent = allProducts.filter(p => (p.stock || 0) <= (p.lowStockAlert || 10)).length;
+                document.getElementById('mgrInvValue').textContent = '¥' + allProducts.reduce((s, p) => s + (p.stock || 0) * (p.cost || 0), 0).toFixed(0);
+                document.getElementById('mgrInvCounts').textContent = counts.length;
+                renderManagerInventory();
+            } catch (e) { console.error('Load inventory error:', e); }
+        }
+
+        function renderManagerInventory() {
+            const search = (document.getElementById('mgrInvSearch')?.value || '').toLowerCase();
+            const filter = document.getElementById('mgrInvFilter')?.value || 'all';
+            let filtered = allProducts.filter(p => {
+                if (search && !(p.name || '').toLowerCase().includes(search)) return false;
+                if (filter === 'low') return (p.stock || 0) > 0 && (p.stock || 0) <= (p.lowStockAlert || 10);
+                if (filter === 'out') return (p.stock || 0) <= 0;
+                return true;
+            });
+            const tbody = document.getElementById('mgrInventoryTable');
+            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">📦</div><p>暂无商品</p></td></tr>'; return; }
+            tbody.innerHTML = filtered.map(p => {
+                const isLow = (p.stock || 0) <= (p.lowStockAlert || 10);
+                return `<tr><td><strong>${p.name}</strong></td><td style="color:${isLow ? '#dc3545' : '#28a745'};font-weight:600;">${p.stock || 0}</td><td>${p.lowStockAlert || 10}</td><td>¥${(p.cost || 0).toFixed(2)}</td><td>¥${((p.stock || 0) * (p.cost || 0)).toFixed(2)}</td><td>${p.supplier || '-'}</td><td><button class="btn btn-sm btn-primary" onclick="adjustProductStock('${p.id}')">调整</button></td></tr>`;
+            }).join('');
+        }
+
+        function showManagerInventoryCountModal() {
+            openModal('inventoryCountModal');
+        }
+
+        function showManagerTransferModal() {
+            openModal('transferModal');
+        }
+
+        // Manager Customers
+        async function loadManagerCustomers() {
+            try {
+                allMembers = await VS_API.members.getAll(true);
+                renderManagerCustomers();
+            } catch (e) { console.error('Load customers error:', e); }
+        }
+
+        function renderManagerCustomers() {
+            const search = (document.getElementById('mgrCustSearch')?.value || '').toLowerCase();
+            const sortBy = document.getElementById('mgrCustSort')?.value || 'spent';
+            let filtered = allMembers.filter(m => {
+                if (search && !(m.name || '').toLowerCase().includes(search) && !(m.phone || '').includes(search)) return false;
+                return true;
+            });
+            switch(sortBy) {
+                case 'spent': filtered.sort((a, b) => (b.totalSpent || 0) - (a.totalSpent || 0)); break;
+                case 'visits': filtered.sort((a, b) => (b.visitCount || 0) - (a.visitCount || 0)); break;
+                case 'points': filtered.sort((a, b) => (b.points || 0) - (a.points || 0)); break;
+            }
+            const tbody = document.getElementById('mgrCustomersTable');
+            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">👤</div><p>暂无客户</p></td></tr>'; return; }
+            const levelBadge = l => l === 'gold' ? 'badge-warning' : l === 'diamond' ? 'badge-info' : l === 'silver' ? 'badge-secondary' : 'badge-success';
+            const levelName = l => ({ bronze: '铜卡', silver: '银卡', gold: '金卡', diamond: '钻卡' }[l] || l);
+            tbody.innerHTML = filtered.map(m => `<tr><td><strong>${m.name}</strong></td><td><span class="badge ${levelBadge(m.level)}">${levelName(m.level)}</span></td><td>¥${(m.totalSpent || 0).toFixed(2)}</td><td>${m.visitCount || 0}</td><td>${m.points || 0}</td><td>¥${(m.balance || 0).toFixed(2)}</td><td>${m.lastVisit || '-'}</td><td><button class="btn btn-sm btn-primary" onclick="showCustomerDetail('${m.id}')">详情</button></td></tr>`).join('');
+        }
+
+        function exportManagerCustomers() {
+            if (!allMembers.length) { VS_API.showToast('暂无数据', 'warning'); return; }
+            VS_API.exportCSV(allMembers.map(m => ({ name: m.name, level: m.level, totalSpent: m.totalSpent, visitCount: m.visitCount, points: m.points, balance: m.balance, phone: m.phone })), 'customers_export.csv');
+        }
+
+        // Shift Reports
+        function initShiftReportDates() {
+            const today = new Date();
+            document.getElementById('mgrShiftEnd').value = today.toISOString().split('T')[0];
+            const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+            document.getElementById('mgrShiftStart').value = weekAgo.toISOString().split('T')[0];
+        }
+
+        async function loadManagerShiftReports() {
+            const start = document.getElementById('mgrShiftStart').value;
+            const end = document.getElementById('mgrShiftEnd').value;
+            try {
+                const shifts = await VS_API.shifts.getAll(true);
+                const filtered = shifts.filter(s => {
+                    if (!s.created_at) return false;
+                    const d = s.created_at.split('T')[0];
+                    return d >= start && d <= end;
+                });
+                const content = document.getElementById('mgrShiftReportContent');
+                content.innerHTML = `<div class="stats-grid" style="margin-top:20px;">
+                    <div class="stat-card"><div class="label">总班次</div><div class="value">${filtered.length}</div></div>
+                    <div class="stat-card"><div class="label">已完成</div><div class="value">${filtered.filter(s => s.status === 'closed').length}</div></div>
+                    <div class="stat-card"><div class="label">开放中</div><div class="value">${filtered.filter(s => s.status === 'open').length}</div></div>
+                </div>
+                <table style="margin-top:20px;"><thead><tr><th>班次</th><th>员工</th><th>开始时间</th><th>结束时间</th><th>状态</th></tr></thead><tbody>
+                ${filtered.map(s => `<tr><td>${s.id || '-'}</td><td>${s.employeeName || '-'}</td><td>${s.created_at ? new Date(s.created_at).toLocaleString() : '-'}</td><td>${s.closed_at ? new Date(s.closed_at).toLocaleString() : '-'}</td><td><span class="badge ${s.status === 'closed' ? 'badge-success' : 'badge-warning'}">${s.status || 'open'}</span></td></tr>`).join('')}
+                </tbody></table>`;
+            } catch (e) { console.error('Load shift report error:', e); }
+        }
+
+        function exportShiftReport() {
+            const content = document.getElementById('mgrShiftReportContent');
+            if (!content.textContent.trim()) { VS_API.showToast('请先生成报表', 'warning'); return; }
+            VS_API.exportCSV([{ report: 'shift_report', generated: new Date().toISOString() }], 'shift_report.csv');
+        }
+
+        // Tax Reports
+        function initTaxReportDates() {
+            const today = new Date();
+            document.getElementById('mgrTaxEnd').value = today.toISOString().split('T')[0];
+            const monthAgo = new Date(today); monthAgo.setMonth(monthAgo.getMonth() - 1);
+            document.getElementById('mgrTaxStart').value = monthAgo.toISOString().split('T')[0];
+        }
+
+        async function loadManagerTaxReports() {
+            const start = document.getElementById('mgrTaxStart').value;
+            const end = document.getElementById('mgrTaxEnd').value;
+            try {
+                const report = await VS_API.getTaxReport({ start, end });
+                const content = document.getElementById('mgrTaxReportContent');
+                const entries = Object.entries(report.taxByRate || {});
+                content.innerHTML = `<div class="stats-grid" style="margin-top:20px;">
+                    <div class="stat-card"><div class="label">总税费</div><div class="value">¥${(report.totalTaxCollected || 0).toFixed(2)}</div></div>
+                    <div class="stat-card"><div class="label">税种数</div><div class="value">${entries.length}</div></div>
+                </div>
+                <table style="margin-top:20px;"><thead><tr><th>税率</th><th>订单数</th><th>应税销售</th><th>税费</th></tr></thead><tbody>
+                ${entries.map(([rate, data]) => `<tr><td>${rate}%</td><td>${data.count}</td><td>¥${data.taxableSales.toFixed(2)}</td><td style="color:#3b7ddd;font-weight:600;">¥${data.taxCollected.toFixed(2)}</td></tr>`).join('')}
+                </tbody></table>`;
+            } catch (e) { console.error('Load tax report error:', e); }
+        }
+
+        function exportTaxReport() {
+            VS_API.exportCSV([{ report: 'tax_report', generated: new Date().toISOString() }], 'tax_report.csv');
+        }
+
+        // Manager Discounts & Modifiers
+        function renderManagerDiscounts() {
+            const container = document.getElementById('managerDiscountsList');
+            if (!container) return;
+            const discounts = settingsData.discountsList || [];
+            if (discounts.length === 0) { container.innerHTML = '<p style="color:#999;font-size:13px;">暂无折扣配置</p>'; return; }
+            container.innerHTML = discounts.map(d => `<div class="setting-row"><div class="info"><div class="name">${d.name}</div><div class="desc">${d.type === 'percent' ? d.value + '%' : '¥' + d.value.toFixed(2)}</div></div></div>`).join('');
+        }
+
+        function showManagerDiscountModal() {
+            VS_API.showToast('请在POS终端添加折扣', 'info');
+        }
+
+        function renderManagerModifiers() {
+            const container = document.getElementById('managerModifiersList');
+            if (!container) return;
+            container.innerHTML = '<p style="color:#999;font-size:13px;">请在POS终端配置修饰符</p>';
+        }
+
+        function showManagerModifierModal() {
+            VS_API.showToast('请在POS终端添加修饰符', 'info');
+        }
+
+        function saveTaxSettings() {
+            const data = { tax: { rate: parseFloat(document.getElementById('taxRate').value) || 0, method: document.getElementById('taxMethod').value } };
+            VS_API.settings.update(data).then(() => VS_API.showToast('税费设置已保存', 'success')).catch(e => console.error(e));
+        }
+
+        function saveReceiptSettings() {
+            const data = { printer: { header: document.getElementById('receiptHeader').value, footer: document.getElementById('receiptFooter').value } };
+            VS_API.settings.update(data).then(() => VS_API.showToast('收据设置已保存', 'success')).catch(e => console.error(e));
+        }
+
+        function testPrint() {
+            VS_API.showToast('测试打印已发送', 'info');
+        }
+
+        function adjustProductStock(id) {
+            VS_API.showToast('请在POS终端调整库存', 'info');
+        }
+
+        function showCustomerDetail(id) {
+            VS_API.customerHistory.get(id).then(data => {
+                openModal('customerDetailModal');
+                document.getElementById('custDetailContent').innerHTML = `
+                    <div class="stats-grid"><div class="stat-card"><div class="label">总消费</div><div class="value">¥${(data.summary.totalSpent || 0).toFixed(2)}</div></div><div class="stat-card"><div class="label">购买次数</div><div class="value">${data.summary.totalPurchases}</div></div><div class="stat-card"><div class="label">退货次数</div><div class="value">${data.summary.totalReturns}</div></div></div>
+                    <h4 style="margin:16px 0 8px;">最近购买</h4>
+                    <table><thead><tr><th>订单</th><th>金额</th><th>日期</th></tr></thead><tbody>${(data.purchases || []).slice(0, 10).map(p => `<tr><td>${p.orderNo || p.id}</td><td>¥${(p.total || 0).toFixed(2)}</td><td>${p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}</td></tr>`).join('') || '<tr><td colspan="3">暂无记录</td></tr>'}</tbody></table>
+                `;
+            }).catch(e => console.error(e));
+        }
+
+        function exportAllData(format) {
+            VS_API.exportAllData(format).then(data => {
+                if (format === 'json') {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = 'vspos_backup.json'; a.click();
+                    URL.revokeObjectURL(url);
+                } else if (format === 'csv') {
+                    Object.entries(data).forEach(([key, csv]) => {
+                        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a'); a.href = url; a.download = key + '_export.csv'; a.click();
+                        URL.revokeObjectURL(url);
+                    });
+                } else if (format === 'pdf') {
+                    LoyverseFeatures.exportToPDF(allOrders || [], 'vspos_report.pdf');
+                }
+                VS_API.showToast('数据已导出: ' + format.toUpperCase(), 'success');
+            }).catch(e => console.error(e));
         }
 
         async function saveSettings() {

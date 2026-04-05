@@ -51,6 +51,13 @@
         .compare-item .amount { font-size: 14px; font-weight: 700; color: #1a1a2e; }
         .date-range { display: flex; gap: 8px; margin-bottom: 12px; }
         .date-range input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
+        .fin-tab { display: none; }
+        .fin-tab.active { display: block; }
+        .margin-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .margin-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .margin-row:last-child { border-bottom: none; }
+        .margin-positive { color: #28a745; font-weight: 600; }
+        .margin-negative { color: #dc3545; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -66,7 +73,18 @@
         <div class="period-tab" onclick="loadPeriod('all')">全部</div>
     </div>
 
+    <div class="tabs" style="background:#fff;border-bottom:1px solid #eee;margin-top:0;">
+        <div class="tab active" onclick="showFinTab('overview')">📊 总览</div>
+        <div class="tab" onclick="showFinTab('byItem')">📦 按商品</div>
+        <div class="tab" onclick="showFinTab('byCategory')">📂 按分类</div>
+        <div class="tab" onclick="showFinTab('byEmployee')">👤 按员工</div>
+        <div class="tab" onclick="showFinTab('tax')">🧾 税务</div>
+        <div class="tab" onclick="showFinTab('margin')">📈 利润分析</div>
+    </div>
+
     <div class="content">
+        <!-- Overview Tab -->
+        <div id="finTab-overview" class="fin-tab active">
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="label">总营收</div>
@@ -111,6 +129,42 @@
             <h3>📋 佣金明细</h3>
             <div id="commissionSummary"></div>
         </div>
+        </div>
+
+        <!-- By Item Tab -->
+        <div id="finTab-byItem" class="fin-tab">
+            <div class="chart-card"><h3>📦 营收按商品</h3><div id="revenueByItem"></div></div>
+        </div>
+
+        <!-- By Category Tab -->
+        <div id="finTab-byCategory" class="fin-tab">
+            <div class="chart-card"><h3>📂 营收按分类</h3><div id="revenueByCategory"></div></div>
+        </div>
+
+        <!-- By Employee Tab -->
+        <div id="finTab-byEmployee" class="fin-tab">
+            <div class="chart-card"><h3>👤 营收按员工</h3><div id="revenueByEmployee"></div></div>
+        </div>
+
+        <!-- Tax Tab -->
+        <div id="finTab-tax" class="fin-tab">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="label">总税费</div><div class="value" id="taxTotal">¥0</div></div>
+                <div class="stat-card"><div class="label">应税销售</div><div class="value" id="taxableSales">¥0</div></div>
+            </div>
+            <div class="chart-card"><h3>🧾 税费明细</h3><div id="taxDetails"></div></div>
+        </div>
+
+        <!-- Profit Margin Tab -->
+        <div id="finTab-margin" class="fin-tab">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="label">总营收</div><div class="value" id="marginRevenue">¥0</div></div>
+                <div class="stat-card"><div class="label">总成本</div><div class="value negative" id="marginCost">¥0</div></div>
+                <div class="stat-card"><div class="label">毛利润</div><div class="value positive" id="marginGross">¥0</div></div>
+                <div class="stat-card"><div class="label">毛利率</div><div class="value" id="marginPct">0%</div></div>
+            </div>
+            <div class="chart-card"><h3>📈 利润明细</h3><div id="marginDetails"></div></div>
+        </div>
 
         <button class="btn btn-primary" onclick="downloadReport()">📥 下载财务报告</button>
         <button class="btn btn-success" onclick="exportCSV()">📤 导出 CSV 数据</button>
@@ -122,6 +176,111 @@
         let currentPeriod = 'today';
         let allOrders = [];
         let allCommissions = [];
+        let allProducts = [];
+        let currentFinTab = 'overview';
+
+        function showFinTab(tab) {
+            currentFinTab = tab;
+            document.querySelectorAll('.fin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('finTab-' + tab).classList.add('active');
+            event.target.classList.add('active');
+            loadFinTab(tab);
+        }
+
+        function loadFinTab(tab) {
+            const { start, end } = getDateRange(currentPeriod);
+            const filtered = allOrders.filter(o => {
+                if (!o.created_at) return false;
+                const d = o.created_at.split('T')[0];
+                return d >= start && d <= end;
+            });
+            switch(tab) {
+                case 'byItem': renderRevenueByItem(filtered); break;
+                case 'byCategory': renderRevenueByCategory(filtered); break;
+                case 'byEmployee': renderRevenueByEmployee(filtered); break;
+                case 'tax': renderTaxReport(filtered); break;
+                case 'margin': renderProfitMargin(filtered); break;
+            }
+        }
+
+        function renderRevenueByItem(orders) {
+            const byItem = {};
+            orders.forEach(o => (o.items || []).forEach(i => {
+                if (!byItem[i.name]) byItem[i.name] = { qty: 0, revenue: 0 };
+                byItem[i.name].qty += i.qty; byItem[i.name].revenue += i.price * i.qty;
+            }));
+            const container = document.getElementById('revenueByItem');
+            const sorted = Object.entries(byItem).sort((a, b) => b[1].revenue - a[1].revenue);
+            container.innerHTML = sorted.map(([name, data]) => `<div class="margin-row"><span style="font-weight:500;">${name}</span><span>${data.qty} 件</span><span style="color:#3b7ddd;font-weight:600;">¥${data.revenue.toFixed(2)}</span></div>`).join('') || '<p style="color:#999;">暂无数据</p>';
+        }
+
+        function renderRevenueByCategory(orders) {
+            const byCat = {};
+            orders.forEach(o => {
+                const cat = o.category || '未分类';
+                if (!byCat[cat]) byCat[cat] = { count: 0, revenue: 0 };
+                byCat[cat].count++; byCat[cat].revenue += o.total || 0;
+            });
+            const container = document.getElementById('revenueByCategory');
+            const sorted = Object.entries(byCat).sort((a, b) => b[1].revenue - a[1].revenue);
+            container.innerHTML = sorted.map(([name, data]) => `<div class="margin-row"><span style="font-weight:500;">${name}</span><span>${data.count} 单</span><span style="color:#3b7ddd;font-weight:600;">¥${data.revenue.toFixed(2)}</span></div>`).join('') || '<p style="color:#999;">暂无数据</p>';
+        }
+
+        function renderRevenueByEmployee(orders) {
+            const byEmp = {};
+            orders.forEach(o => {
+                const emp = o.employeeName || '未分配';
+                if (!byEmp[emp]) byEmp[emp] = { orders: 0, revenue: 0 };
+                byEmp[emp].orders++; byEmp[emp].revenue += o.total || 0;
+            });
+            const container = document.getElementById('revenueByEmployee');
+            const sorted = Object.entries(byEmp).sort((a, b) => b[1].revenue - a[1].revenue);
+            container.innerHTML = sorted.map(([name, data]) => `<div class="margin-row"><span style="font-weight:500;">${name}</span><span>${data.orders} 单</span><span style="color:#3b7ddd;font-weight:600;">¥${data.revenue.toFixed(2)}</span><span>均 ¥${(data.revenue / data.orders).toFixed(2)}</span></div>`).join('') || '<p style="color:#999;">暂无数据</p>';
+        }
+
+        function renderTaxReport(orders) {
+            const totalTax = orders.reduce((s, o) => s + (o.tax || 0), 0);
+            const taxableSales = orders.reduce((s, o) => s + (o.subtotal || 0), 0);
+            document.getElementById('taxTotal').textContent = '¥' + totalTax.toFixed(2);
+            document.getElementById('taxableSales').textContent = '¥' + taxableSales.toFixed(2);
+            const taxByRate = {};
+            orders.forEach(o => {
+                const rate = o.taxRate || 6;
+                if (!taxByRate[rate]) taxByRate[rate] = { count: 0, taxable: 0, tax: 0 };
+                taxByRate[rate].count++; taxByRate[rate].taxable += o.subtotal || 0; taxByRate[rate].tax += o.tax || 0;
+            });
+            const container = document.getElementById('taxDetails');
+            container.innerHTML = Object.entries(taxByRate).map(([rate, data]) => `<div class="margin-row"><span>${rate}% 税率</span><span>${data.count} 单</span><span>¥${data.taxable.toFixed(2)}</span><span style="color:#3b7ddd;font-weight:600;">¥${data.tax.toFixed(2)}</span></div>`).join('') || '<p style="color:#999;">暂无税费数据</p>';
+        }
+
+        function renderProfitMargin(orders) {
+            const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+            let totalCost = 0;
+            orders.forEach(o => (o.items || []).forEach(i => {
+                const prod = allProducts.find(p => p.name === i.name);
+                totalCost += (prod?.cost || i.price * 0.3) * i.qty;
+            }));
+            const grossProfit = totalRevenue - totalCost;
+            const marginPct = totalRevenue > 0 ? Math.round((grossProfit / totalRevenue) * 100) : 0;
+            document.getElementById('marginRevenue').textContent = '¥' + totalRevenue.toFixed(2);
+            document.getElementById('marginCost').textContent = '¥' + totalCost.toFixed(2);
+            document.getElementById('marginGross').textContent = '¥' + grossProfit.toFixed(2);
+            document.getElementById('marginPct').textContent = marginPct + '%';
+            const byItem = {};
+            orders.forEach(o => (o.items || []).forEach(i => {
+                if (!byItem[i.name]) byItem[i.name] = { revenue: 0, cost: 0 };
+                const prod = allProducts.find(p => p.name === i.name);
+                const cost = (prod?.cost || i.price * 0.3) * i.qty;
+                byItem[i.name].revenue += i.price * i.qty; byItem[i.name].cost += cost;
+            }));
+            const container = document.getElementById('marginDetails');
+            container.innerHTML = Object.entries(byItem).sort((a, b) => (b[1].revenue - b[1].cost) - (a[1].revenue - a[1].cost)).map(([name, data]) => {
+                const profit = data.revenue - data.cost;
+                const pct = data.revenue > 0 ? Math.round((profit / data.revenue) * 100) : 0;
+                return `<div class="margin-row"><span style="font-weight:500;">${name}</span><span>收入 ¥${data.revenue.toFixed(2)}</span><span>成本 ¥${data.cost.toFixed(2)}</span><span class="${profit >= 0 ? 'margin-positive' : 'margin-negative'}">利润 ¥${profit.toFixed(2)} (${pct}%)</span></div>`;
+            }).join('') || '<p style="color:#999;">暂无数据</p>';
+        }
 
         function loadPeriod(period) {
             currentPeriod = period;
@@ -144,6 +303,7 @@
             try {
                 allOrders = await VS_API.orders.getAll(true);
                 allCommissions = await VS_API.commissions.getAll(true);
+                allProducts = await VS_API.products.getAll(true).catch(() => []);
                 const { start, end } = getDateRange(currentPeriod);
                 const filtered = allOrders.filter(o => {
                     if (!o.created_at) return false;
@@ -171,6 +331,7 @@
                 renderRevenueChart();
                 renderCommissionSummary(filteredCommissions);
                 renderCompareGrid();
+                loadFinTab(currentFinTab);
             } catch (e) { console.error('Load finance data error:', e); }
         }
 

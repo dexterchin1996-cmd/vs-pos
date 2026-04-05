@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="api.js"></script>
     <script src="vs-api.js"></script>
+    <script src="loyverse-features.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -828,6 +829,10 @@
                         <span class="icon">📦</span>
                         <span>商品管理</span>
                     </div>
+                    <div class="nav-item" data-panel="inventory">
+                        <span class="icon">🏭</span>
+                        <span>高级库存</span>
+                    </div>
                     <div class="nav-item" data-panel="suppliers">
                         <span class="icon">🚚</span>
                         <span>供应商管理</span>
@@ -835,6 +840,10 @@
                     <div class="nav-item" data-panel="members">
                         <span class="icon">👥</span>
                         <span>会员管理</span>
+                    </div>
+                    <div class="nav-item" data-panel="customerHistory">
+                        <span class="icon">📜</span>
+                        <span>客户历史</span>
                     </div>
                     <div class="nav-item" data-panel="employees">
                         <span class="icon">👤</span>
@@ -851,6 +860,10 @@
                     <div class="nav-item" data-panel="reports">
                         <span class="icon">📊</span>
                         <span>营业报表</span>
+                    </div>
+                    <div class="nav-item" data-panel="advancedReports">
+                        <span class="icon">📈</span>
+                        <span>高级报表</span>
                     </div>
                     <div class="nav-item" data-panel="finance">
                         <span class="icon">💹</span>
@@ -1579,6 +1592,97 @@
                         </div>
                         <div id="shiftsTable"></div>
                     </div>
+                </div>
+
+                <!-- 高级库存管理 -->
+                <div id="inventory-panel" class="panel">
+                    <div class="page-header">
+                        <h2 class="page-title">高级库存管理</h2>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" onclick="showInventoryCountModal()">📋 新建盘点</button>
+                            <button class="btn btn-outline" onclick="showTransferModal()">🔄 库存调拨</button>
+                            <button class="btn btn-outline" onclick="showPurchaseOrderModal()">📦 采购订单</button>
+                            <button class="btn btn-outline" onclick="showStockAdjustmentModal()">⚙️ 库存调整</button>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="icon">📦</div><div class="value" id="invTotalProducts">0</div><div class="label">商品总数</div></div>
+                        <div class="stat-card warning"><div class="icon">⚠️</div><div class="value" id="invLowStock">0</div><div class="label">低库存预警</div></div>
+                        <div class="stat-card success"><div class="icon">💰</div><div class="value" id="invStockValue">¥0</div><div class="label">库存总值</div></div>
+                        <div class="stat-card"><div class="icon">📋</div><div class="value" id="invPendingPOs">0</div><div class="label">待处理采购单</div></div>
+                    </div>
+                    <div class="settings-tabs">
+                        <div class="settings-tab active" onclick="showInvTab('stockLevels', this)">📊 库存水平</div>
+                        <div class="settings-tab" onclick="showInvTab('counts', this)">📋 盘点记录</div>
+                        <div class="settings-tab" onclick="showInvTab('transfers', this)">🔄 调拨记录</div>
+                        <div class="settings-tab" onclick="showInvTab('purchaseOrders', this)">📦 采购订单</div>
+                        <div class="settings-tab" onclick="showInvTab('adjustments', this)">⚙️ 调整记录</div>
+                        <div class="settings-tab" onclick="showInvTab('alerts', this)">🔔 低库存预警</div>
+                    </div>
+                    <div id="invTab-stockLevels" class="inv-tab-content">
+                        <div class="filter-bar">
+                            <input type="text" id="invStockSearch" placeholder="搜索商品..." class="search-input" oninput="renderStockLevels()">
+                            <select id="invStockFilter" onchange="renderStockLevels()"><option value="all">全部</option><option value="low">低库存</option><option value="out">售罄</option><option value="normal">正常</option></select>
+                        </div>
+                        <div class="data-table"><div class="table-header" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr auto;"><span>商品</span><span>当前库存</span><span>预警值</span><span>成本</span><span>库存值</span><span>供应商</span><span>操作</span></div><div id="stockLevelsTable"></div></div>
+                    </div>
+                    <div id="invTab-counts" class="inv-tab-content" style="display:none;">
+                        <div id="inventoryCountsList"></div>
+                    </div>
+                    <div id="invTab-transfers" class="inv-tab-content" style="display:none;">
+                        <div id="inventoryTransfersList"></div>
+                    </div>
+                    <div id="invTab-purchaseOrders" class="inv-tab-content" style="display:none;">
+                        <div id="purchaseOrdersList"></div>
+                    </div>
+                    <div id="invTab-adjustments" class="inv-tab-content" style="display:none;">
+                        <div id="stockAdjustmentsList"></div>
+                    </div>
+                    <div id="invTab-alerts" class="inv-tab-content" style="display:none;">
+                        <div id="lowStockAlertsList"></div>
+                    </div>
+                </div>
+
+                <!-- 客户历史 -->
+                <div id="customerHistory-panel" class="panel">
+                    <div class="page-header">
+                        <h2 class="page-title">客户历史</h2>
+                        <div class="page-actions">
+                            <button class="btn btn-outline" onclick="exportCustomerHistory()">📥 导出</button>
+                        </div>
+                    </div>
+                    <div class="filter-bar">
+                        <input type="text" id="custHistorySearch" placeholder="搜索会员..." class="search-input" oninput="renderCustomerHistory()">
+                        <select id="custHistorySort" onchange="renderCustomerHistory()"><option value="spent">按消费排序</option><option value="visits">按访问次数</option><option value="points">按积分</option><option value="name">按姓名</option></select>
+                    </div>
+                    <div class="data-table"><div class="table-header" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr 1fr auto;"><span>姓名</span><span>等级</span><span>总消费</span><span>访问次数</span><span>积分</span><span>余额</span><span>最后访问</span><span>操作</span></div><div id="customerHistoryTable"></div></div>
+                </div>
+
+                <!-- 高级报表 -->
+                <div id="advancedReports-panel" class="panel">
+                    <div class="page-header">
+                        <h2 class="page-title">高级报表</h2>
+                        <div class="page-actions">
+                            <button class="btn btn-outline" onclick="exportAdvancedReport()">📥 导出报表</button>
+                        </div>
+                    </div>
+                    <div class="settings-tabs">
+                        <div class="settings-tab active" onclick="showAdvReportTab('salesByItem', this)">📦 按商品</div>
+                        <div class="settings-tab" onclick="showAdvReportTab('salesByCategory', this)">📂 按分类</div>
+                        <div class="settings-tab" onclick="showAdvReportTab('salesByEmployee', this)">👤 按员工</div>
+                        <div class="settings-tab" onclick="showAdvReportTab('salesByPayment', this)">💳 按支付方式</div>
+                        <div class="settings-tab" onclick="showAdvReportTab('shiftReports', this)">⏰ 班次报表</div>
+                        <div class="settings-tab" onclick="showAdvReportTab('taxReports', this)">🧾 税务报表</div>
+                        <div class="settings-tab" onclick="showAdvReportTab('customerReports', this)">👥 客户报表</div>
+                        <div class="settings-tab" onclick="showAdvReportTab('inventoryReports', this)">📦 库存报表</div>
+                    </div>
+                    <div class="filter-bar">
+                        <input type="date" id="advReportStart">
+                        <input type="date" id="advReportEnd">
+                        <select id="advReportPeriod" onchange="setAdvReportDates()"><option value="custom">自定义</option><option value="today">今天</option><option value="week">本周</option><option value="month">本月</option><option value="year">今年</option></select>
+                        <button class="btn btn-primary" onclick="loadAdvancedReport()">生成报表</button>
+                    </div>
+                    <div id="advReportContent"></div>
                 </div>
 
                 <!-- 系统设置 -->
@@ -2706,6 +2810,20 @@
                 transferOrders: 'vsevice_transfer_orders',
                 disassembles: 'vsevice_disassembles',
                 inventoryCounts: 'vsevice_inventory_counts',
+                inventoryTransfers: 'vsevice_inventory_transfers',
+                purchaseOrders: 'vsevice_purchase_orders',
+                stockAdjustments: 'vsevice_stock_adjustments',
+                customerGroups: 'vsevice_customer_groups',
+                loyaltyTransactions: 'vsevice_loyalty_transactions',
+                taxRates: 'vsevice_tax_rates',
+                modifierGroups: 'vsevice_modifier_groups',
+                modifierOptions: 'vsevice_modifier_options',
+                receiptTemplates: 'vsevice_receipt_templates',
+                printerSettings: 'vsevice_printer_settings',
+                barcodes: 'vsevice_barcodes',
+                itemVariants: 'vsevice_item_variants',
+                refunds: 'vsevice_refunds',
+                returnsData: 'vsevice_returns',
                 webhooks: 'vsevice_webhooks',
                 taxes: 'vsevice_taxes',
                 discounts: 'vsevice_discounts',
@@ -2734,6 +2852,19 @@
         let suppliers = [];
         let customerDisplays = [];
         let printerGroups = [];
+        let inventoryCounts = JSON.parse(localStorage.getItem(CONFIG.storage.inventoryCounts) || '[]');
+        let inventoryTransfers = JSON.parse(localStorage.getItem(CONFIG.storage.inventoryTransfers) || '[]');
+        let purchaseOrders = JSON.parse(localStorage.getItem(CONFIG.storage.purchaseOrders) || '[]');
+        let stockAdjustments = JSON.parse(localStorage.getItem(CONFIG.storage.stockAdjustments) || '[]');
+        let customerGroups = JSON.parse(localStorage.getItem(CONFIG.storage.customerGroups) || '[]');
+        let loyaltyTransactions = JSON.parse(localStorage.getItem(CONFIG.storage.loyaltyTransactions) || '[]');
+        let taxRates = JSON.parse(localStorage.getItem(CONFIG.storage.taxRates) || '[]');
+        let modifierGroups = JSON.parse(localStorage.getItem(CONFIG.storage.modifierGroups) || '[]');
+        let modifierOptions = JSON.parse(localStorage.getItem(CONFIG.storage.modifierOptions) || '[]');
+        let receiptTemplates = JSON.parse(localStorage.getItem(CONFIG.storage.receiptTemplates) || '[]');
+        let refunds = JSON.parse(localStorage.getItem(CONFIG.storage.refunds) || '[]');
+        let returnsData = JSON.parse(localStorage.getItem(CONFIG.storage.returnsData) || '[]');
+        let itemVariants = JSON.parse(localStorage.getItem(CONFIG.storage.itemVariants) || '[]');
         let diningOptions = [
             { id: 'dine_in', name: '堂食', icon: '🍽️', active: true, sort: 1 },
             { id: 'takeout', name: '外带', icon: '🥡', active: true, sort: 2 },
@@ -11311,8 +11442,825 @@ SPA-001,6901234560002,精油推背,spa,398,120,90,999,10,60,芳疗馆
             });
         })();
 
-        // 启动
-        init();
+        // Loyverse Advanced Features
+        function showInvTab(tab, el) {
+            document.querySelectorAll('.inv-tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('#inventory-panel .settings-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('invTab-' + tab).style.display = 'block';
+            if (el) el.classList.add('active');
+            switch(tab) {
+                case 'stockLevels': renderStockLevels(); break;
+                case 'counts': renderInventoryCounts(); break;
+                case 'transfers': renderInventoryTransfers(); break;
+                case 'purchaseOrders': renderPurchaseOrders(); break;
+                case 'adjustments': renderStockAdjustments(); break;
+                case 'alerts': renderLowStockAlerts(); break;
+            }
+        }
+
+        function renderStockLevels() {
+            const search = document.getElementById('invStockSearch')?.value?.toLowerCase() || '';
+            const filter = document.getElementById('invStockFilter')?.value || 'all';
+            let filtered = services.filter(s => s.active);
+            if (search) filtered = filtered.filter(s => s.name.toLowerCase().includes(search) || (s.sku || '').toLowerCase().includes(search) || (s.barcode || '').includes(search));
+            if (filter === 'low') filtered = filtered.filter(s => (s.stock || 0) > 0 && (s.stock || 0) <= (s.lowStockAlert || 10));
+            else if (filter === 'out') filtered = filtered.filter(s => (s.stock || 0) <= 0);
+            else if (filter === 'normal') filtered = filtered.filter(s => (s.stock || 0) > (s.lowStockAlert || 10));
+            const table = document.getElementById('stockLevelsTable');
+            if (filtered.length === 0) { table.innerHTML = '<div class="empty-state"><div class="icon">📦</div><p>暂无商品</p></div>'; return; }
+            table.innerHTML = filtered.map(s => {
+                const stockVal = (s.stock || 0) * (s.cost || 0);
+                const isLow = (s.stock || 0) <= (s.lowStockAlert || 10);
+                return `<div class="table-row" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr auto;">
+                    <span style="font-weight:600;">${s.name}<br><span style="font-size:11px;color:var(--gray-500);">SKU: ${s.sku || '-'}</span></span>
+                    <span class="${isLow ? 'stock-negative' : 'stock-positive'}">${s.stock || 0}</span>
+                    <span>${s.lowStockAlert || 10}</span>
+                    <span>¥${(s.cost || 0).toFixed(2)}</span>
+                    <span>¥${stockVal.toFixed(2)}</span>
+                    <span style="font-size:12px;">${s.supplier || '-'}</span>
+                    <span><button class="btn btn-sm btn-outline" onclick="showStockAdjustItem('${s.id}')">调整</button></span>
+                </div>`;
+            }).join('');
+            document.getElementById('invTotalProducts').textContent = services.length;
+            document.getElementById('invLowStock').textContent = services.filter(s => (s.stock || 0) <= (s.lowStockAlert || 10)).length;
+            document.getElementById('invStockValue').textContent = '¥' + services.reduce((sum, s) => sum + (s.stock || 0) * (s.cost || 0), 0).toFixed(0);
+            document.getElementById('invPendingPOs').textContent = purchaseOrders.filter(po => po.status === 'draft' || po.status === 'ordered').length;
+        }
+
+        function showInventoryCountModal() {
+            showModal('新建盘点', `
+                <div class="form-group"><label class="form-label">盘点名称</label><input type="text" class="form-input" id="icName" placeholder="例如: 2024年12月盘点"></div>
+                <div class="form-group"><label class="form-label">盘点位置</label><input type="text" class="form-input" id="icLocation" value="主店"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeModal()">取消</button>
+                    <button class="btn btn-primary" onclick="createInventoryCount()">创建</button>
+                </div>
+            `);
+        }
+
+        function createInventoryCount() {
+            const name = document.getElementById('icName').value.trim();
+            const location = document.getElementById('icLocation').value.trim();
+            if (!name) { showToast('error', '错误', '请输入盘点名称'); return; }
+            const count = LoyverseFeatures.createInventoryCount(services, name, location);
+            inventoryCounts.unshift(count);
+            localStorage.setItem(CONFIG.storage.inventoryCounts, JSON.stringify(inventoryCounts));
+            closeModal(); renderInventoryCounts();
+            showToast('success', '已创建', '盘点已创建');
+        }
+
+        function renderInventoryCounts() {
+            const container = document.getElementById('inventoryCountsList');
+            if (inventoryCounts.length === 0) { container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>暂无盘点记录</p></div>'; return; }
+            container.innerHTML = inventoryCounts.map(ic => {
+                const statusBadge = ic.status === 'completed' ? 'completed' : ic.status === 'in_progress' ? 'pending' : 'cancelled';
+                const statusLabel = ic.status === 'completed' ? '已完成' : ic.status === 'in_progress' ? '进行中' : '草稿';
+                return `<div class="order-card" onclick="openInventoryCount('${ic.id}')">
+                    <div class="order-header"><span class="order-id">${ic.name}</span><span class="status-badge ${statusBadge}">${statusLabel}</span></div>
+                    <div class="order-info"><div>位置: ${ic.location}</div><div>商品数: ${ic.items.length}</div><div>创建: ${new Date(ic.createdAt).toLocaleString()}</div></div>
+                </div>`;
+            }).join('');
+        }
+
+        function openInventoryCount(id) {
+            const ic = inventoryCounts.find(x => x.id === id);
+            if (!ic) return;
+            let html = `<div class="form-group"><label class="form-label">盘点: ${ic.name}</label></div>`;
+            html += ic.items.map((item, idx) => `
+                <div class="count-item">
+                    <span style="font-weight:500;">${item.name}</span>
+                    <span class="count-expected">预期: ${item.expectedQty}</span>
+                    <span><input type="number" class="form-input form-input-sm" style="width:80px;" value="${item.countedQty !== null ? item.countedQty : ''}" placeholder="数量" onchange="updateCountItem('${id}', ${idx}, this.value)"></span>
+                    <span class="count-diff ${item.countedQty !== null ? (item.countedQty - item.expectedQty >= 0 ? 'positive' : 'negative') : ''}">${item.countedQty !== null ? (item.countedQty - item.expectedQty >= 0 ? '+' : '') + (item.countedQty - item.expectedQty) : '-'}</span>
+                </div>
+            `).join('');
+            html += `<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">关闭</button><button class="btn btn-primary" onclick="completeInventoryCount('${id}')">完成盘点</button></div>`;
+            showModal('盘点详情', html);
+        }
+
+        function updateCountItem(icId, idx, value) {
+            const ic = inventoryCounts.find(x => x.id === icId);
+            if (ic && ic.items[idx]) {
+                ic.items[idx].countedQty = parseInt(value) || 0;
+                ic.items[idx].variance = ic.items[idx].countedQty - ic.items[idx].expectedQty;
+                localStorage.setItem(CONFIG.storage.inventoryCounts, JSON.stringify(inventoryCounts));
+            }
+        }
+
+        function completeInventoryCount(id) {
+            const ic = inventoryCounts.find(x => x.id === id);
+            if (!ic) return;
+            ic.status = 'completed'; ic.completedAt = new Date().toISOString();
+            ic.items.forEach(item => {
+                if (item.countedQty !== null) {
+                    const prod = services.find(s => s.id === item.productId);
+                    if (prod) { prod.stock = item.countedQty; }
+                }
+            });
+            saveData('services', services);
+            localStorage.setItem(CONFIG.storage.inventoryCounts, JSON.stringify(inventoryCounts));
+            closeModal(); renderInventoryCounts();
+            showToast('success', '已完成', '盘点已完成，库存已更新');
+        }
+
+        function showTransferModal() {
+            showModal('库存调拨', `
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">从</label><input type="text" class="form-input" id="transferFrom" value="主店"></div>
+                    <div class="form-group"><label class="form-label">到</label><input type="text" class="form-input" id="transferTo" placeholder="目标位置"></div>
+                </div>
+                <div class="form-group"><label class="form-label">备注</label><textarea class="form-input" id="transferNotes" rows="2"></textarea></div>
+                <p style="font-size:12px;color:var(--gray-500);margin-bottom:12px;">选择要调拨的商品:</p>
+                <div style="max-height:300px;overflow-y:auto;">
+                    ${services.filter(s => (s.stock || 0) > 0).map(s => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+                            <span>${s.name} (库存: ${s.stock})</span>
+                            <input type="number" class="form-input form-input-sm" style="width:80px;" id="transferQty_${s.id}" placeholder="数量" min="0" max="${s.stock}">
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="createTransfer()">创建调拨</button></div>
+            `);
+        }
+
+        function createTransfer() {
+            const from = document.getElementById('transferFrom').value.trim();
+            const to = document.getElementById('transferTo').value.trim();
+            if (!to) { showToast('error', '错误', '请输入目标位置'); return; }
+            const items = [];
+            services.forEach(s => {
+                const qtyInput = document.getElementById('transferQty_' + s.id);
+                if (qtyInput && parseInt(qtyInput.value) > 0) {
+                    items.push({ productId: s.id, name: s.name, qty: parseInt(qtyInput.value) });
+                }
+            });
+            if (items.length === 0) { showToast('error', '错误', '请选择要调拨的商品'); return; }
+            const transfer = LoyverseFeatures.createInventoryTransfer(items, from, to, document.getElementById('transferNotes').value);
+            inventoryTransfers.unshift(transfer);
+            localStorage.setItem(CONFIG.storage.inventoryTransfers, JSON.stringify(inventoryTransfers));
+            items.forEach(item => {
+                const prod = services.find(s => s.id === item.productId);
+                if (prod) prod.stock = (prod.stock || 0) - item.qty;
+            });
+            saveData('services', services);
+            closeModal(); renderInventoryTransfers();
+            showToast('success', '已创建', '调拨已创建');
+        }
+
+        function renderInventoryTransfers() {
+            const container = document.getElementById('inventoryTransfersList');
+            if (inventoryTransfers.length === 0) { container.innerHTML = '<div class="empty-state"><div class="icon">🔄</div><p>暂无调拨记录</p></div>'; return; }
+            container.innerHTML = inventoryTransfers.map(t => {
+                const statusLabel = t.status === 'completed' ? '已完成' : t.status === 'in_progress' ? '运输中' : '草稿';
+                return `<div class="transfer-card"><div class="order-header"><span class="order-id">${t.id}</span><span class="transfer-status ${t.status === 'completed' ? 'transferred' : t.status === 'in_progress' ? 'transit' : 'draft'}">${statusLabel}</span></div>
+                    <div class="order-info"><div>从: ${t.fromLocation} → 到: ${t.toLocation}</div><div>商品: ${t.items.length} 项</div><div>创建: ${new Date(t.createdAt).toLocaleString()}</div></div></div>`;
+            }).join('');
+        }
+
+        function showPurchaseOrderModal() {
+            showModal('创建采购订单', `
+                <div class="form-group"><label class="form-label">供应商</label><select class="form-select" id="poSupplier">${suppliers.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}</select></div>
+                <div class="form-group"><label class="form-label">备注</label><textarea class="form-input" id="poNotes" rows="2"></textarea></div>
+                <p style="font-size:12px;color:var(--gray-500);margin-bottom:12px;">选择要采购的商品:</p>
+                <div style="max-height:300px;overflow-y:auto;">
+                    ${services.map(s => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+                            <span>${s.name} (成本: ¥${(s.cost || 0).toFixed(2)})</span>
+                            <div style="display:flex;gap:8px;">
+                                <input type="number" class="form-input form-input-sm" style="width:80px;" id="poQty_${s.id}" placeholder="数量" min="0">
+                                <input type="number" class="form-input form-input-sm" style="width:80px;" id="poCost_${s.id}" placeholder="成本" value="${s.cost || ''}">
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="createPurchaseOrder()">创建</button></div>
+            `);
+        }
+
+        function createPurchaseOrder() {
+            const supplier = document.getElementById('poSupplier').value;
+            const items = [];
+            services.forEach(s => {
+                const qtyInput = document.getElementById('poQty_' + s.id);
+                const costInput = document.getElementById('poCost_' + s.id);
+                if (qtyInput && parseInt(qtyInput.value) > 0) {
+                    items.push({ productId: s.id, name: s.name, qty: parseInt(qtyInput.value), cost: parseFloat(costInput?.value) || s.cost || 0 });
+                }
+            });
+            if (items.length === 0) { showToast('error', '错误', '请选择要采购的商品'); return; }
+            const po = LoyverseFeatures.createPurchaseOrder(supplier, items, document.getElementById('poNotes').value);
+            purchaseOrders.unshift(po);
+            localStorage.setItem(CONFIG.storage.purchaseOrders, JSON.stringify(purchaseOrders));
+            closeModal(); renderPurchaseOrders();
+            showToast('success', '已创建', '采购订单已创建');
+        }
+
+        function renderPurchaseOrders() {
+            const container = document.getElementById('purchaseOrdersList');
+            if (purchaseOrders.length === 0) { container.innerHTML = '<div class="empty-state"><div class="icon">📦</div><p>暂无采购订单</p></div>'; return; }
+            container.innerHTML = purchaseOrders.map(po => {
+                const statusLabel = po.status === 'received' ? '已收货' : po.status === 'ordered' ? '已下单' : '草稿';
+                return `<div class="order-card" onclick="receivePurchaseOrder('${po.id}')">
+                    <div class="order-header"><span class="order-id">${po.id}</span><span class="status-badge ${po.status === 'received' ? 'completed' : po.status === 'ordered' ? 'pending' : 'cancelled'}">${statusLabel}</span></div>
+                    <div class="order-info"><div>供应商: ${po.supplierName}</div><div>商品: ${po.items.length} 项</div><div>总额: ¥${po.total.toFixed(2)}</div></div>
+                </div>`;
+            }).join('');
+        }
+
+        function receivePurchaseOrder(id) {
+            const po = purchaseOrders.find(x => x.id === id);
+            if (!po) return;
+            if (po.status === 'received') { showToast('info', '提示', '此订单已收货'); return; }
+            if (!confirm('确认收货？库存将自动更新。')) return;
+            po.status = 'received'; po.receivedAt = new Date().toISOString();
+            po.items.forEach(item => {
+                const prod = services.find(s => s.id === item.productId);
+                if (prod) prod.stock = (prod.stock || 0) + item.qty;
+            });
+            saveData('services', services);
+            localStorage.setItem(CONFIG.storage.purchaseOrders, JSON.stringify(purchaseOrders));
+            renderPurchaseOrders();
+            showToast('success', '已收货', '库存已更新');
+        }
+
+        function showStockAdjustmentModal() {
+            showModal('库存调整', `
+                <div class="form-group"><label class="form-label">调整原因</label><select class="form-select" id="saReason"><option value="damage">损坏</option><option value="loss">丢失</option><option value="found">发现</option><option value="correction">更正</option><option value="other">其他</option></select></div>
+                <div class="form-group"><label class="form-label">备注</label><textarea class="form-input" id="saNotes" rows="2"></textarea></div>
+                <div style="max-height:300px;overflow-y:auto;">
+                    ${services.map(s => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+                            <span>${s.name} (当前: ${s.stock})</span>
+                            <input type="number" class="form-input form-input-sm" style="width:80px;" id="saQty_${s.id}" placeholder="调整量" value="0">
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="createStockAdjustment()">执行调整</button></div>
+            `);
+        }
+
+        function createStockAdjustment() {
+            const reason = document.getElementById('saReason').value;
+            const items = [];
+            services.forEach(s => {
+                const qtyInput = document.getElementById('saQty_' + s.id);
+                if (qtyInput && parseInt(qtyInput.value) !== 0) {
+                    items.push({ productId: s.id, name: s.name, adjustment: parseInt(qtyInput.value), currentStock: s.stock });
+                }
+            });
+            if (items.length === 0) { showToast('error', '错误', '请输入调整数量'); return; }
+            const adj = LoyverseFeatures.createStockAdjustment(items, reason, document.getElementById('saNotes').value);
+            stockAdjustments.unshift(adj);
+            items.forEach(item => {
+                const prod = services.find(s => s.id === item.productId);
+                if (prod) prod.stock = (prod.stock || 0) + item.adjustment;
+            });
+            saveData('services', services);
+            localStorage.setItem(CONFIG.storage.stockAdjustments, JSON.stringify(stockAdjustments));
+            closeModal(); renderStockAdjustments();
+            showToast('success', '已调整', '库存已调整');
+        }
+
+        function renderStockAdjustments() {
+            const container = document.getElementById('stockAdjustmentsList');
+            if (stockAdjustments.length === 0) { container.innerHTML = '<div class="empty-state"><div class="icon">⚙️</div><p>暂无调整记录</p></div>'; return; }
+            container.innerHTML = stockAdjustments.map(sa => `
+                <div class="order-card">
+                    <div class="order-header"><span class="order-id">${sa.id}</span><span class="status-badge completed">已调整</span></div>
+                    <div class="order-info"><div>原因: ${sa.reason}</div><div>商品: ${sa.items.length} 项</div><div>${new Date(sa.createdAt).toLocaleString()}</div></div>
+                    ${sa.notes ? '<div style="font-size:12px;color:var(--gray-500);">备注: ' + sa.notes + '</div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function renderLowStockAlerts() {
+            const container = document.getElementById('lowStockAlertsList');
+            const alerts = services.filter(s => (s.stock || 0) <= (s.lowStockAlert || 10));
+            if (alerts.length === 0) { container.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>所有商品库存正常</p></div>'; return; }
+            container.innerHTML = alerts.map(s => `
+                <div class="order-card" style="border-left:4px solid ${s.stock <= 0 ? 'var(--danger)' : 'var(--warning)'};">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div><strong>${s.name}</strong><br><span style="font-size:12px;color:var(--gray-500);">供应商: ${s.supplier || '-'}</span></div>
+                        <div style="text-align:right;"><span class="${s.stock <= 0 ? 'stock-negative' : 'stock-negative'}" style="font-size:20px;font-weight:700;">${s.stock}</span><br><span style="font-size:11px;color:var(--gray-500);">预警值: ${s.lowStockAlert || 10}</span></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showStockAdjustItem(productId) {
+            const prod = services.find(s => s.id === productId);
+            if (!prod) return;
+            showModal('调整库存 - ' + prod.name, `
+                <div style="text-align:center;padding:16px;background:var(--gray-50);border-radius:8px;margin-bottom:16px;">
+                    <div style="font-size:24px;font-weight:700;">当前库存: ${prod.stock}</div>
+                </div>
+                <div class="form-group"><label class="form-label">新库存数量</label><input type="number" class="form-input" id="newStockQty" value="${prod.stock}"></div>
+                <div class="form-group"><label class="form-label">调整原因</label><select class="form-select" id="adjReason"><option value="correction">更正</option><option value="damage">损坏</option><option value="loss">丢失</option><option value="found">发现</option></select></div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="applyStockAdjust('${productId}')">应用</button></div>
+            `);
+        }
+
+        function applyStockAdjust(productId) {
+            const prod = services.find(s => s.id === productId);
+            if (!prod) return;
+            const newQty = parseInt(document.getElementById('newStockQty').value) || 0;
+            const reason = document.getElementById('adjReason').value;
+            const adj = { productId: prod.id, name: prod.name, adjustment: newQty - prod.stock, currentStock: prod.stock };
+            stockAdjustments.unshift({ id: 'SA' + Date.now(), items: [adj], reason, createdAt: new Date().toISOString() });
+            prod.stock = newQty;
+            saveData('services', services);
+            localStorage.setItem(CONFIG.storage.stockAdjustments, JSON.stringify(stockAdjustments));
+            closeModal(); renderStockLevels();
+            showToast('success', '已更新', '库存已更新为 ' + newQty);
+        }
+
+        // Customer History
+        function renderCustomerHistory() {
+            const search = document.getElementById('custHistorySearch')?.value?.toLowerCase() || '';
+            const sortBy = document.getElementById('custHistorySort')?.value || 'spent';
+            let filtered = [...members];
+            if (search) filtered = filtered.filter(m => m.name.toLowerCase().includes(search) || (m.phone || '').includes(search) || (m.cardNo || '').toLowerCase().includes(search));
+            switch(sortBy) {
+                case 'spent': filtered.sort((a, b) => (b.totalSpent || 0) - (a.totalSpent || 0)); break;
+                case 'visits': filtered.sort((a, b) => (b.visitCount || 0) - (a.visitCount || 0)); break;
+                case 'points': filtered.sort((a, b) => (b.points || 0) - (a.points || 0)); break;
+                case 'name': filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')); break;
+            }
+            const table = document.getElementById('customerHistoryTable');
+            if (filtered.length === 0) { table.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>暂无会员</p></div>'; return; }
+            table.innerHTML = filtered.map(m => `
+                <div class="table-row" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr 1fr auto;">
+                    <span style="font-weight:600;">${m.name}</span>
+                    <span><span class="status-badge ${m.level === 'gold' ? 'active' : m.level === 'diamond' ? 'free' : m.level === 'silver' ? 'pending' : 'cancelled'}">${CONFIG.levelNames[m.level] || m.level}</span></span>
+                    <span style="color:var(--primary);font-weight:600;">¥${(m.totalSpent || 0).toFixed(2)}</span>
+                    <span>${m.visitCount || 0}</span>
+                    <span>${m.points || 0}</span>
+                    <span>¥${(m.balance || 0).toFixed(2)}</span>
+                    <span style="font-size:12px;">${m.lastVisit || '-'}</span>
+                    <span><button class="btn btn-sm btn-outline" onclick="showCustomerDetail('${m.id}')">详情</button></span>
+                </div>
+            `).join('');
+        }
+
+        function showCustomerDetail(memberId) {
+            const m = members.find(x => x.id === memberId);
+            if (!m) return;
+            const custOrders = orders.filter(o => o.memberId === memberId);
+            const custLoyalty = loyaltyTransactions.filter(l => l.memberId === memberId);
+            showModal('客户详情 - ' + m.name, `
+                <div class="member-grid">
+                    <div class="member-card"><div class="card-label">总消费</div><div class="card-value" style="color:var(--primary);">¥${(m.totalSpent || 0).toFixed(2)}</div></div>
+                    <div class="member-card highlight"><div class="card-label">积分</div><div class="card-value">${m.points || 0}</div></div>
+                    <div class="member-card"><div class="card-label">访问次数</div><div class="card-value">${m.visitCount || 0}</div></div>
+                </div>
+                <div style="margin:16px 0;"><strong>最近订单</strong></div>
+                <div style="max-height:200px;overflow-y:auto;">
+                    ${custOrders.slice(0, 10).map(o => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px;"><span>${o.orderNo}</span><span style="color:var(--primary);font-weight:600;">¥${(o.total || 0).toFixed(2)}</span></div>`).join('') || '<p style="color:var(--gray-500);">暂无订单</p>'}
+                </div>
+                ${custLoyalty.length > 0 ? `<div style="margin:16px 0;"><strong>积分记录</strong></div>
+                <div style="max-height:150px;overflow-y:auto;">
+                    ${custLoyalty.slice(0, 10).map(l => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px;"><span>${l.type === 'earn' ? '获得' : '兑换'}: ${l.reason || ''}</span><span class="${l.points > 0 ? 'stock-positive' : 'stock-negative'}">${l.points > 0 ? '+' : ''}${l.points}</span></div>`).join('')}
+                </div>` : ''}
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">关闭</button></div>
+            `);
+        }
+
+        function exportCustomerHistory() {
+            const data = members.map(m => ({ name: m.name, level: m.level, totalSpent: m.totalSpent, visitCount: m.visitCount, points: m.points, balance: m.balance, lastVisit: m.lastVisit, joinDate: m.joinDate }));
+            LoyverseFeatures.exportToCSV(data, 'customer_history.csv');
+        }
+
+        // Advanced Reports
+        function showAdvReportTab(tab, el) {
+            document.querySelectorAll('#advancedReports-panel .settings-tab').forEach(t => t.classList.remove('active'));
+            if (el) el.classList.add('active');
+            loadAdvancedReport(tab);
+        }
+
+        function setAdvReportDates() {
+            const period = document.getElementById('advReportPeriod').value;
+            const today = new Date();
+            document.getElementById('advReportEnd').value = today.toISOString().split('T')[0];
+            let start;
+            switch(period) {
+                case 'today': start = today.toISOString().split('T')[0]; break;
+                case 'week': { const d = new Date(today); d.setDate(d.getDate() - 7); start = d.toISOString().split('T')[0]; break; }
+                case 'month': { const d = new Date(today); d.setMonth(d.getMonth() - 1); start = d.toISOString().split('T')[0]; break; }
+                case 'year': { const d = new Date(today); d.setFullYear(d.getFullYear() - 1); start = d.toISOString().split('T')[0]; break; }
+                default: return;
+            }
+            document.getElementById('advReportStart').value = start;
+        }
+
+        function loadAdvancedReport(tab) {
+            const start = document.getElementById('advReportStart')?.value;
+            const end = document.getElementById('advReportEnd')?.value;
+            let filtered = [...orders];
+            if (start) filtered = filtered.filter(o => o.created_at && o.created_at.split('T')[0] >= start);
+            if (end) filtered = filtered.filter(o => o.created_at && o.created_at.split('T')[0] <= end);
+            const container = document.getElementById('advReportContent');
+            const totalRevenue = filtered.reduce((s, o) => s + (o.total || 0), 0);
+            const totalTax = filtered.reduce((s, o) => s + (o.tax || 0), 0);
+            const totalDiscount = filtered.reduce((s, o) => s + (o.discount || 0), 0);
+            switch(tab || 'salesByItem') {
+                case 'salesByItem': {
+                    const byItem = {};
+                    filtered.forEach(o => (o.items || []).forEach(i => {
+                        if (!byItem[i.name]) byItem[i.name] = { qty: 0, revenue: 0 };
+                        byItem[i.name].qty += i.qty; byItem[i.name].revenue += i.price * i.qty;
+                    }));
+                    container.innerHTML = `<div class="stats-grid"><div class="stat-card"><div class="label">总营收</div><div class="value">¥${totalRevenue.toFixed(2)}</div></div><div class="stat-card"><div class="label">总税费</div><div class="value">¥${totalTax.toFixed(2)}</div></div><div class="stat-card"><div class="label">总折扣</div><div class="value">¥${totalDiscount.toFixed(2)}</div></div><div class="stat-card"><div class="label">订单数</div><div class="value">${filtered.length}</div></div></div>
+                    <div class="data-table"><div class="table-header" style="grid-template-columns:2fr 1fr 1fr;"><span>商品</span><span>数量</span><span>营收</span></div>
+                    ${Object.entries(byItem).sort((a, b) => b[1].revenue - a[1].revenue).map(([name, data]) => `<div class="table-row" style="grid-template-columns:2fr 1fr 1fr;"><span style="font-weight:500;">${name}</span><span>${data.qty}</span><span style="color:var(--primary);font-weight:600;">¥${data.revenue.toFixed(2)}</span></div>`).join('')}</div>`;
+                    break;
+                }
+                case 'salesByCategory': {
+                    const byCat = {};
+                    filtered.forEach(o => {
+                        const cat = o.category || '未分类';
+                        if (!byCat[cat]) byCat[cat] = { count: 0, revenue: 0 };
+                        byCat[cat].count++; byCat[cat].revenue += o.total || 0;
+                    });
+                    container.innerHTML = `<div class="data-table"><div class="table-header" style="grid-template-columns:2fr 1fr 1fr;"><span>分类</span><span>订单数</span><span>营收</span></div>
+                    ${Object.entries(byCat).sort((a, b) => b[1].revenue - a[1].revenue).map(([name, data]) => `<div class="table-row" style="grid-template-columns:2fr 1fr 1fr;"><span style="font-weight:500;">${name}</span><span>${data.count}</span><span style="color:var(--primary);font-weight:600;">¥${data.revenue.toFixed(2)}</span></div>`).join('')}</div>`;
+                    break;
+                }
+                case 'salesByEmployee': {
+                    const byEmp = {};
+                    filtered.forEach(o => {
+                        const emp = o.employeeName || '未分配';
+                        if (!byEmp[emp]) byEmp[emp] = { orders: 0, revenue: 0 };
+                        byEmp[emp].orders++; byEmp[emp].revenue += o.total || 0;
+                    });
+                    container.innerHTML = `<div class="data-table"><div class="table-header" style="grid-template-columns:2fr 1fr 1fr 1fr;"><span>员工</span><span>订单数</span><span>营收</span><span>平均客单</span></div>
+                    ${Object.entries(byEmp).sort((a, b) => b[1].revenue - a[1].revenue).map(([name, data]) => `<div class="table-row" style="grid-template-columns:2fr 1fr 1fr 1fr;"><span style="font-weight:500;">${name}</span><span>${data.orders}</span><span style="color:var(--primary);font-weight:600;">¥${data.revenue.toFixed(2)}</span><span>¥${(data.revenue / data.orders).toFixed(2)}</span></div>`).join('')}</div>`;
+                    break;
+                }
+                case 'salesByPayment': {
+                    const byPay = {};
+                    filtered.forEach(o => {
+                        const pay = o.paymentMethod || o.payment || 'cash';
+                        if (!byPay[pay]) byPay[pay] = { count: 0, total: 0 };
+                        byPay[pay].count++; byPay[pay].total += o.total || 0;
+                    });
+                    container.innerHTML = `<div class="data-table"><div class="table-header" style="grid-template-columns:2fr 1fr 1fr 1fr;"><span>支付方式</span><span>订单数</span><span>金额</span><span>占比</span></div>
+                    ${Object.entries(byPay).sort((a, b) => b[1].total - a[1].total).map(([name, data]) => `<div class="table-row" style="grid-template-columns:2fr 1fr 1fr 1fr;"><span style="font-weight:500;">${CONFIG.paymentNames[name] || name}</span><span>${data.count}</span><span style="color:var(--primary);font-weight:600;">¥${data.total.toFixed(2)}</span><span>${totalRevenue > 0 ? ((data.total / totalRevenue) * 100).toFixed(1) : 0}%</span></div>`).join('')}</div>`;
+                    break;
+                }
+                case 'shiftReports': {
+                    container.innerHTML = `<div class="stats-grid"><div class="stat-card"><div class="label">总班次</div><div class="value">${shifts.length}</div></div><div class="stat-card"><div class="label">总营收</div><div class="value">¥${totalRevenue.toFixed(2)}</div></div></div>
+                    <div class="data-table"><div class="table-header" style="grid-template-columns:1fr 1fr 1fr 1fr;"><span>班次</span><span>员工</span><span>时间</span><span>状态</span></div>
+                    ${shifts.map(s => `<div class="table-row" style="grid-template-columns:1fr 1fr 1fr 1fr;"><span>${s.id || '-'}</span><span>${s.employeeName || '-'}</span><span>${s.created_at ? new Date(s.created_at).toLocaleString() : '-'}</span><span><span class="status-badge ${s.status || 'open'}">${s.status || '开放'}</span></span></div>`).join('')}</div>`;
+                    break;
+                }
+                case 'taxReports': {
+                    const taxByRate = {};
+                    filtered.forEach(o => {
+                        const rate = o.taxRate || settings.tax?.rate || 0;
+                        if (!taxByRate[rate]) taxByRate[rate] = { taxableSales: 0, taxCollected: 0, count: 0 };
+                        taxByRate[rate].taxableSales += o.subtotal || 0;
+                        taxByRate[rate].taxCollected += o.tax || 0;
+                        taxByRate[rate].count++;
+                    });
+                    container.innerHTML = `<div class="stats-grid"><div class="stat-card"><div class="label">总税费</div><div class="value">¥${totalTax.toFixed(2)}</div></div><div class="label">应税销售额</div><div class="value">¥${(totalRevenue - totalTax).toFixed(2)}</div></div>
+                    <div class="data-table"><div class="table-header" style="grid-template-columns:1fr 1fr 1fr 1fr;"><span>税率</span><span>订单数</span><span>应税销售</span><span>税费</span></div>
+                    ${Object.entries(taxByRate).map(([rate, data]) => `<div class="table-row" style="grid-template-columns:1fr 1fr 1fr 1fr;"><span>${rate}%</span><span>${data.count}</span><span>¥${data.taxableSales.toFixed(2)}</span><span style="color:var(--primary);font-weight:600;">¥${data.taxCollected.toFixed(2)}</span></div>`).join('')}</div>`;
+                    break;
+                }
+                case 'customerReports': {
+                    const byCust = {};
+                    filtered.forEach(o => {
+                        const cust = o.customerName || o.memberId || '散客';
+                        if (!byCust[cust]) byCust[cust] = { visits: 0, totalSpent: 0 };
+                        byCust[cust].visits++; byCust[cust].totalSpent += o.total || 0;
+                    });
+                    container.innerHTML = `<div class="data-table"><div class="table-header" style="grid-template-columns:2fr 1fr 1fr;"><span>客户</span><span>访问次数</span><span>总消费</span></div>
+                    ${Object.entries(byCust).sort((a, b) => b[1].totalSpent - a[1].totalSpent).slice(0, 20).map(([name, data]) => `<div class="table-row" style="grid-template-columns:2fr 1fr 1fr;"><span style="font-weight:500;">${name}</span><span>${data.visits}</span><span style="color:var(--primary);font-weight:600;">¥${data.totalSpent.toFixed(2)}</span></div>`).join('')}</div>`;
+                    break;
+                }
+                case 'inventoryReports': {
+                    const lowStock = services.filter(s => (s.stock || 0) <= (s.lowStockAlert || 10));
+                    container.innerHTML = `<div class="stats-grid"><div class="stat-card"><div class="label">商品总数</div><div class="value">${services.length}</div></div><div class="stat-card warning"><div class="label">低库存</div><div class="value">${lowStock.length}</div></div><div class="stat-card"><div class="label">库存总值</div><div class="value">¥${services.reduce((s, p) => s + (p.stock || 0) * (p.cost || 0), 0).toFixed(2)}</div></div></div>
+                    ${lowStock.length > 0 ? '<div class="data-table"><div class="table-header" style="grid-template-columns:2fr 1fr 1fr;"><span>商品</span><span>当前库存</span><span>预警值</span></div>' + lowStock.map(s => `<div class="table-row" style="grid-template-columns:2fr 1fr 1fr;"><span style="font-weight:500;">${s.name}</span><span class="stock-negative">${s.stock}</span><span>${s.lowStockAlert || 10}</span></div>`).join('') + '</div>' : ''}`;
+                    break;
+                }
+            }
+        }
+
+        function exportAdvancedReport() {
+            const start = document.getElementById('advReportStart')?.value;
+            const end = document.getElementById('advReportEnd')?.value;
+            let filtered = [...orders];
+            if (start) filtered = filtered.filter(o => o.created_at && o.created_at.split('T')[0] >= start);
+            if (end) filtered = filtered.filter(o => o.created_at && o.created_at.split('T')[0] <= end);
+            LoyverseFeatures.exportToCSV(filtered.map(o => ({ orderNo: o.orderNo, total: o.total, paymentMethod: o.paymentMethod, employeeName: o.employeeName, customerName: o.customerName, created_at: o.created_at })), 'advanced_report.csv');
+        }
+
+        // Barcode scanning integration
+        LoyverseFeatures.initBarcodeScanner((code) => {
+            const product = LoyverseFeatures.scanBarcode(code, services);
+            if (product) {
+                addToCart(product.id);
+                showToast('success', '已扫描', product.name);
+            } else {
+                showToast('warning', '未找到', '条码: ' + code);
+            }
+        });
+
+        // Refund processing
+        function showRefundModal() {
+            showModal('退款处理', `
+                <div class="form-group"><label class="form-label">订单号</label><input type="text" class="form-input" id="refundOrderNo" placeholder="输入订单号"></div>
+                <div class="form-group"><label class="form-label">退款原因</label><select class="form-select" id="refundReason"><option value="customer_request">客户要求</option><option value="defective">商品缺陷</option><option value="wrong_item">商品错误</option><option value="other">其他</option></select></div>
+                <div class="form-group"><label class="form-label">退款金额</label><input type="number" class="form-input" id="refundAmount" placeholder="输入退款金额"></div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-danger" onclick="processRefundSubmit()">处理退款</button></div>
+            `);
+        }
+
+        function processRefundSubmit() {
+            const orderNo = document.getElementById('refundOrderNo').value.trim();
+            const reason = document.getElementById('refundReason').value;
+            const amount = parseFloat(document.getElementById('refundAmount').value) || 0;
+            if (!orderNo) { showToast('error', '错误', '请输入订单号'); return; }
+            if (amount <= 0) { showToast('error', '错误', '请输入退款金额'); return; }
+            const order = orders.find(o => o.orderNo === orderNo);
+            if (!order) { showToast('error', '错误', '订单不存在'); return; }
+            order.status = 'refunded'; order.refundAmount = amount;
+            refunds.push({ id: 'REF' + Date.now(), orderId: order.id, orderNo, amount, reason, createdAt: new Date().toISOString() });
+            saveData('orders', orders);
+            localStorage.setItem(CONFIG.storage.refunds, JSON.stringify(refunds));
+            closeModal(); renderInvoices();
+            showToast('success', '退款成功', '退款 ¥' + amount.toFixed(2) + ' 已处理');
+        }
+
+        // Sale screen configuration
+        function showSaleScreenConfig() {
+            showModal('销售界面配置', `
+                <div class="form-group"><label class="form-label">商品显示方式</label><select class="form-select" id="saleViewMode"><option value="grid">网格视图</option><option value="list">列表视图</option></select></div>
+                <div class="form-group"><label class="form-label">显示商品图片</label><select class="form-select" id="saleShowImages"><option value="true">是</option><option value="false">否</option></select></div>
+                <div class="form-group"><label class="form-label">默认支付方式</label><select class="form-select" id="saleDefaultPayment"><option value="cash">现金</option><option value="card">刷卡</option><option value="wechat">微信</option><option value="alipay">支付宝</option></select></div>
+                <div class="form-group"><label class="form-label">搜索栏位置</label><select class="form-select" id="saleSearchPosition"><option value="top">顶部</option><option value="bottom">底部</option></select></div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveSaleScreenConfig()">保存</button></div>
+            `);
+        }
+
+        function saveSaleScreenConfig() {
+            settings.saleScreen = {
+                viewMode: document.getElementById('saleViewMode').value,
+                showImages: document.getElementById('saleShowImages').value === 'true',
+                defaultPayment: document.getElementById('saleDefaultPayment').value,
+                searchPosition: document.getElementById('saleSearchPosition').value
+            };
+            saveData('settings', settings);
+            closeModal();
+            showToast('success', '已保存', '销售界面配置已更新');
+        }
+
+        // Receipt template editor
+        function showReceiptTemplateEditor() {
+            const templates = receiptTemplates.length > 0 ? receiptTemplates : [{ name: '默认模板', header: 'VS POS', footer: '谢谢惠顾', isDefault: true }];
+            showModal('收据模板编辑', `
+                <div class="form-group"><label class="form-label">模板名称</label><input type="text" class="form-input" id="rtName" value="${templates[0].name}"></div>
+                <div class="form-group"><label class="form-label">收据头部</label><textarea class="form-input" id="rtHeader" rows="3">${templates[0].header || ''}</textarea></div>
+                <div class="form-group"><label class="form-label">收据底部</label><textarea class="form-input" id="rtFooter" rows="3">${templates[0].footer || ''}</textarea></div>
+                <div style="display:flex;gap:16px;margin:12px 0;">
+                    <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="rtShowLogo" ${templates[0].showLogo !== false ? 'checked' : ''}> 显示Logo</label>
+                    <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="rtShowTax" ${templates[0].showTax !== false ? 'checked' : ''}> 显示税费</label>
+                    <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="rtShowDiscount" ${templates[0].showDiscount !== false ? 'checked' : ''}> 显示折扣</label>
+                </div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveReceiptTemplate()">保存</button></div>
+            `);
+        }
+
+        function saveReceiptTemplate() {
+            const template = {
+                name: document.getElementById('rtName').value,
+                header: document.getElementById('rtHeader').value,
+                footer: document.getElementById('rtFooter').value,
+                showLogo: document.getElementById('rtShowLogo').checked,
+                showTax: document.getElementById('rtShowTax').checked,
+                showDiscount: document.getElementById('rtShowDiscount').checked
+            };
+            if (receiptTemplates.length > 0) receiptTemplates[0] = { ...receiptTemplates[0], ...template };
+            else receiptTemplates.push({ id: 'RT' + Date.now(), ...template });
+            localStorage.setItem(CONFIG.storage.receiptTemplates, JSON.stringify(receiptTemplates));
+            closeModal();
+            showToast('success', '已保存', '收据模板已更新');
+        }
+
+        // Tax configuration
+        function showAddTaxModal() {
+            showModal('添加税费', `
+                <div class="form-group"><label class="form-label">税费名称</label><input type="text" class="form-input" id="taxName" placeholder="例如: 增值税"></div>
+                <div class="form-group"><label class="form-label">税率 (%)</label><input type="number" class="form-input" id="taxRateInput" value="6" min="0" max="100" step="0.1"></div>
+                <div class="form-group"><label class="form-label">计算方式</label><select class="form-select" id="taxCalcMethod"><option value="add">添加到价格</option><option value="included">包含在价格内</option></select></div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveTaxRate()">保存</button></div>
+            `);
+        }
+
+        function saveTaxRate() {
+            const name = document.getElementById('taxName').value.trim();
+            const rate = parseFloat(document.getElementById('taxRateInput').value) || 0;
+            const isInclusive = document.getElementById('taxCalcMethod').value === 'included';
+            if (!name) { showToast('error', '错误', '请输入税费名称'); return; }
+            const tax = LoyverseFeatures.createTaxRate(name, rate, isInclusive);
+            taxRates.push(tax);
+            localStorage.setItem(CONFIG.storage.taxRates, JSON.stringify(taxRates));
+            closeModal(); renderTaxRates();
+            showToast('success', '已添加', '税费已添加');
+        }
+
+        function renderTaxRates() {
+            const container = document.getElementById('taxesTableBody');
+            if (!container) return;
+            if (taxRates.length === 0) { container.innerHTML = '<div class="empty-state"><p>暂无税费配置</p></div>'; return; }
+            container.innerHTML = taxRates.map(t => `
+                <div class="table-row" style="grid-template-columns:2fr 1fr 1fr 1fr auto;">
+                    <span style="font-weight:500;">${t.name}</span>
+                    <span class="tax-rate">${t.rate}%</span>
+                    <span>${t.isInclusive ? '含税' : '外加'}</span>
+                    <span><span class="status-badge ${t.active ? 'active' : 'cancelled'}">${t.active ? '启用' : '禁用'}</span></span>
+                    <span><button class="btn btn-sm btn-danger" onclick="deleteTaxRate('${t.id}')">删除</button></span>
+                </div>
+            `).join('');
+        }
+
+        function deleteTaxRate(id) {
+            taxRates = taxRates.filter(t => t.id !== id);
+            localStorage.setItem(CONFIG.storage.taxRates, JSON.stringify(taxRates));
+            renderTaxRates();
+            showToast('success', '已删除', '税费已删除');
+        }
+
+        // Discount management
+        function showAddDiscountModal() {
+            showModal('添加折扣', `
+                <div class="form-group"><label class="form-label">折扣名称</label><input type="text" class="form-input" id="discName" placeholder="例如: 员工折扣"></div>
+                <div class="form-group"><label class="form-label">折扣类型</label><select class="form-select" id="discType"><option value="percent">百分比</option><option value="fixed">固定金额</option></select></div>
+                <div class="form-group"><label class="form-label">折扣值</label><input type="number" class="form-input" id="discValue" placeholder="值"></div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveDiscount()">保存</button></div>
+            `);
+        }
+
+        function saveDiscount() {
+            const name = document.getElementById('discName').value.trim();
+            if (!name) { showToast('error', '错误', '请输入折扣名称'); return; }
+            const discount = { id: 'DISC' + Date.now(), name, type: document.getElementById('discType').value, value: parseFloat(document.getElementById('discValue').value) || 0 };
+            if (!settings.discountsList) settings.discountsList = [];
+            settings.discountsList.push(discount);
+            saveData('settings', settings);
+            closeModal(); renderDiscounts();
+            showToast('success', '已添加', '折扣已添加');
+        }
+
+        function renderDiscounts() {
+            const container = document.getElementById('discountsTableBody');
+            if (!container) return;
+            const discounts = settings.discountsList || [];
+            if (discounts.length === 0) { container.innerHTML = '<div class="empty-state"><p>暂无折扣配置</p></div>'; return; }
+            container.innerHTML = discounts.map(d => `
+                <div class="table-row" style="grid-template-columns:2fr 1fr 1fr auto;">
+                    <span style="font-weight:500;">${d.name}</span>
+                    <span>${d.type === 'percent' ? '百分比' : '固定金额'}</span>
+                    <span class="discount-value">${d.type === 'percent' ? d.value + '%' : '¥' + d.value.toFixed(2)}</span>
+                    <span><button class="btn btn-sm btn-danger" onclick="deleteDiscount('${d.id}')">删除</button></span>
+                </div>
+            `).join('');
+        }
+
+        function deleteDiscount(id) {
+            settings.discountsList = (settings.discountsList || []).filter(d => d.id !== id);
+            saveData('settings', settings);
+            renderDiscounts();
+            showToast('success', '已删除', '折扣已删除');
+        }
+
+        // Modifier management
+        function showAddModifierModal() {
+            showModal('添加修饰符组', `
+                <div class="form-group"><label class="form-label">修饰符组名称</label><input type="text" class="form-input" id="modGroupName" placeholder="例如: 尺寸、口味"></div>
+                <div class="form-group"><label class="form-label">是否必选</label><select class="form-select" id="modRequired"><option value="false">可选</option><option value="true">必选</option></select></div>
+                <div class="form-group"><label class="form-label">选项 (每行一个, 格式: 名称,加价)</label><textarea class="form-input" id="modOptions" rows="4" placeholder="大,0&#10;中,0&#10;小,-5"></textarea></div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveModifierGroup()">保存</button></div>
+            `);
+        }
+
+        function saveModifierGroup() {
+            const name = document.getElementById('modGroupName').value.trim();
+            if (!name) { showToast('error', '错误', '请输入修饰符组名称'); return; }
+            const optionsText = document.getElementById('modOptions').value.trim();
+            const options = optionsText.split('\n').filter(l => l.trim()).map(line => {
+                const parts = line.split(',');
+                return { name: parts[0].trim(), priceAdjustment: parseFloat(parts[1]) || 0 };
+            });
+            const mg = LoyverseFeatures.createModifierGroup(name, options, document.getElementById('modRequired').value === 'true');
+            modifierGroups.push(mg);
+            localStorage.setItem(CONFIG.storage.modifierGroups, JSON.stringify(modifierGroups));
+            closeModal(); renderModifierGroups();
+            showToast('success', '已添加', '修饰符组已添加');
+        }
+
+        function renderModifierGroups() {
+            const container = document.getElementById('modifiersList');
+            if (!container) return;
+            if (modifierGroups.length === 0) { container.innerHTML = '<div class="empty-state"><p>暂无修饰符配置</p></div>'; return; }
+            container.innerHTML = modifierGroups.map(mg => `
+                <div class="order-card">
+                    <div class="order-header"><span class="order-id">${mg.name}</span><span class="status-badge ${mg.required ? 'pending' : 'active'}">${mg.required ? '必选' : '可选'}</span></div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+                        ${(mg.options || []).map(opt => `<span class="category-tag">${opt.name}${opt.priceAdjustment > 0 ? ' (+¥' + opt.priceAdjustment + ')' : opt.priceAdjustment < 0 ? ' (-¥' + Math.abs(opt.priceAdjustment) + ')' : ''}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Payment type management
+        function showAddPaymentTypeModal() {
+            showModal('添加支付类型', `
+                <div class="form-group"><label class="form-label">支付类型名称</label><input type="text" class="form-input" id="ptName" placeholder="例如: 信用卡、礼品卡"></div>
+                <div class="form-group"><label class="form-label">图标 Emoji</label><input type="text" class="form-input" id="ptIcon" placeholder="💳" style="width:60px;"></div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="savePaymentType()">保存</button></div>
+            `);
+        }
+
+        function savePaymentType() {
+            const name = document.getElementById('ptName').value.trim();
+            if (!name) { showToast('error', '错误', '请输入支付类型名称'); return; }
+            if (!settings.customPaymentTypes) settings.customPaymentTypes = [];
+            settings.customPaymentTypes.push({ id: 'PT' + Date.now(), name, icon: document.getElementById('ptIcon').value || '💳' });
+            saveData('settings', settings);
+            closeModal(); renderPaymentTypes();
+            showToast('success', '已添加', '支付类型已添加');
+        }
+
+        function renderPaymentTypes() {
+            const container = document.getElementById('paymentTypesList');
+            if (!container) return;
+            const types = settings.customPaymentTypes || [];
+            if (types.length === 0) { container.innerHTML = '<div class="empty-state"><p>暂无自定义支付类型</p></div>'; return; }
+            container.innerHTML = types.map(pt => `
+                <div class="setting-item"><div class="setting-info"><div class="setting-name">${pt.icon || '💳'} ${pt.name}</div></div>
+                <button class="btn btn-sm btn-danger" onclick="deletePaymentType('${pt.id}')">删除</button></div>
+            `).join('');
+        }
+
+        function deletePaymentType(id) {
+            settings.customPaymentTypes = (settings.customPaymentTypes || []).filter(pt => pt.id !== id);
+            saveData('settings', settings);
+            renderPaymentTypes();
+            showToast('success', '已删除', '支付类型已删除');
+        }
+
+        // Customer group management
+        function showAddCustomerGroupModal() {
+            showModal('添加客户组', `
+                <div class="form-group"><label class="form-label">组名称</label><input type="text" class="form-input" id="cgName" placeholder="例如: VIP客户"></div>
+                <div class="form-group"><label class="form-label">组折扣 (%)</label><input type="number" class="form-input" id="cgDiscount" value="0" min="0" max="100"></div>
+                <div class="form-group"><label class="form-label">描述</label><textarea class="form-input" id="cgDesc" rows="2"></textarea></div>
+                <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveCustomerGroup()">保存</button></div>
+            `);
+        }
+
+        function saveCustomerGroup() {
+            const name = document.getElementById('cgName').value.trim();
+            if (!name) { showToast('error', '错误', '请输入组名称'); return; }
+            const group = LoyverseFeatures.createCustomerGroup(name, parseFloat(document.getElementById('cgDiscount').value) || 0, document.getElementById('cgDesc').value);
+            customerGroups.push(group);
+            localStorage.setItem(CONFIG.storage.customerGroups, JSON.stringify(customerGroups));
+            closeModal();
+            showToast('success', '已添加', '客户组已创建');
+        }
+
+        // Update refreshPanel to handle new panels
+        const originalRefreshPanel = refreshPanel;
+        refreshPanel = function(panel) {
+            switch(panel) {
+                case 'inventory': renderStockLevels(); break;
+                case 'customerHistory': renderCustomerHistory(); break;
+                case 'advancedReports': loadAdvancedReport('salesByItem'); break;
+                default: originalRefreshPanel(panel);
+            }
+        };
+
+        // Update loadSettingsValues to render new settings
+        const originalLoadSettingsValues = loadSettingsValues;
+        loadSettingsValues = function() {
+            originalLoadSettingsValues();
+            renderTaxRates();
+            renderDiscounts();
+            renderModifierGroups();
+            renderPaymentTypes();
+        };
+
+        // Add inventory count to saveData
+        const originalSaveData = saveData;
+        saveData = async function(key, data) {
+            await originalSaveData(key, data);
+            if (['inventoryCounts', 'inventoryTransfers', 'purchaseOrders', 'stockAdjustments', 'customerGroups', 'loyaltyTransactions', 'taxRates', 'modifierGroups', 'modifierOptions', 'receiptTemplates', 'refunds', 'returnsData', 'itemVariants'].includes(key)) {
+                const storageKey = CONFIG.storage[key];
+                if (storageKey) localStorage.setItem(storageKey, JSON.stringify(data));
+            }
+        };
     </script>
 </body>
 </html>
