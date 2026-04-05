@@ -3,7 +3,7 @@
     {
       "id": "U001",
       "username": "admin",
-      "password": "$2a$10$herkGmzthT29LxV3MgqJ0O7GiMPk6lQja1phiTZbrG8xjkUHPAY0.",
+      "password": "$2a$10$/IhbvnZ2i97ZdEYRJhvwtuOD9RRbDjfnhbyM/PxVlIsMcKDC/m7Mi",
       "name": "系统管理员",
       "role": "admin",
       "status": "active"
@@ -241,5 +241,168 @@
       "price": 188,
       "description": "专业面部护理"
     }
-  ]
+  ],
+  "subscriptions": [
+    {
+      "id": "SUB001",
+      "plan": "free",
+      "status": "active",
+      "startDate": "2026-04-05T10:45:26.015Z",
+      "endDate": null,
+      "features": [
+        "basic_pos",
+        "members",
+        "reports_basic"
+      ]
+    },
+    {
+      "id": "SUB002",
+      "plan": "pro",
+      "price": 99,
+      "billing": "monthly",
+      "status": "available",
+      "features": [
+        "all_pos",
+        "advanced_reports",
+        "multi_store",
+        "api_access"
+      ]
+    },
+    {
+      "id": "SUB003",
+      "plan": "pro",
+      "price": 999,
+      "billing": "yearly",
+      "status": "available",
+      "features": [
+        "all_pos",
+        "advanced_reports",
+        "multi_store",
+        "api_access",
+        "priority_support"
+      ]
+    },
+    {
+      "id": "SUB004",
+      "plan": "enterprise",
+      "price": 299,
+      "billing": "monthly",
+      "status": "available",
+      "features": [
+        "all_pos",
+        "advanced_reports",
+        "multi_store",
+        "api_access",
+        "white_label",
+        "dedicated_support"
+      ]
+    },
+    {
+      "id": "SUB005",
+      "plan": "enterprise",
+      "price": 2999,
+      "billing": "yearly",
+      "status": "available",
+      "features": [
+        "all_pos",
+        "advanced_reports",
+        "multi_store",
+        "api_access",
+        "white_label",
+        "dedicated_support",
+        "custom_integration"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TASK001",
+      "employeeId": "E001",
+      "type": "service",
+      "serviceName": "中式按摩",
+      "status": "pending",
+      "assignedAt": "2026-04-05T10:45:26.016Z",
+      "completedAt": null,
+      "commission": 50
+    },
+    {
+      "id": "TASK002",
+      "employeeId": "E002",
+      "type": "service",
+      "serviceName": "精油SPA",
+      "status": "in_progress",
+      "assignedAt": "2026-04-05T10:45:26.016Z",
+      "completedAt": null,
+      "commission": 80
+    }
+  ],
+  "permissions": [
+    {
+      "id": "PERM001",
+      "role": "admin",
+      "name": "管理员",
+      "permissions": [
+        "all"
+      ]
+    },
+    {
+      "id": "PERM002",
+      "role": "manager",
+      "name": "店长",
+      "permissions": [
+        "pos",
+        "members",
+        "reports",
+        "employees",
+        "settings_basic"
+      ]
+    },
+    {
+      "id": "PERM003",
+      "role": "cashier",
+      "name": "收银员",
+      "permissions": [
+        "pos",
+        "members_view",
+        "reports_basic"
+      ]
+    },
+    {
+      "id": "PERM004",
+      "role": "technician",
+      "name": "技师",
+      "permissions": [
+        "pos_basic",
+        "own_reports"
+      ]
+    }
+  ],
+  "finance_reports": [],
+  "inventory_counts": [],
+  "inventory_transfers": [],
+  "purchase_orders": [],
+  "stock_adjustments": [],
+  "customer_groups": [],
+  "customer_history": [],
+  "loyalty_transactions": [],
+  "tax_rates": [],
+  "modifier_groups": [],
+  "modifier_options": [],
+  "receipt_templates": [],
+  "printer_settings": [],
+  "barcodes": [],
+  "item_variants": [],
+  "shift_details": [],
+  "shift_cash_transactions": [],
+  "refunds": [],
+  "returns": [],
+  "suppliers": [],
+  "dining_options": [],
+  "kitchen_printers": [],
+  "customer_displays": [],
+  "payment_types": [],
+  "api_tokens": [],
+  "webhooks": [],
+  "import_jobs": [],
+  "low_stock_alerts": []
 }

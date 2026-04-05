@@ -19,10 +19,17 @@ app.use(express.json());
 function loadDB() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    const defaultDB = { users: [], products: [], categories: [], members: [], orders: [], employees: [], tickets: [], commissions: [], shifts: [], settings: {}, technicians: [], services: [], subscriptions: [], tasks: [], permissions: [], finance_reports: [], inventory_counts: [], inventory_transfers: [], purchase_orders: [], stock_adjustments: [], customer_groups: [], customer_history: [], loyalty_transactions: [], tax_rates: [], modifier_groups: [], modifier_options: [], receipt_templates: [], printer_settings: [], barcodes: [], item_variants: [], shift_details: [], shift_cash_transactions: [], refunds: [], returns: [], suppliers: [], dining_options: [], kitchen_printers: [], customer_displays: [], payment_types: [], api_tokens: [], webhooks: [], import_jobs: [], low_stock_alerts: [] };
     if (!fs.existsSync(DB_FILE)) {
-      saveDB({ users: [], products: [], categories: [], members: [], orders: [], employees: [], tickets: [], commissions: [], shifts: [], settings: {}, technicians: [], services: [], subscriptions: [], tasks: [], permissions: [], finance_reports: [], inventory_counts: [], inventory_transfers: [], purchase_orders: [], stock_adjustments: [], customer_groups: [], customer_history: [], loyalty_transactions: [], tax_rates: [], modifier_groups: [], modifier_options: [], receipt_templates: [], printer_settings: [], barcodes: [], item_variants: [], shift_details: [], shift_cash_transactions: [], refunds: [], returns: [], suppliers: [], dining_options: [], kitchen_printers: [], customer_displays: [], payment_types: [], api_tokens: [], webhooks: [], import_jobs: [], low_stock_alerts: [] });
+      saveDB(defaultDB);
+      return defaultDB;
     }
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    // Ensure all collections exist (migration)
+    for (const key of Object.keys(defaultDB)) {
+      if (!(key in db)) db[key] = defaultDB[key];
+    }
+    return db;
   } catch (e) {
     return { users: [], products: [], categories: [], members: [], orders: [], employees: [], tickets: [], commissions: [], shifts: [], settings: {}, technicians: [], services: [], subscriptions: [], tasks: [], permissions: [], finance_reports: [], inventory_counts: [], inventory_transfers: [], purchase_orders: [], stock_adjustments: [], customer_groups: [], customer_history: [], loyalty_transactions: [], tax_rates: [], modifier_groups: [], modifier_options: [], receipt_templates: [], printer_settings: [], barcodes: [], item_variants: [], shift_details: [], shift_cash_transactions: [], refunds: [], returns: [], suppliers: [], dining_options: [], kitchen_printers: [], customer_displays: [], payment_types: [], api_tokens: [], webhooks: [], import_jobs: [], low_stock_alerts: [] };
   }
@@ -115,7 +122,7 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 });
 
 // CRUD
-['products','categories','members','orders','employees','tickets','commissions','shifts','technicians','services','subscriptions','tasks','permissions','finance_reports','inventory_counts','inventory_transfers','purchase_orders','stock_adjustments','customer_groups','customer_history','loyalty_transactions','tax_rates','modifier_groups','modifier_options','receipt_templates','printer_settings','barcodes','item_variants','shift_details','shift_cash_transactions','refunds','returns','suppliers','payment_types','api_tokens','webhooks','import_jobs','low_stock_alerts'].forEach(col => {
+['products','categories','members','orders','employees','tickets','commissions','shifts','technicians','services','subscriptions','tasks','permissions','finance_reports','inventory_counts','inventory_transfers','purchase_orders','stock_adjustments','customer_groups','customer_history','loyalty_transactions','tax_rates','discounts','modifier_groups','modifier_options','receipt_templates','printer_settings','barcodes','item_variants','shift_details','shift_cash_transactions','refunds','returns','suppliers','payment_types','api_tokens','webhooks','import_jobs','low_stock_alerts','dining_options','kitchen_printers','customer_displays'].forEach(col => {
   app.get(`/api/${col}`, (req, res) => res.json(db[col] || []));
   app.get(`/api/${col}/:id`, (req, res) => { const i = db[col].find(x => x.id === req.params.id); if (!i) return res.status(404).json({ error: '不存在' }); res.json(i); });
   app.post(`/api/${col}`, (req, res) => { const n = { id: req.body.id || (col[0].toUpperCase() + Date.now()), ...req.body }; db[col].push(n); saveDB(db); res.status(201).json(n); });
